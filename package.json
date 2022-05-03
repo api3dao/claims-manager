@@ -9,7 +9,8 @@
     "lint:solhint": "solhint contracts/**/*.sol",
     "prepare": "husky install",
     "prettier": "prettier --write \"./**/*.{json,js,ts,md}\"",
-    "prettier:check": "prettier --check \"./**/*.{json,js,ts,md}\""
+    "prettier:check": "prettier --check \"./**/*.{json,js,ts,md}\"",
+    "test": "hardhat test"
   },
   "repository": {
     "type": "git",
