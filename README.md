@@ -1,1 +1,1 @@
-# claims-manager
+# @api3/claims-manager
