@@ -28,12 +28,12 @@ contract ClaimsManager {
         CoverageClaimStatus status;
     }
 
-    IAPI3Pool immutable iAPI3Pool;
+    IAPI3Pool public immutable iAPI3Pool;
 
-    address immutable coverageClaimManager;
-    uint256 claimCount;
-    mapping(address => bool) isArbitrator;
-    mapping(address => bool) isMediator;
+    address public immutable coverageClaimManager;
+    uint256 public claimCount;
+    mapping(address => bool) public isArbitrator;
+    mapping(address => bool) public isMediator;
     mapping(uint256 => CoverageClaim) public claims;
 
     event CoverageClaimResolved(
