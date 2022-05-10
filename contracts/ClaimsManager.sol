@@ -54,18 +54,12 @@ contract ClaimsManager {
     );
 
     modifier onlyArbitrator() {
-        require(
-            isArbitrator[msg.sender],
-            "Only API3 Service Coverage Claim Arbitrators"
-        );
+        require(isArbitrator[msg.sender], "Sender not arbitrator");
         _;
     }
 
     modifier onlyMediator() {
-        require(
-            isMediator[msg.sender],
-            "Only API3 Service Coverage Claim Mediators"
-        );
+        require(isMediator[msg.sender], "Sender not mediator");
         _;
     }
 
@@ -125,11 +119,11 @@ contract ClaimsManager {
         CoverageClaim storage claim = claims[_claimCount];
         require(
             claim.status == CoverageClaimStatus.Submitted,
-            "Claim must be submitted and unresolved"
+            "Claim not submitted"
         );
         require(
             _amount <= claim.claimedDamagesAmount,
-            "Mediation offer must be <= claimed damages"
+            "Amount larger than claim"
         );
         claim.status = CoverageClaimStatus.MediationOffered;
         claim.mediationOfferAmount = _amount;
@@ -161,7 +155,7 @@ contract ClaimsManager {
         CoverageClaim storage claim = claims[_claimCount];
         require(
             _amount <= claim.claimedDamagesAmount,
-            "Claim payment must be <= claimed damages"
+            "Amount larger than claim"
         );
         require(
             claim.status != CoverageClaimStatus.Resolved,
