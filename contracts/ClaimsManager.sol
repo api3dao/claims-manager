@@ -2,6 +2,8 @@
 
 pragma solidity >=0.8.4;
 
+import "@api3/airnode-protocol/contracts/access-control-registry/AccessControlRegistryAdminnedWithManager.sol";
+
 /// @title API3 Service Coverage Claims Manager
 /// @notice contract manager of API3 service coverage claims process and payments, permitted to withdraw as many tokens as necessary from API3's staking pool to satisfy successful valid claims on service coverage
 /// @dev the primary DAO Agent must call setClaimsManagerStatus(coverageClaimManager, true) so this contract will satisfy the onlyClaimsManager() modifier to pay out claims or mediation offers
@@ -10,7 +12,7 @@ interface IAPI3Pool {
     function payOutClaim(address recipient, uint256 amount) external;
 }
 
-contract ClaimsManager {
+contract ClaimsManager is AccessControlRegistryAdminnedWithManager {
     enum CoverageClaimStatus {
         None,
         Submitted,
@@ -28,12 +30,15 @@ contract ClaimsManager {
         CoverageClaimStatus status;
     }
 
+    string public constant ARBITRATOR_ROLE_DESCRIPTION = "Arbitrator";
+    string public constant MEDIATOR_ROLE_DESCRIPTION = "Mediator";
+
+    bytes32 public immutable arbitratorRole;
+    bytes32 public immutable mediatorRole;
+
     IAPI3Pool public immutable iAPI3Pool;
 
-    address public immutable coverageClaimManager;
     uint256 public claimCount;
-    mapping(address => bool) public isArbitrator;
-    mapping(address => bool) public isMediator;
     mapping(uint256 => CoverageClaim) public claims;
 
     event CoverageClaimResolved(
@@ -54,31 +59,44 @@ contract ClaimsManager {
     );
 
     modifier onlyArbitrator() {
-        require(isArbitrator[msg.sender], "Sender not arbitrator");
+        require(
+            manager == msg.sender ||
+                IAccessControlRegistry(accessControlRegistry).hasRole(
+                    arbitratorRole,
+                    msg.sender
+                ),
+            "Sender not arbitrator"
+        );
         _;
     }
 
     modifier onlyMediator() {
-        require(isMediator[msg.sender], "Sender not mediator");
+        require(
+            manager == msg.sender ||
+                IAccessControlRegistry(accessControlRegistry).hasRole(
+                    mediatorRole,
+                    msg.sender
+                ),
+            "Sender not mediator"
+        );
         _;
     }
 
-    /// @param _api3Pool API3 DAO staking pool which collateralizes the service coverage, 0x6dd655f10d4b9E242aE186D9050B68F725c76d76
-    /// @param _arbitrators address(es) who adjudicate and resolve claims, i.e. Kleros
-    /// @param _mediators address(es) who may set forth mediation offers to settle and resolve claims, i.e. multisig agent of API3
     constructor(
         address _api3Pool,
-        address[] memory _arbitrators,
-        address[] memory _mediators
-    ) {
-        coverageClaimManager = address(this);
+        address _accessControlRegistry,
+        string memory _adminRoleDescription,
+        address _manager
+    )
+        AccessControlRegistryAdminnedWithManager(
+            _accessControlRegistry,
+            _adminRoleDescription,
+            _manager
+        )
+    {
         iAPI3Pool = IAPI3Pool(_api3Pool);
-        for (uint16 i = 0; i < _arbitrators.length; ++i) {
-            isArbitrator[_arbitrators[i]] = true;
-        }
-        for (uint16 i = 0; i < _mediators.length; ++i) {
-            isMediator[_mediators[i]] = true;
-        }
+        arbitratorRole = _deriveRole(adminRole, ARBITRATOR_ROLE_DESCRIPTION);
+        mediatorRole = _deriveRole(adminRole, MEDIATOR_ROLE_DESCRIPTION);
     }
 
     /// @notice for claimant to submit a claim
