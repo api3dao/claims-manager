@@ -4,10 +4,6 @@ pragma solidity >=0.8.4;
 
 import "@api3/airnode-protocol/contracts/access-control-registry/AccessControlRegistryAdminnedWithManager.sol";
 
-/// @title API3 Service Coverage Claims Manager
-/// @notice contract manager of API3 service coverage claims process and payments, permitted to withdraw as many tokens as necessary from API3's staking pool to satisfy successful valid claims on service coverage
-/// @dev the primary DAO Agent must call setClaimsManagerStatus(coverageClaimManager, true) so this contract will satisfy the onlyClaimsManager() modifier to pay out claims or mediation offers
-
 interface IAPI3Pool {
     function payOutClaim(address recipient, uint256 amount) external;
 }
@@ -99,10 +95,6 @@ contract ClaimsManager is AccessControlRegistryAdminnedWithManager {
         mediatorRole = _deriveRole(adminRole, MEDIATOR_ROLE_DESCRIPTION);
     }
 
-    /// @notice for claimant to submit a claim
-    /// @param _claimedDamagesAmount amount of damages claimed by claimant in API3 tokens as of the time of claim submission
-    /// @param _evidence IPFS-pinned document created by claimant containing evidence of damages, policy, and other items required by the applicable Service Coverage Terms and Conditions
-    /// @return claimCount for submitted claim
     function submitClaim(
         uint256 _claimedDamagesAmount,
         string calldata _evidence
@@ -125,10 +117,6 @@ contract ClaimsManager is AccessControlRegistryAdminnedWithManager {
         return (claimCount);
     }
 
-    /// @notice for mediator to provide a mediation offer to settle and satisfy a submitted and unresolved claim
-    /// @param _amount amount of API3 tokens offered as a mediation offer to settle and satisfy the claim
-    /// @param _claimCount number of applicable claim
-    /// @param _mediatorEvidence IPFS-pinned document created by mediator refuting or otherwise addressing claimant's evidence, optional
     function provideMediationOffer(
         uint256 _amount,
         uint256 _claimCount,
@@ -148,8 +136,6 @@ contract ClaimsManager is AccessControlRegistryAdminnedWithManager {
         emit MediationOffer(_claimCount, _amount, _mediatorEvidence);
     }
 
-    /// @notice for claimant to accept mediator's offer to settle claim
-    /// @param _claimCount number of applicable claim
     function acceptMediationOffer(uint256 _claimCount) external {
         CoverageClaim storage claim = claims[_claimCount];
         require(msg.sender == claim.claimant, "Only claimant can accept");
@@ -162,10 +148,6 @@ contract ClaimsManager is AccessControlRegistryAdminnedWithManager {
         emit CoverageClaimResolved(_claimCount, claim.mediationOfferAmount);
     }
 
-    /// @notice for arbitrator to resolve a submitted and unresolved claim
-    /// @param _amount amount of API3 tokens to be withdrawn from the API3 pool to satisfy the claim, discretionary amount by arbitrator but must be <= claimedDamagesAmount and unsuccessful or invalid claims should be resolved with an _amount of 0
-    /// @param _claimCount number of applicable claim
-    /// @dev iAPI3Pool.payOutClaim() ensures _amount will be less than the total staked amount via "require(totalStake > amount)" and can be called by this contract after whitelisting by the DAO primary agent calling setClaimsManagerStatus for this address
     function resolveClaim(uint256 _amount, uint256 _claimCount)
         external
         onlyArbitrator
