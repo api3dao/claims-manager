@@ -1,6 +1,6 @@
 {
   "name": "@api3/claims-manager",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "license": "MIT",
   "scripts": {
     "build": "hardhat compile",
@@ -11,10 +11,6 @@
     "prettier": "prettier --write \"./**/*.{json,js,ts,sol,md}\"",
     "prettier:check": "prettier --check \"./**/*.{json,js,ts,sol,md}\"",
     "test": "hardhat test"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/api3dao/claims-manager.git"
   },
   "devDependencies": {
     "@api3/airnode-protocol": "^0.6.2",
