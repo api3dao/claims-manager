@@ -10,7 +10,9 @@
     "prepare": "husky install",
     "prettier": "prettier --write \"./**/*.{json,js,ts,sol,md}\"",
     "prettier:check": "prettier --check \"./**/*.{json,js,ts,sol,md}\"",
-    "test": "hardhat test"
+    "test": "hardhat test --parallel",
+    "test:coverage": "hardhat coverage",
+    "test:gas": "REPORT_GAS=true hardhat test"
   },
   "devDependencies": {
     "@api3/airnode-protocol": "^0.6.2",
