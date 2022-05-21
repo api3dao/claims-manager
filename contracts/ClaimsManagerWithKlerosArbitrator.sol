@@ -131,17 +131,17 @@ contract ClaimsManagerWithKlerosArbitrator is
             "Sender not Kleros arbitrator"
         );
         uint256 claimIndex = klerosArbitratorDisputeIdToClaimIndex[disputeId];
-        ArbitratorDecision result;
+        ArbitratorDecision decision;
         if (ruling == 0 || ruling == 1) {
-            result = ArbitratorDecision.DoNotPay;
+            decision = ArbitratorDecision.DoNotPay;
         } else if (ruling == 2) {
-            result = ArbitratorDecision.PayClaim;
+            decision = ArbitratorDecision.PayClaim;
         } else if (ruling == 3) {
-            result = ArbitratorDecision.PaySettlement;
+            decision = ArbitratorDecision.PaySettlement;
         } else {
             revert("Invalid ruling option");
         }
         emit Ruling(klerosArbitrator, disputeId, ruling);
-        ClaimsManager.resolveDispute(claimIndex, result);
+        ClaimsManager.resolveDispute(claimIndex, decision);
     }
 }
