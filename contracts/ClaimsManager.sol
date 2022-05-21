@@ -3,10 +3,7 @@
 pragma solidity >=0.8.4;
 
 import "@api3/airnode-protocol/contracts/access-control-registry/AccessControlRegistryAdminnedWithManager.sol";
-
-interface IAPI3Pool {
-    function payOutClaim(address recipient, uint256 amount) external;
-}
+import "@api3/api3-dao-contracts/contracts/interfaces/IApi3Pool.sol";
 
 contract ClaimsManager is AccessControlRegistryAdminnedWithManager {
     enum CoverageClaimStatus {
@@ -32,7 +29,7 @@ contract ClaimsManager is AccessControlRegistryAdminnedWithManager {
     bytes32 public immutable arbitratorRole;
     bytes32 public immutable mediatorRole;
 
-    IAPI3Pool public immutable iAPI3Pool;
+    IApi3Pool public immutable iAPI3Pool;
 
     uint256 public claimCount;
     mapping(uint256 => CoverageClaim) public claims;
@@ -90,7 +87,7 @@ contract ClaimsManager is AccessControlRegistryAdminnedWithManager {
             _manager
         )
     {
-        iAPI3Pool = IAPI3Pool(_api3Pool);
+        iAPI3Pool = IApi3Pool(_api3Pool);
         arbitratorRole = _deriveRole(adminRole, ARBITRATOR_ROLE_DESCRIPTION);
         mediatorRole = _deriveRole(adminRole, MEDIATOR_ROLE_DESCRIPTION);
     }

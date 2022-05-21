@@ -10,6 +10,11 @@
     "@openzeppelin/contracts" "4.4.2"
     ethers "^5.4.5"
 
+"@api3/api3-dao-contracts@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@api3/api3-dao-contracts/-/api3-dao-contracts-0.1.0.tgz#13d38a94459ee86865a8d3cdbe456500ba4409c8"
+  integrity sha512-VT10GFPTLR7I2U5VTcceGbhzSk3qiu6lXHzhqBWzBXwAl4+Rvvhstvehtt5zvsVBoQ4tlL8ON37dRDt/jYOB9Q==
+
 "@babel/code-frame@^7.0.0":
   version "7.16.7"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.16.7.tgz#44416b6bd7624b998f5b1af5d470856c40138789"
