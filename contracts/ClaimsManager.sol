@@ -12,7 +12,7 @@ contract ClaimsManager is
     enum ClaimStatus {
         None,
         ClaimCreated,
-        PayClaim,
+        ClaimAccepted,
         SettlementProposed,
         SettlementAccepted,
         DisputeCreated,
@@ -285,7 +285,7 @@ contract ClaimsManager is
         onlyMediatableClaim(claimIndex)
     {
         Claim storage claim = claims[claimIndex];
-        claim.status = ClaimStatus.PayClaim;
+        claim.status = ClaimStatus.ClaimAccepted;
         updateAccumulatedInitiative(msg.sender, claim.amount);
         emit AcceptedClaim(
             claimIndex,
