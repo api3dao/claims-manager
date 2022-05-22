@@ -87,19 +87,6 @@ contract ClaimsManager is
         _;
     }
 
-    modifier onlyMediatableClaim(uint256 claimIndex) {
-        Claim storage claim = claims[claimIndex];
-        require(
-            claim.status == ClaimStatus.ClaimCreated,
-            "Claim is not mediatable"
-        );
-        require(
-            claim.updateTime + mediatorResponsePeriod > block.timestamp,
-            "Mediator response too late"
-        );
-        _;
-    }
-
     constructor(
         address _accessControlRegistry,
         string memory _adminRoleDescription,
@@ -269,12 +256,16 @@ contract ClaimsManager is
         );
     }
 
-    function acceptClaim(uint256 claimIndex)
-        external
-        onlyManagerOrMediator
-        onlyMediatableClaim(claimIndex)
-    {
+    function acceptClaim(uint256 claimIndex) external onlyManagerOrMediator {
         Claim storage claim = claims[claimIndex];
+        require(
+            claim.status == ClaimStatus.ClaimCreated,
+            "Claim is not mediatable"
+        );
+        require(
+            claim.updateTime + mediatorResponsePeriod > block.timestamp,
+            "Mediator response too late"
+        );
         claim.status = ClaimStatus.ClaimAccepted;
         updateAccumulatedQuotaUsage(msg.sender, claim.amount);
         emit AcceptedClaim(
@@ -290,10 +281,17 @@ contract ClaimsManager is
     function proposeSettlement(uint256 claimIndex, uint256 amount)
         external
         onlyManagerOrMediator
-        onlyMediatableClaim(claimIndex)
     {
         require(amount != 0, "Settlement amount zero");
         Claim storage claim = claims[claimIndex];
+        require(
+            claim.status == ClaimStatus.ClaimCreated,
+            "Claim is not mediatable"
+        );
+        require(
+            claim.updateTime + mediatorResponsePeriod > block.timestamp,
+            "Mediator response too late"
+        );
         require(amount < claim.amount, "Settlement amount not smaller");
         claim.status = ClaimStatus.SettlementProposed;
         claim.updateTime = block.timestamp;
