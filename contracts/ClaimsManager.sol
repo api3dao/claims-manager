@@ -58,7 +58,7 @@ contract ClaimsManager is
     mapping(uint256 => Claim) public claims;
     mapping(uint256 => uint256) public claimIndexToProposedSettlementAmount;
     mapping(address => Checkpoint[])
-        public accountToAccumulatedInitiativeCheckpoints;
+        public accountToAccumulatedQuotaUsageCheckpoints;
     mapping(address => Quota) public accountToQuota;
     mapping(uint256 => address) public claimIndexToArbitrator;
     uint256 public claimCount = 0;
@@ -164,8 +164,8 @@ contract ClaimsManager is
         uint256 amount
     ) external onlyManagerOrAdmin {
         require(account != address(0), "Account address zero");
-        require(period != 0, "Initiative limit period zero");
-        require(amount != 0, "Initiative limit amount zero");
+        require(period != 0, "Quota period zero");
+        require(amount != 0, "Quota amount zero");
         accountToQuota[account] = Quota({period: period, amount: amount});
         emit SetQuota(account, period, amount, msg.sender);
     }
@@ -276,7 +276,7 @@ contract ClaimsManager is
     {
         Claim storage claim = claims[claimIndex];
         claim.status = ClaimStatus.ClaimAccepted;
-        updateAccumulatedInitiative(msg.sender, claim.amount);
+        updateAccumulatedQuotaUsage(msg.sender, claim.amount);
         emit AcceptedClaim(
             claimIndex,
             claim.claimant,
@@ -298,7 +298,7 @@ contract ClaimsManager is
         claim.status = ClaimStatus.SettlementProposed;
         claim.updateTime = block.timestamp;
         claimIndexToProposedSettlementAmount[claimIndex] = amount;
-        updateAccumulatedInitiative(msg.sender, amount);
+        updateAccumulatedQuotaUsage(msg.sender, amount);
         emit ProposedSettlement(claimIndex, claim.claimant, amount, msg.sender);
     }
 
@@ -394,7 +394,7 @@ contract ClaimsManager is
             );
         } else if (result == ArbitratorDecision.PayClaim) {
             uint256 claimAmount = claim.amount;
-            updateAccumulatedInitiative(msg.sender, claimAmount);
+            updateAccumulatedQuotaUsage(msg.sender, claimAmount);
             emit ResolvedDisputeByAcceptingClaim(
                 claimIndex,
                 claim.claimant,
@@ -414,7 +414,7 @@ contract ClaimsManager is
                     msg.sender
                 );
             } else {
-                updateAccumulatedInitiative(msg.sender, settlementAmount);
+                updateAccumulatedQuotaUsage(msg.sender, settlementAmount);
                 emit ResolvedDisputeByAcceptingSettlement(
                     claimIndex,
                     claim.claimant,
@@ -501,34 +501,33 @@ contract ClaimsManager is
         );
     }
 
-    function updateAccumulatedInitiative(address account, uint256 amount)
+    function updateAccumulatedQuotaUsage(address account, uint256 amount)
         private
     {
         Checkpoint[]
-            storage accumulatedInitiativeCheckpoints = accountToAccumulatedInitiativeCheckpoints[
+            storage accumulatedQuotaUsageCheckpoints = accountToAccumulatedQuotaUsageCheckpoints[
                 account
             ];
-        uint256 accumulatedInitiative = amount;
-        if (accumulatedInitiativeCheckpoints.length > 0) {
-            accumulatedInitiative += accumulatedInitiativeCheckpoints[
-                accumulatedInitiativeCheckpoints.length - 1
+        uint256 accumulatedQuotaUsage = amount;
+        if (accumulatedQuotaUsageCheckpoints.length > 0) {
+            accumulatedQuotaUsage += accumulatedQuotaUsageCheckpoints[
+                accumulatedQuotaUsageCheckpoints.length - 1
             ].value;
         }
-        accumulatedInitiativeCheckpoints.push(
+        accumulatedQuotaUsageCheckpoints.push(
             Checkpoint({
                 fromTimestamp: block.timestamp,
-                value: accumulatedInitiative
+                value: accumulatedQuotaUsage
             })
         );
-        Quota storage initiativeLimit = accountToQuota[account];
-        uint256 accumulatedInitiativeThen = getValueAt(
-            accumulatedInitiativeCheckpoints,
-            block.timestamp - initiativeLimit.period
+        Quota storage quota = accountToQuota[account];
+        uint256 accumulatedQuotaUsageThen = getValueAt(
+            accumulatedQuotaUsageCheckpoints,
+            block.timestamp - quota.period
         );
         require(
-            accumulatedInitiative - accumulatedInitiativeThen <=
-                initiativeLimit.amount,
-            "Initiative limit amount exceeded"
+            accumulatedQuotaUsage - accumulatedQuotaUsageThen <= quota.amount,
+            "Quota amount exceeded"
         );
     }
 
