@@ -15,8 +15,10 @@ contract ClaimsManagerWithKlerosArbitrator is
 {
     uint256 private constant RULING_OPTIONS = 3;
 
+    // Should these be immutable?
     IArbitrator public immutable klerosArbitrator;
     bytes public klerosArbitratorExtraData;
+
     mapping(uint256 => uint256) public klerosArbitratorDisputeIdToClaimIndex;
 
     // What is klerosArbitratorExtraData here?
@@ -88,7 +90,8 @@ contract ClaimsManagerWithKlerosArbitrator is
     }
 
     // Can this be done anonymously? If so, how do we prevent claimant from
-    // providing additional evidence after the mediation period?
+    // providing additional evidence after the mediation period? Is this the
+    // only place this can be done?
     function submitEvidenceToKlerosArbitrator(
         uint256 claimIndex,
         string calldata evidence

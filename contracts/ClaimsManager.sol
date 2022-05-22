@@ -157,6 +157,7 @@ contract ClaimsManager is
         emit SetQuota(account, period, amount, msg.sender);
     }
 
+    // Means the account will not be limited
     function resetQuota(address account) external onlyManagerOrAdmin {
         require(account != address(0), "Account address zero");
         accountToQuota[account] = Quota({period: 0, amount: 0});
