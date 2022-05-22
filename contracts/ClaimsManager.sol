@@ -63,11 +63,6 @@ contract ClaimsManager is
     mapping(uint256 => address) public claimIndexToArbitrator;
     uint256 public claimCount = 0;
 
-    modifier onlyManager() {
-        require(manager == msg.sender, "Sender not manager");
-        _;
-    }
-
     modifier onlyManagerOrAdmin() {
         require(
             manager == msg.sender ||
@@ -136,20 +131,21 @@ contract ClaimsManager is
         _setClaimantResponsePeriod(_claimantResponsePeriod);
     }
 
-    function setApi3Pool(address _api3Pool) external onlyManager {
+    function setApi3Pool(address _api3Pool) external {
+        require(manager == msg.sender, "Sender not manager");
         _setApi3Pool(_api3Pool);
     }
 
     function setMediatorResponsePeriod(uint256 _mediatorResponsePeriod)
         external
-        onlyManager
+        onlyManagerOrAdmin
     {
         _setMediatorResponsePeriod(_mediatorResponsePeriod);
     }
 
     function setClaimantResponsePeriod(uint256 _claimantResponsePeriod)
         external
-        onlyManager
+        onlyManagerOrAdmin
     {
         _setClaimantResponsePeriod(_claimantResponsePeriod);
     }
