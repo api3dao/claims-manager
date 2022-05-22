@@ -183,7 +183,7 @@ contract ClaimsManager is
         require(beneficiary != address(0), "Beneficiary address zero");
         require(coverageAmount != 0, "Coverage amount zero");
         require(startTime != 0, "Start time zero");
-        require(endTime > startTime, "Does not start earlier than end");
+        require(endTime > startTime, "Start not earlier than end");
         require(bytes(policy).length != 0, "Policy address empty");
         policyHash = keccak256(
             abi.encodePacked(
@@ -261,11 +261,11 @@ contract ClaimsManager is
         Claim storage claim = claims[claimIndex];
         require(
             claim.status == ClaimStatus.ClaimCreated,
-            "Claim is not mediatable"
+            "Claim is not acceptable"
         );
         require(
             claim.updateTime + mediatorResponsePeriod > block.timestamp,
-            "Mediator response too late"
+            "Too late to accept"
         );
         claim.status = ClaimStatus.ClaimAccepted;
         updateAccumulatedQuotaUsage(msg.sender, claim.amount);
@@ -287,11 +287,11 @@ contract ClaimsManager is
         Claim storage claim = claims[claimIndex];
         require(
             claim.status == ClaimStatus.ClaimCreated,
-            "Claim is not mediatable"
+            "Claim is not settleable"
         );
         require(
             claim.updateTime + mediatorResponsePeriod > block.timestamp,
-            "Mediator response too late"
+            "Too late to propose settlement"
         );
         require(amount < claim.amount, "Settlement amount not smaller");
         claim.status = ClaimStatus.SettlementProposed;
@@ -310,7 +310,7 @@ contract ClaimsManager is
         );
         require(
             claim.updateTime + claimantResponsePeriod > block.timestamp,
-            "Claimant too late"
+            "Too late to accept settlement"
         );
         claim.status = ClaimStatus.SettlementAccepted;
         uint256 settlementAmount = claimIndexToProposedSettlementAmount[
@@ -333,12 +333,12 @@ contract ClaimsManager is
                     mediatorResponsePeriod +
                     claimantResponsePeriod >
                     block.timestamp,
-                "Claimant response too late"
+                "Too late to create dispute"
             );
         } else if (claim.status == ClaimStatus.SettlementProposed) {
             require(
                 claim.updateTime + claimantResponsePeriod > block.timestamp,
-                "Claimant response too late"
+                "Too late to create dispute"
             );
         } else {
             revert("Claim is not disputable");
@@ -348,7 +348,7 @@ contract ClaimsManager is
                 arbitratorRole,
                 arbitrator
             ),
-            "Arbitrator does not have role"
+            "Arbitrator lacks role"
         );
         require(
             arbitratorToResponsePeriod[arbitrator] > 0,
@@ -368,7 +368,7 @@ contract ClaimsManager is
                 arbitratorRole,
                 msg.sender
             ),
-            "Sender not arbitrator"
+            "Sender lacks arbitrator role"
         );
         require(
             msg.sender == claimIndexToArbitrator[claimIndex],
@@ -382,7 +382,7 @@ contract ClaimsManager is
         require(
             claim.updateTime + arbitratorToResponsePeriod[msg.sender] >
                 block.timestamp,
-            "Arbitrator response too late"
+            "Too late to resolve dispute"
         );
         claim.status = ClaimStatus.DisputeResolved;
         if (result == ArbitratorDecision.DoNotPay) {
