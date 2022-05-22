@@ -349,7 +349,11 @@ contract ClaimsManager is
                 arbitratorRole,
                 arbitrator
             ),
-            "Invalid arbitrator"
+            "Arbitrator does not have role"
+        );
+        require(
+            arbitratorToResponsePeriod[arbitrator] > 0,
+            "Arbitrator response period zero"
         );
         claim.status = ClaimStatus.DisputeCreated;
         claim.updateTime = block.timestamp;
