@@ -40,7 +40,7 @@ contract ClaimsManager is
         uint256 value;
     }
 
-    struct InitiativeLimit {
+    struct Quota {
         uint256 period;
         uint256 amount;
     }
@@ -59,7 +59,7 @@ contract ClaimsManager is
     mapping(uint256 => uint256) public claimIndexToProposedSettlementAmount;
     mapping(address => Checkpoint[])
         public accountToAccumulatedInitiativeCheckpoints;
-    mapping(address => InitiativeLimit) public accountToInitiativeLimit;
+    mapping(address => Quota) public accountToQuota;
     mapping(uint256 => address) public claimIndexToArbitrator;
     uint256 public claimCount = 0;
 
@@ -161,8 +161,8 @@ contract ClaimsManager is
         _setArbitratorResponsePeriod(arbitrator, arbitratorResponsePeriod);
     }
 
-    // Allows setting a limit that is currently exceeded
-    function setInitiativeLimit(
+    // Allows setting a quota that is currently exceeded
+    function setQuota(
         address account,
         uint256 period,
         uint256 amount
@@ -170,20 +170,14 @@ contract ClaimsManager is
         require(account != address(0), "Account address zero");
         require(period != 0, "Initiative limit period zero");
         require(amount != 0, "Initiative limit amount zero");
-        accountToInitiativeLimit[account] = InitiativeLimit({
-            period: period,
-            amount: amount
-        });
-        emit SetInitiativeLimit(account, period, amount, msg.sender);
+        accountToQuota[account] = Quota({period: period, amount: amount});
+        emit SetQuota(account, period, amount, msg.sender);
     }
 
-    function resetInitiativeLimit(address account) external onlyManagerOrAdmin {
+    function resetQuota(address account) external onlyManagerOrAdmin {
         require(account != address(0), "Account address zero");
-        accountToInitiativeLimit[account] = InitiativeLimit({
-            period: 0,
-            amount: 0
-        });
-        emit ResetInitiativeLimit(account, msg.sender);
+        accountToQuota[account] = Quota({period: 0, amount: 0});
+        emit ResetQuota(account, msg.sender);
     }
 
     function createPolicy(
@@ -526,9 +520,7 @@ contract ClaimsManager is
                 value: accumulatedInitiative
             })
         );
-        InitiativeLimit storage initiativeLimit = accountToInitiativeLimit[
-            account
-        ];
+        Quota storage initiativeLimit = accountToQuota[account];
         uint256 accumulatedInitiativeThen = getValueAt(
             accumulatedInitiativeCheckpoints,
             block.timestamp - initiativeLimit.period

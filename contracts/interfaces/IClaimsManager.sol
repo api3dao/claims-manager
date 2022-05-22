@@ -16,14 +16,14 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address sender
     );
 
-    event SetInitiativeLimit(
+    event SetQuota(
         address account,
         uint256 period,
         uint256 amount,
         address sender
     );
 
-    event ResetInitiativeLimit(address account, address sender);
+    event ResetQuota(address account, address sender);
 
     event CreatedPolicy(
         bytes32 indexed policyHash,
