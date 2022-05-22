@@ -269,14 +269,16 @@ contract ClaimsManager is
         );
         claim.status = ClaimStatus.ClaimAccepted;
         updateAccumulatedQuotaUsage(msg.sender, claim.amount);
+        address beneficiary = claim.beneficiary;
+        uint256 amount = claim.amount;
         emit AcceptedClaim(
             claimIndex,
             claim.claimant,
-            claim.beneficiary,
-            claim.amount,
+            beneficiary,
+            amount,
             msg.sender
         );
-        IApi3Pool(api3Pool).payOutClaim(claim.beneficiary, claim.amount);
+        IApi3Pool(api3Pool).payOutClaim(beneficiary, amount);
     }
 
     function proposeSettlement(uint256 claimIndex, uint256 amount)
@@ -303,7 +305,8 @@ contract ClaimsManager is
 
     function acceptSettlement(uint256 claimIndex) external {
         Claim storage claim = claims[claimIndex];
-        require(msg.sender == claim.claimant, "Sender not claimant");
+        address claimant = claim.claimant;
+        require(msg.sender == claimant, "Sender not claimant");
         require(
             claim.status == ClaimStatus.SettlementProposed,
             "No settlement to accept"
@@ -316,7 +319,7 @@ contract ClaimsManager is
         uint256 settlementAmount = claimIndexToProposedSettlementAmount[
             claimIndex
         ];
-        emit AcceptedSettlement(claimIndex, claim.claimant, settlementAmount);
+        emit AcceptedSettlement(claimIndex, claimant, settlementAmount);
         IApi3Pool(api3Pool).payOutClaim(claim.beneficiary, settlementAmount);
     }
 
