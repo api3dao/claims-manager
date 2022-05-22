@@ -9,23 +9,6 @@ contract ClaimsManager is
     AccessControlRegistryAdminnedWithManager,
     IClaimsManager
 {
-    enum ClaimStatus {
-        None,
-        ClaimCreated,
-        ClaimAccepted,
-        SettlementProposed,
-        SettlementAccepted,
-        DisputeCreated,
-        DisputeResolved,
-        TimedOut
-    }
-
-    enum ArbitratorDecision {
-        DoNotPay,
-        PayClaim,
-        PaySettlement
-    }
-
     struct Claim {
         address claimant;
         address beneficiary;
@@ -45,23 +28,26 @@ contract ClaimsManager is
         uint256 amount;
     }
 
-    bytes32 public immutable policyCreatorRole;
-    bytes32 public immutable mediatorRole;
-    bytes32 public immutable arbitratorRole;
+    bytes32 public immutable override policyCreatorRole;
+    bytes32 public immutable override mediatorRole;
+    bytes32 public immutable override arbitratorRole;
 
-    address public api3Pool;
-    uint256 public mediatorResponsePeriod;
-    uint256 public claimantResponsePeriod;
-    mapping(address => uint256) public arbitratorToResponsePeriod;
-
-    mapping(bytes32 => bool) public policyWithHashExists;
-    mapping(uint256 => Claim) public claims;
-    mapping(uint256 => uint256) public claimIndexToProposedSettlementAmount;
+    address public override api3Pool;
+    uint256 public override mediatorResponsePeriod;
+    uint256 public override claimantResponsePeriod;
+    mapping(address => uint256) public override arbitratorToResponsePeriod;
     mapping(address => Checkpoint[])
-        public accountToAccumulatedQuotaUsageCheckpoints;
-    mapping(address => Quota) public accountToQuota;
-    mapping(uint256 => address) public claimIndexToArbitrator;
-    uint256 public claimCount = 0;
+        public
+        override accountToAccumulatedQuotaUsageCheckpoints;
+    mapping(address => Quota) public override accountToQuota;
+
+    mapping(bytes32 => bool) public override policyWithHashExists;
+    uint256 public override claimCount = 0;
+    mapping(uint256 => Claim) public override claims;
+    mapping(uint256 => uint256)
+        public
+        override claimIndexToProposedSettlementAmount;
+    mapping(uint256 => address) public override claimIndexToArbitrator;
 
     modifier onlyManagerOrAdmin() {
         require(
@@ -118,13 +104,14 @@ contract ClaimsManager is
         _setClaimantResponsePeriod(_claimantResponsePeriod);
     }
 
-    function setApi3Pool(address _api3Pool) external {
+    function setApi3Pool(address _api3Pool) external override {
         require(manager == msg.sender, "Sender not manager");
         _setApi3Pool(_api3Pool);
     }
 
     function setMediatorResponsePeriod(uint256 _mediatorResponsePeriod)
         external
+        override
         onlyManagerOrAdmin
     {
         _setMediatorResponsePeriod(_mediatorResponsePeriod);
@@ -132,6 +119,7 @@ contract ClaimsManager is
 
     function setClaimantResponsePeriod(uint256 _claimantResponsePeriod)
         external
+        override
         onlyManagerOrAdmin
     {
         _setClaimantResponsePeriod(_claimantResponsePeriod);
@@ -140,7 +128,7 @@ contract ClaimsManager is
     function setArbitratorResponsePeriod(
         address arbitrator,
         uint256 arbitratorResponsePeriod
-    ) external onlyManagerOrAdmin {
+    ) external override onlyManagerOrAdmin {
         _setArbitratorResponsePeriod(arbitrator, arbitratorResponsePeriod);
     }
 
@@ -149,7 +137,7 @@ contract ClaimsManager is
         address account,
         uint256 period,
         uint256 amount
-    ) external onlyManagerOrAdmin {
+    ) external override onlyManagerOrAdmin {
         require(account != address(0), "Account address zero");
         require(period != 0, "Quota period zero");
         require(amount != 0, "Quota amount zero");
@@ -158,7 +146,7 @@ contract ClaimsManager is
     }
 
     // Means the account will not be limited
-    function resetQuota(address account) external onlyManagerOrAdmin {
+    function resetQuota(address account) external override onlyManagerOrAdmin {
         require(account != address(0), "Account address zero");
         accountToQuota[account] = Quota({period: 0, amount: 0});
         emit ResetQuota(account, msg.sender);
@@ -171,7 +159,7 @@ contract ClaimsManager is
         uint256 startTime,
         uint256 endTime,
         string calldata policy
-    ) external returns (bytes32 policyHash) {
+    ) external override returns (bytes32 policyHash) {
         require(
             manager == msg.sender ||
                 IAccessControlRegistry(accessControlRegistry).hasRole(
@@ -217,7 +205,7 @@ contract ClaimsManager is
         string calldata policy,
         uint256 claimAmount,
         string calldata evidence
-    ) external returns (uint256 claimIndex) {
+    ) external override returns (uint256 claimIndex) {
         bytes32 policyHash = keccak256(
             abi.encodePacked(
                 msg.sender,
@@ -258,7 +246,11 @@ contract ClaimsManager is
         );
     }
 
-    function acceptClaim(uint256 claimIndex) external onlyManagerOrMediator {
+    function acceptClaim(uint256 claimIndex)
+        external
+        override
+        onlyManagerOrMediator
+    {
         Claim storage claim = claims[claimIndex];
         require(
             claim.status == ClaimStatus.ClaimCreated,
@@ -284,6 +276,7 @@ contract ClaimsManager is
 
     function proposeSettlement(uint256 claimIndex, uint256 amount)
         external
+        override
         onlyManagerOrMediator
     {
         require(amount != 0, "Settlement amount zero");
@@ -304,7 +297,7 @@ contract ClaimsManager is
         emit ProposedSettlement(claimIndex, claim.claimant, amount, msg.sender);
     }
 
-    function acceptSettlement(uint256 claimIndex) external {
+    function acceptSettlement(uint256 claimIndex) external override {
         Claim storage claim = claims[claimIndex];
         address claimant = claim.claimant;
         require(msg.sender == claimant, "Sender not claimant");
@@ -324,7 +317,10 @@ contract ClaimsManager is
         IApi3Pool(api3Pool).payOutClaim(claim.beneficiary, settlementAmount);
     }
 
-    function createDispute(uint256 claimIndex, address arbitrator) public {
+    function createDispute(uint256 claimIndex, address arbitrator)
+        public
+        override
+    {
         Claim storage claim = claims[claimIndex];
         require(msg.sender == claim.claimant, "Sender not claimant");
         if (claim.status == ClaimStatus.ClaimCreated) {
@@ -366,6 +362,7 @@ contract ClaimsManager is
 
     function resolveDispute(uint256 claimIndex, ArbitratorDecision result)
         public
+        override
     {
         require(
             IAccessControlRegistry(accessControlRegistry).hasRole(
@@ -433,7 +430,7 @@ contract ClaimsManager is
         }
     }
 
-    function timeOutClaim(uint256 claimIndex) external {
+    function timeOutClaim(uint256 claimIndex) external override {
         Claim storage claim = claims[claimIndex];
         ClaimStatus status = claim.status;
         if (status == ClaimStatus.ClaimCreated) {
@@ -465,7 +462,12 @@ contract ClaimsManager is
         emit TimedOutClaim(claimIndex, claim.claimant);
     }
 
-    function getQuotaUsage(address account) public view returns (uint256) {
+    function getQuotaUsage(address account)
+        public
+        view
+        override
+        returns (uint256)
+    {
         Checkpoint[]
             storage accumulatedQuotaUsageCheckpoints = accountToAccumulatedQuotaUsageCheckpoints[
                 account
