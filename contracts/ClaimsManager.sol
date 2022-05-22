@@ -269,7 +269,7 @@ contract ClaimsManager is
             "Too late to accept"
         );
         claim.status = ClaimStatus.ClaimAccepted;
-        updateAccumulatedQuotaUsage(msg.sender, claim.amount);
+        updateQuotaUsage(msg.sender, claim.amount);
         address beneficiary = claim.beneficiary;
         uint256 amount = claim.amount;
         emit AcceptedClaim(
@@ -300,7 +300,7 @@ contract ClaimsManager is
         claim.status = ClaimStatus.SettlementProposed;
         claim.updateTime = block.timestamp;
         claimIndexToProposedSettlementAmount[claimIndex] = amount;
-        updateAccumulatedQuotaUsage(msg.sender, amount);
+        updateQuotaUsage(msg.sender, amount);
         emit ProposedSettlement(claimIndex, claim.claimant, amount, msg.sender);
     }
 
@@ -397,7 +397,7 @@ contract ClaimsManager is
             );
         } else if (result == ArbitratorDecision.PayClaim) {
             uint256 claimAmount = claim.amount;
-            updateAccumulatedQuotaUsage(msg.sender, claimAmount);
+            updateQuotaUsage(msg.sender, claimAmount);
             emit ResolvedDisputeByAcceptingClaim(
                 claimIndex,
                 claim.claimant,
@@ -417,7 +417,7 @@ contract ClaimsManager is
                     msg.sender
                 );
             } else {
-                updateAccumulatedQuotaUsage(msg.sender, settlementAmount);
+                updateQuotaUsage(msg.sender, settlementAmount);
                 emit ResolvedDisputeByAcceptingSettlement(
                     claimIndex,
                     claim.claimant,
@@ -465,6 +465,24 @@ contract ClaimsManager is
         emit TimedOutClaim(claimIndex, claim.claimant);
     }
 
+    function getQuotaUsage(address account) public view returns (uint256) {
+        Checkpoint[]
+            storage accumulatedQuotaUsageCheckpoints = accountToAccumulatedQuotaUsageCheckpoints[
+                account
+            ];
+        uint256 accumulatedQuotaUsage = 0;
+        if (accumulatedQuotaUsageCheckpoints.length > 0) {
+            accumulatedQuotaUsage = accumulatedQuotaUsageCheckpoints[
+                accumulatedQuotaUsageCheckpoints.length - 1
+            ].value;
+        }
+        uint256 accumulatedQuotaUsageThen = getValueAt(
+            accumulatedQuotaUsageCheckpoints,
+            block.timestamp - accountToQuota[account].period
+        );
+        return accumulatedQuotaUsage - accumulatedQuotaUsageThen;
+    }
+
     function _setApi3Pool(address _api3Pool) private {
         require(_api3Pool != address(0), "Api3Pool address zero");
         api3Pool = _api3Pool;
@@ -504,9 +522,7 @@ contract ClaimsManager is
         );
     }
 
-    function updateAccumulatedQuotaUsage(address account, uint256 amount)
-        private
-    {
+    function updateQuotaUsage(address account, uint256 amount) private {
         Checkpoint[]
             storage accumulatedQuotaUsageCheckpoints = accountToAccumulatedQuotaUsageCheckpoints[
                 account
@@ -523,14 +539,9 @@ contract ClaimsManager is
                 value: accumulatedQuotaUsage
             })
         );
-        Quota storage quota = accountToQuota[account];
-        uint256 accumulatedQuotaUsageThen = getValueAt(
-            accumulatedQuotaUsageCheckpoints,
-            block.timestamp - quota.period
-        );
         require(
-            accumulatedQuotaUsage - accumulatedQuotaUsageThen <= quota.amount,
-            "Quota amount exceeded"
+            getQuotaUsage(account) <= accountToQuota[account].amount,
+            "Quota exceeded"
         );
     }
 
