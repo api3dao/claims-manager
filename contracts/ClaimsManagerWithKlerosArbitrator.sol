@@ -3,23 +3,20 @@ pragma solidity ^0.8.0;
 
 import "./ClaimsManager.sol";
 import "./interfaces/IClaimsManagerWithKlerosArbitrator.sol";
-import "@kleros/erc-792/contracts/erc-1497/IEvidence.sol";
-import "@kleros/erc-792/contracts/IArbitrable.sol";
-import "@kleros/erc-792/contracts/IArbitrator.sol";
 
 contract ClaimsManagerWithKlerosArbitrator is
     ClaimsManager,
-    IEvidence,
-    IArbitrable,
     IClaimsManagerWithKlerosArbitrator
 {
-    uint256 private constant RULING_OPTIONS = 3;
-
     // Should these be immutable?
-    IArbitrator public immutable klerosArbitrator;
-    bytes public klerosArbitratorExtraData;
+    IArbitrator public immutable override klerosArbitrator;
+    bytes public override klerosArbitratorExtraData;
 
-    mapping(uint256 => uint256) public klerosArbitratorDisputeIdToClaimIndex;
+    mapping(uint256 => uint256)
+        public
+        override klerosArbitratorDisputeIdToClaimIndex;
+
+    uint256 private constant RULING_OPTIONS = 3;
 
     // What is klerosArbitratorExtraData here?
     constructor(
@@ -62,6 +59,7 @@ contract ClaimsManagerWithKlerosArbitrator is
     function createDisputeWithKlerosArbitrator(uint256 claimIndex)
         external
         payable
+        override
     {
         ClaimsManager.createDispute(claimIndex, address(klerosArbitrator));
         uint256 klerosArbitratorDisputeId = klerosArbitrator.createDispute{
@@ -95,7 +93,7 @@ contract ClaimsManagerWithKlerosArbitrator is
     function submitEvidenceToKlerosArbitrator(
         uint256 claimIndex,
         string calldata evidence
-    ) external {
+    ) external override {
         // Should we check if claimIndex corresponds to an active Kleros dispute here?
         emit SubmittedEvidenceToKlerosArbitrator(
             claimIndex,
@@ -108,7 +106,7 @@ contract ClaimsManagerWithKlerosArbitrator is
     function appealKlerosArbitratorDecision(
         uint256 claimIndex,
         uint256 klerosArbitratorDisputeId
-    ) external payable {
+    ) external payable override {
         require(
             claimIndex ==
                 klerosArbitratorDisputeIdToClaimIndex[
