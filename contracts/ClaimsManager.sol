@@ -197,9 +197,9 @@ contract ClaimsManager is
         );
         policyWithHashExists[policyHash] = true;
         emit CreatedPolicy(
-            policyHash,
-            claimant,
             beneficiary,
+            claimant,
+            policyHash,
             coverageAmount,
             startTime,
             endTime,
@@ -245,6 +245,7 @@ contract ClaimsManager is
         emit CreatedClaim(
             claimIndex,
             msg.sender,
+            policyHash,
             beneficiary,
             coverageAmount,
             startTime,

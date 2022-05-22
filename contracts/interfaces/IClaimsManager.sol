@@ -11,24 +11,24 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     event SetClaimantResponsePeriod(uint256 claimantResponsePeriod);
 
     event SetArbitratorResponsePeriod(
-        address arbitrator,
+        address indexed arbitrator,
         uint256 arbitratorResponsePeriod,
         address sender
     );
 
     event SetQuota(
-        address account,
+        address indexed account,
         uint256 period,
         uint256 amount,
         address sender
     );
 
-    event ResetQuota(address account, address sender);
+    event ResetQuota(address indexed account, address sender);
 
     event CreatedPolicy(
-        bytes32 indexed policyHash,
-        address indexed claimant,
         address beneficiary,
+        address indexed claimant,
+        bytes32 indexed policyHash,
         uint256 coverageAmount,
         uint256 startTime,
         uint256 endTime,
@@ -39,6 +39,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     event CreatedClaim(
         uint256 indexed claimIndex,
         address indexed claimant,
+        bytes32 indexed policyHash,
         address beneficiary,
         uint256 coverageAmount,
         uint256 startTime,

@@ -96,16 +96,23 @@ contract ClaimsManagerWithKlerosArbitrator is
         // Should we check if claimIndex corresponds to an active Kleros dispute here?
         emit SubmittedEvidenceToKlerosArbitrator(
             claimIndex,
-            evidence,
-            msg.sender
+            msg.sender,
+            evidence
         );
         emit Evidence(klerosArbitrator, claimIndex, msg.sender, evidence);
     }
 
-    function appealKlerosArbitratorDecision(uint256 klerosArbitratorDisputeId)
-        external
-        payable
-    {
+    function appealKlerosArbitratorDecision(
+        uint256 claimIndex,
+        uint256 klerosArbitratorDisputeId
+    ) external payable {
+        require(
+            claimIndex ==
+                klerosArbitratorDisputeIdToClaimIndex[
+                    klerosArbitratorDisputeId
+                ],
+            "Claim index-dispute ID mismatch"
+        );
         // Won't appeal() check for this anyway?
         require(
             msg.value >=
@@ -116,8 +123,9 @@ contract ClaimsManagerWithKlerosArbitrator is
             "Value does not cover appeal cost"
         );
         emit AppealedKlerosArbitratorDecision(
-            klerosArbitratorDisputeId,
-            msg.sender
+            claimIndex,
+            msg.sender,
+            klerosArbitratorDisputeId
         );
         klerosArbitrator.appeal(
             klerosArbitratorDisputeId,
