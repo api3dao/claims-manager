@@ -61,14 +61,6 @@ contract ClaimsManager is
         _;
     }
 
-    modifier onlyManagerOrMediator() {
-        require(
-            hasMediatorRoleOrIsManager(msg.sender),
-            "Sender cannot mediate"
-        );
-        _;
-    }
-
     constructor(
         address _accessControlRegistry,
         string memory _adminRoleDescription,
@@ -238,11 +230,11 @@ contract ClaimsManager is
         );
     }
 
-    function acceptClaim(uint256 claimIndex)
-        external
-        override
-        onlyManagerOrMediator
-    {
+    function acceptClaim(uint256 claimIndex) external override {
+        require(
+            hasMediatorRoleOrIsManager(msg.sender),
+            "Sender cannot accept claim"
+        );
         Claim storage claim = claims[claimIndex];
         require(
             claim.status == ClaimStatus.ClaimCreated,
@@ -269,8 +261,11 @@ contract ClaimsManager is
     function proposeSettlement(uint256 claimIndex, uint256 amount)
         external
         override
-        onlyManagerOrMediator
     {
+        require(
+            hasMediatorRoleOrIsManager(msg.sender),
+            "Sender cannot propose settlement"
+        );
         require(amount != 0, "Settlement amount zero");
         Claim storage claim = claims[claimIndex];
         require(
