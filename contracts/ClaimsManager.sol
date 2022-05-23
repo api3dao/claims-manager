@@ -242,7 +242,7 @@ contract ClaimsManager is
         );
         require(
             claim.updateTime + mediatorResponsePeriod > block.timestamp,
-            "Too late to accept"
+            "Too late to accept claim"
         );
         claim.status = ClaimStatus.ClaimAccepted;
         updateQuotaUsage(msg.sender, claim.amount);
