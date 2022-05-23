@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 import "./ClaimsManager.sol";
 import "./interfaces/IClaimsManagerWithKlerosArbitrator.sol";
 
+// This contract will implement wrapper functions around the Kleros arbitrator view functions
+// so that the frontend will only need to interact with this contract directly.
 contract ClaimsManagerWithKlerosArbitrator is
     ClaimsManager,
     IClaimsManagerWithKlerosArbitrator
