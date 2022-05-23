@@ -63,11 +63,7 @@ contract ClaimsManager is
 
     modifier onlyManagerOrMediator() {
         require(
-            manager == msg.sender ||
-                IAccessControlRegistry(accessControlRegistry).hasRole(
-                    mediatorRole,
-                    msg.sender
-                ),
+            hasMediatorRoleOrIsManager(msg.sender),
             "Sender cannot mediate"
         );
         _;
@@ -161,11 +157,7 @@ contract ClaimsManager is
         string calldata policy
     ) external override returns (bytes32 policyHash) {
         require(
-            manager == msg.sender ||
-                IAccessControlRegistry(accessControlRegistry).hasRole(
-                    policyCreatorRole,
-                    msg.sender
-                ),
+            hasPolicyCreatorRoleOrIsManager(msg.sender),
             "Sender cannot create policy"
         );
         require(claimant != address(0), "Claimant address zero");
@@ -344,13 +336,8 @@ contract ClaimsManager is
         } else {
             revert("Claim is not disputable");
         }
-        require(
-            IAccessControlRegistry(accessControlRegistry).hasRole(
-                arbitratorRole,
-                arbitrator
-            ),
-            "Arbitrator lacks role"
-        );
+
+        require(hasArbitratorRole(arbitrator), "Arbitrator lacks role");
         require(
             arbitratorToResponsePeriod[arbitrator] > 0,
             "Arbitrator response period zero"
@@ -366,13 +353,7 @@ contract ClaimsManager is
         virtual
         override
     {
-        require(
-            IAccessControlRegistry(accessControlRegistry).hasRole(
-                arbitratorRole,
-                msg.sender
-            ),
-            "Sender lacks arbitrator role"
-        );
+        require(hasArbitratorRole(msg.sender), "Sender lacks arbitrator role");
         require(
             msg.sender == claimIndexToArbitrator[claimIndex],
             "Sender wrong arbitrator"
@@ -464,6 +445,47 @@ contract ClaimsManager is
         }
         claim.status = ClaimStatus.TimedOut;
         emit TimedOutClaim(claimIndex, claim.claimant);
+    }
+
+    function hasPolicyCreatorRoleOrIsManager(address account)
+        public
+        view
+        override
+        returns (bool)
+    {
+        return
+            manager == account ||
+            IAccessControlRegistry(accessControlRegistry).hasRole(
+                policyCreatorRole,
+                account
+            );
+    }
+
+    function hasMediatorRoleOrIsManager(address account)
+        public
+        view
+        override
+        returns (bool)
+    {
+        return
+            manager == account ||
+            IAccessControlRegistry(accessControlRegistry).hasRole(
+                mediatorRole,
+                account
+            );
+    }
+
+    function hasArbitratorRole(address account)
+        public
+        view
+        override
+        returns (bool)
+    {
+        return
+            IAccessControlRegistry(accessControlRegistry).hasRole(
+                arbitratorRole,
+                account
+            );
     }
 
     function getQuotaUsage(address account)

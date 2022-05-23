@@ -173,6 +173,18 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     function timeOutClaim(uint256 claimIndex) external;
 
+    function hasPolicyCreatorRoleOrIsManager(address account)
+        external
+        view
+        returns (bool);
+
+    function hasMediatorRoleOrIsManager(address account)
+        external
+        view
+        returns (bool);
+
+    function hasArbitratorRole(address account) external view returns (bool);
+
     function getQuotaUsage(address account) external view returns (uint256);
 
     function policyCreatorRole() external view returns (bytes32);
