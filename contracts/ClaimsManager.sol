@@ -387,14 +387,15 @@ contract ClaimsManager is
                 block.timestamp,
             "Too late to resolve dispute"
         );
-        claim.status = ClaimStatus.DisputeResolved;
         if (result == ArbitratorDecision.DoNotPay) {
+            claim.status = ClaimStatus.DisputeResolvedWithoutPayout;
             emit ResolvedDisputeByRejectingClaim(
                 claimIndex,
                 claim.claimant,
                 msg.sender
             );
         } else if (result == ArbitratorDecision.PayClaim) {
+            claim.status = ClaimStatus.DisputeResolvedWithClaimPayout;
             uint256 claimAmount = claim.amount;
             updateQuotaUsage(msg.sender, claimAmount);
             emit ResolvedDisputeByAcceptingClaim(
@@ -406,6 +407,7 @@ contract ClaimsManager is
             );
             IApi3Pool(api3Pool).payOutClaim(claim.beneficiary, claimAmount);
         } else if (result == ArbitratorDecision.PaySettlement) {
+            claim.status = ClaimStatus.DisputeResolvedWithSettlementPayout;
             uint256 settlementAmount = claimIndexToProposedSettlementAmount[
                 claimIndex
             ];

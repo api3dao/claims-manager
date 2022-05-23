@@ -11,7 +11,9 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         SettlementProposed,
         SettlementAccepted,
         DisputeCreated,
-        DisputeResolved,
+        DisputeResolvedWithoutPayout,
+        DisputeResolvedWithClaimPayout,
+        DisputeResolvedWithSettlementPayout,
         TimedOut
     }
 
