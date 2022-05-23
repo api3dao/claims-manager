@@ -319,6 +319,7 @@ contract ClaimsManager is
 
     function createDispute(uint256 claimIndex, address arbitrator)
         public
+        virtual
         override
     {
         Claim storage claim = claims[claimIndex];
@@ -362,6 +363,7 @@ contract ClaimsManager is
 
     function resolveDispute(uint256 claimIndex, ArbitratorDecision result)
         public
+        virtual
         override
     {
         require(

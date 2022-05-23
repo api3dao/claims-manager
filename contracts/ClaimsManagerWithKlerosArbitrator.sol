@@ -153,4 +153,26 @@ contract ClaimsManagerWithKlerosArbitrator is
         emit Ruling(klerosArbitrator, disputeId, ruling);
         ClaimsManager.resolveDispute(claimIndex, decision);
     }
+
+    function createDispute(uint256 claimIndex, address arbitrator)
+        public
+        override(ClaimsManager, IClaimsManager)
+    {
+        require(
+            arbitrator != address(klerosArbitrator),
+            "Use Kleros arbitrator interface"
+        );
+        ClaimsManager.createDispute(claimIndex, arbitrator);
+    }
+
+    function resolveDispute(uint256 claimIndex, ArbitratorDecision result)
+        public
+        override(ClaimsManager, IClaimsManager)
+    {
+        require(
+            msg.sender != address(klerosArbitrator),
+            "Use Kleros arbitrator interface"
+        );
+        ClaimsManager.resolveDispute(claimIndex, result);
+    }
 }
