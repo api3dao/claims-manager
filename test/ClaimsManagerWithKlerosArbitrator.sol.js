@@ -29,7 +29,8 @@ describe('ClaimsManagerWithKlerosArbitrator', function () {
       3 * 24 * 60 * 60,
       mockKlerosArbitrator.address,
       '0x123456',
-      40 * 24 * 60 * 60
+      40 * 24 * 60 * 60,
+      '/ipfs/Qm...testhash/metaevidence.json'
     );
   });
 

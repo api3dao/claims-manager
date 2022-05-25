@@ -47,7 +47,8 @@ interface IClaimsManagerWithKlerosArbitrator is
 
     function klerosArbitratorExtraData() external returns (bytes memory);
 
-    function klerosArbitratorDisputeIdToClaimIndex(uint256 disputeId)
-        external
-        returns (uint256);
+    function klerosArbitratorAndDisputeIdToClaimIndex(
+        address arbitrator,
+        uint256 disputeId
+    ) external returns (uint256);
 }

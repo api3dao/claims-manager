@@ -10,17 +10,23 @@ contract ClaimsManagerWithKlerosArbitrator is
     ClaimsManager,
     IClaimsManagerWithKlerosArbitrator
 {
-    // Should these be immutable?
-    IArbitrator public immutable override klerosArbitrator;
-    bytes public override klerosArbitratorExtraData;
+    // metaEvidence is related, but is emitted as event
+    struct ArbitrationParams {
+        IArbitrator klerosArbitrator;
+        bytes klerosArbitratorExtraData;
+    }
 
-    mapping(uint256 => uint256)
-        public
-        override klerosArbitratorDisputeIdToClaimIndex;
+    // two arbitrators could have disputeId collisions between them
+    mapping(address => mapping(uint256 => uint256))
+        public klerosArbitratorAndDisputeIdToClaimIndex;
+
+    mapping(uint256 => ArbitrationParams) public arbitrationParamsChanges;
+    uint256 public arbitrationParamsCount = 1; // there will be 1 upon contract construction
+
+    mapping(uint256 => uint256) public claimIndexToArbitrationParamIndex;
 
     uint256 private constant RULING_OPTIONS = 3;
 
-    // What is klerosArbitratorExtraData here?
     constructor(
         address _accessControlRegistry,
         string memory _adminRoleDescription,
@@ -30,7 +36,8 @@ contract ClaimsManagerWithKlerosArbitrator is
         uint256 _claimantResponsePeriod,
         address _klerosArbitrator,
         bytes memory _klerosArbitratorExtraData,
-        uint256 _klerosArbitratorResponsePeriod
+        uint256 _klerosArbitratorResponsePeriod,
+        string memory _metaEvidence
     )
         ClaimsManager(
             _accessControlRegistry,
@@ -49,40 +56,78 @@ contract ClaimsManagerWithKlerosArbitrator is
             _klerosArbitratorExtraData.length != 0,
             "Arbitrator extra data empty"
         );
-        klerosArbitrator = IArbitrator(_klerosArbitrator);
-        klerosArbitratorExtraData = _klerosArbitratorExtraData;
+
         _setArbitratorResponsePeriod(
             _klerosArbitrator,
             _klerosArbitratorResponsePeriod
         );
+
+        arbitrationParamsChanges[0] = ArbitrationParams(
+            IArbitrator(_klerosArbitrator),
+            _klerosArbitratorExtraData
+        );
+        emit MetaEvidence(0, _metaEvidence);
     }
 
-    // Should msg.value be arbitrationCost() here?
+    function changeArbitrationParams(
+        address _klerosArbitrator,
+        bytes memory _klerosArbitratorExtraData,
+        string calldata _metaEvidence,
+        uint256 _klerosArbitratorResponsePeriod
+    ) external onlyManagerOrAdmin {
+        uint256 arbitrationParamsIndex = arbitrationParamsCount++;
+        arbitrationParamsChanges[arbitrationParamsIndex] = ArbitrationParams(
+            IArbitrator(_klerosArbitrator),
+            _klerosArbitratorExtraData
+        );
+        // manager is trusted to not decrease the period for ongoing
+        // disputes using this arbitrator.
+        _setArbitratorResponsePeriod(
+            _klerosArbitrator,
+            _klerosArbitratorResponsePeriod
+        );
+        emit MetaEvidence(arbitrationParamsIndex, _metaEvidence);
+    }
+
+    // msg.value should be arbitrationCost() here
     function createDisputeWithKlerosArbitrator(uint256 claimIndex)
         external
         payable
         override
     {
-        ClaimsManager.createDispute(claimIndex, address(klerosArbitrator));
-        uint256 klerosArbitratorDisputeId = klerosArbitrator.createDispute{
-            value: msg.value
-        }(RULING_OPTIONS, klerosArbitratorExtraData);
-        klerosArbitratorDisputeIdToClaimIndex[
-            klerosArbitratorDisputeId
-        ] = claimIndex;
+        // fix the arbitrationParams for this claim
+        uint256 arbitrationParamsIndex = arbitrationParamsCount - 1;
+        claimIndexToArbitrationParamIndex[claimIndex] = arbitrationParamsIndex;
+        ArbitrationParams memory arbitrationParams = arbitrationParamsChanges[
+            arbitrationParamsIndex
+        ];
+
+        ClaimsManager.createDispute(
+            claimIndex,
+            address(arbitrationParams.klerosArbitrator)
+        );
+        uint256 klerosArbitratorDisputeId = arbitrationParams
+            .klerosArbitrator
+            .createDispute{value: msg.value}(
+            RULING_OPTIONS,
+            arbitrationParams.klerosArbitratorExtraData
+        );
+        klerosArbitratorAndDisputeIdToClaimIndex[
+            address(arbitrationParams.klerosArbitrator)
+        ][klerosArbitratorDisputeId] = claimIndex;
         emit CreatedDisputeWithKlerosArbitrator(
             claimIndex,
             msg.sender,
             klerosArbitratorDisputeId
         );
         emit Dispute(
-            klerosArbitrator,
+            arbitrationParams.klerosArbitrator,
             klerosArbitratorDisputeId,
-            0,
+            arbitrationParamsIndex, // metaEvidence is emitted with the arbitrationParams
             claimIndex
         );
         emit Evidence(
-            klerosArbitrator,
+            arbitrationParams.klerosArbitrator,
             claimIndex,
             msg.sender,
             claims[claimIndex].evidence
@@ -97,51 +142,61 @@ contract ClaimsManagerWithKlerosArbitrator is
         string calldata evidence
     ) external override {
         // Should we check if claimIndex corresponds to an active Kleros dispute here?
+        ArbitrationParams memory arbitrationParams = arbitrationParamsChanges[
+            claimIndexToArbitrationParamIndex[claimIndex]
+        ];
         emit SubmittedEvidenceToKlerosArbitrator(
             claimIndex,
             msg.sender,
             evidence
         );
-        emit Evidence(klerosArbitrator, claimIndex, msg.sender, evidence);
+        emit Evidence(
+            arbitrationParams.klerosArbitrator,
+            claimIndex,
+            msg.sender,
+            evidence
+        );
     }
 
     function appealKlerosArbitratorDecision(
         uint256 claimIndex,
         uint256 klerosArbitratorDisputeId
     ) external payable override {
+        ArbitrationParams memory arbitrationParams = arbitrationParamsChanges[
+            claimIndexToArbitrationParamIndex[claimIndex]
+        ];
         require(
             claimIndex ==
-                klerosArbitratorDisputeIdToClaimIndex[
-                    klerosArbitratorDisputeId
-                ],
+                klerosArbitratorAndDisputeIdToClaimIndex[
+                    address(arbitrationParams.klerosArbitrator)
+                ][klerosArbitratorDisputeId],
             "Claim index-dispute ID mismatch"
         );
-        // Won't appeal() check for this anyway?
-        require(
-            msg.value >=
-                klerosArbitrator.appealCost(
-                    klerosArbitratorDisputeId,
-                    klerosArbitratorExtraData
-                ),
-            "Value does not cover appeal cost"
-        );
+
         emit AppealedKlerosArbitratorDecision(
             claimIndex,
             msg.sender,
             klerosArbitratorDisputeId
         );
-        klerosArbitrator.appeal(
+
+        // msg.value will be verified in the appeal
+        arbitrationParams.klerosArbitrator.appeal(
             klerosArbitratorDisputeId,
-            klerosArbitratorExtraData // Should this not be empty
+            arbitrationParams.klerosArbitratorExtraData // Unused in KlerosLiquid
         );
     }
 
     function rule(uint256 disputeId, uint256 ruling) external override {
+        uint256 claimIndex = klerosArbitratorAndDisputeIdToClaimIndex[
+            msg.sender
+        ][disputeId];
+        ArbitrationParams memory arbitrationParams = arbitrationParamsChanges[
+            claimIndexToArbitrationParamIndex[claimIndex]
+        ];
         require(
-            msg.sender == address(klerosArbitrator),
+            msg.sender == address(arbitrationParams.klerosArbitrator),
             "Sender not Kleros arbitrator"
         );
-        uint256 claimIndex = klerosArbitratorDisputeIdToClaimIndex[disputeId];
         ArbitratorDecision decision;
         if (ruling == 0 || ruling == 1) {
             decision = ArbitratorDecision.DoNotPay;
@@ -152,7 +207,7 @@ contract ClaimsManagerWithKlerosArbitrator is
         } else {
             revert("Invalid ruling option");
         }
-        emit Ruling(klerosArbitrator, disputeId, ruling);
+        emit Ruling(arbitrationParams.klerosArbitrator, disputeId, ruling);
         ClaimsManager.resolveDispute(claimIndex, decision);
     }
 
@@ -160,8 +215,15 @@ contract ClaimsManagerWithKlerosArbitrator is
         public
         override(ClaimsManager, IClaimsManager)
     {
+        // arbitrationParams are fixed to the claim at dispute creation.
+        // there's no "general" klerosArbitrator, so just check the
+        // last arbitrationParams
+
+        ArbitrationParams memory arbitrationParams = arbitrationParamsChanges[
+            arbitrationParamsCount - 1
+        ];
         require(
-            arbitrator != address(klerosArbitrator),
+            arbitrator != address(arbitrationParams.klerosArbitrator),
             "Use Kleros arbitrator interface"
         );
         ClaimsManager.createDispute(claimIndex, arbitrator);
@@ -171,10 +233,28 @@ contract ClaimsManagerWithKlerosArbitrator is
         public
         override(ClaimsManager, IClaimsManager)
     {
+        ArbitrationParams memory arbitrationParams = arbitrationParamsChanges[
+            claimIndexToArbitrationParamIndex[claimIndex]
+        ];
         require(
-            msg.sender != address(klerosArbitrator),
+            msg.sender != address(arbitrationParams.klerosArbitrator),
             "Use Kleros arbitrator interface"
         );
         ClaimsManager.resolveDispute(claimIndex, result);
+    }
+
+    // two functions below are implemented to respect the interface
+    function klerosArbitrator() external view returns (IArbitrator) {
+        ArbitrationParams memory arbitrationParams = arbitrationParamsChanges[
+            arbitrationParamsCount - 1
+        ];
+        return arbitrationParams.klerosArbitrator;
+    }
+
+    function klerosArbitratorExtraData() external view returns (bytes memory) {
+        ArbitrationParams memory arbitrationParams = arbitrationParamsChanges[
+            arbitrationParamsCount - 1
+        ];
+        return arbitrationParams.klerosArbitratorExtraData;
     }
 }
