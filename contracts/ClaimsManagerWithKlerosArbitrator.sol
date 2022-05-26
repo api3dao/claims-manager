@@ -25,7 +25,7 @@ contract ClaimsManagerWithKlerosArbitrator is
 
     mapping(uint256 => uint256) public claimIndexToArbitrationParamIndex;
 
-    uint256 private constant RULING_OPTIONS = 3;
+    uint256 private constant RULING_OPTIONS = 2;
 
     constructor(
         address _accessControlRegistry,
@@ -199,11 +199,9 @@ contract ClaimsManagerWithKlerosArbitrator is
         );
         ArbitratorDecision decision;
         if (ruling == 0 || ruling == 1) {
-            decision = ArbitratorDecision.DoNotPay;
+            decision = ArbitratorDecision.PaySettlement;
         } else if (ruling == 2) {
             decision = ArbitratorDecision.PayClaim;
-        } else if (ruling == 3) {
-            decision = ArbitratorDecision.PaySettlement;
         } else {
             revert("Invalid ruling option");
         }
