@@ -383,17 +383,18 @@ contract ClaimsManager is
             );
             IApi3Pool(api3Pool).payOutClaim(claim.beneficiary, claimAmount);
         } else if (result == ArbitratorDecision.PaySettlement) {
-            claim.status = ClaimStatus.DisputeResolvedWithSettlementPayout;
             uint256 settlementAmount = claimIndexToProposedSettlementAmount[
                 claimIndex
             ];
             if (settlementAmount == 0) {
+                claim.status = ClaimStatus.DisputeResolvedWithoutPayout;
                 emit ResolvedDisputeByRejectingClaim(
                     claimIndex,
                     claim.claimant,
                     msg.sender
                 );
             } else {
+                claim.status = ClaimStatus.DisputeResolvedWithSettlementPayout;
                 updateQuotaUsage(msg.sender, settlementAmount);
                 emit ResolvedDisputeByAcceptingSettlement(
                     claimIndex,
