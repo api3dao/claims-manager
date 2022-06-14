@@ -35,6 +35,7 @@ contract ClaimsManager is
     address public override api3Pool;
     uint256 public override mediatorResponsePeriod;
     uint256 public override claimantResponsePeriod;
+    uint256 public override claimValidityPeriod = 259200;
     mapping(address => uint256) public override arbitratorToResponsePeriod;
     mapping(address => Checkpoint[])
         public
@@ -118,6 +119,14 @@ contract ClaimsManager is
         uint256 arbitratorResponsePeriod
     ) external override onlyManagerOrAdmin {
         _setArbitratorResponsePeriod(arbitrator, arbitratorResponsePeriod);
+    }
+
+    function setClaimValidityPeriod(uint256 _claimValidityPeriod)
+        external
+        override
+    {
+        require(manager == msg.sender, "Sender not manager");
+        _setClaimValidityPeriod(_claimValidityPeriod);
     }
 
     // Allows setting a quota that is currently exceeded
@@ -204,7 +213,10 @@ contract ClaimsManager is
         require(claimAmount != 0, "Claim amount zero");
         require(bytes(evidence).length != 0, "Evidence address empty");
         require(block.timestamp >= startTime, "Policy not active yet");
-        require(block.timestamp <= endTime, "Policy expired");
+        require(
+            block.timestamp <= endTime + claimValidityPeriod,
+            "Claim validity period expired"
+        );
         require(claimAmount <= coverageAmount, "Claim larger than coverage");
         claimIndex = claimCount++;
         claims[claimIndex] = Claim({
@@ -544,6 +556,11 @@ contract ClaimsManager is
             arbitratorResponsePeriod,
             msg.sender
         );
+    }
+
+    function _setClaimValidityPeriod(uint256 _claimValidityPeriod) internal {
+        claimValidityPeriod = _claimValidityPeriod;
+        emit SetClaimValidityPeriod(_claimValidityPeriod);
     }
 
     function updateQuotaUsage(address account, uint256 amount) private {
