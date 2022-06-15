@@ -35,7 +35,7 @@ contract ClaimsManager is
     address public override api3Pool;
     uint256 public override mediatorResponsePeriod;
     uint256 public override claimantResponsePeriod;
-    uint256 public override claimValidityPeriod = 259200;
+    uint256 public override claimValidityPeriod;
     mapping(address => uint256) public override arbitratorToResponsePeriod;
     mapping(address => Checkpoint[])
         public
@@ -68,7 +68,8 @@ contract ClaimsManager is
         address _manager,
         address _api3Pool,
         uint256 _mediatorResponsePeriod,
-        uint256 _claimantResponsePeriod
+        uint256 _claimantResponsePeriod,
+        uint256 _claimValidityPeriod
     )
         AccessControlRegistryAdminnedWithManager(
             _accessControlRegistry,
@@ -91,6 +92,7 @@ contract ClaimsManager is
         _setApi3Pool(_api3Pool);
         _setMediatorResponsePeriod(_mediatorResponsePeriod);
         _setClaimantResponsePeriod(_claimantResponsePeriod);
+        _setClaimValidityPeriod(_claimValidityPeriod);
     }
 
     function setApi3Pool(address _api3Pool) external override {
