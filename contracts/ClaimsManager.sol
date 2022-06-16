@@ -169,6 +169,7 @@ contract ClaimsManager is
         require(startTime != 0, "Start time zero");
         require(endTime > startTime, "Start not earlier than end");
         require(bytes(policy).length != 0, "Policy address empty");
+        endTime += claimValidityPeriod;
         policyHash = keccak256(
             abi.encodePacked(
                 claimant,
@@ -201,6 +202,7 @@ contract ClaimsManager is
         uint256 claimAmount,
         string calldata evidence
     ) external override returns (uint256 claimIndex) {
+        endTime += claimValidityPeriod;
         bytes32 policyHash = keccak256(
             abi.encodePacked(
                 msg.sender,
@@ -215,10 +217,7 @@ contract ClaimsManager is
         require(claimAmount != 0, "Claim amount zero");
         require(bytes(evidence).length != 0, "Evidence address empty");
         require(block.timestamp >= startTime, "Policy not active yet");
-        require(
-            block.timestamp <= endTime + claimValidityPeriod,
-            "Claim validity period expired"
-        );
+        require(block.timestamp <= endTime, "Claim validity period expired");
         require(claimAmount <= coverageAmount, "Claim larger than coverage");
         claimIndex = claimCount++;
         claims[claimIndex] = Claim({
