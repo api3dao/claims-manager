@@ -156,7 +156,7 @@ contract ClaimsManager is
         address beneficiary,
         uint256 coverageAmount,
         uint256 startTime,
-        uint256 endTime,
+        uint256 claimValidityPeriodEndTime,
         string calldata policy
     ) external override returns (bytes32 policyHash) {
         require(
@@ -167,16 +167,18 @@ contract ClaimsManager is
         require(beneficiary != address(0), "Beneficiary address zero");
         require(coverageAmount != 0, "Coverage amount zero");
         require(startTime != 0, "Start time zero");
-        require(endTime > startTime, "Start not earlier than end");
+        require(
+            claimValidityPeriodEndTime > startTime,
+            "Start not earlier than end"
+        );
         require(bytes(policy).length != 0, "Policy address empty");
-        endTime += claimValidityPeriod;
         policyHash = keccak256(
             abi.encodePacked(
                 claimant,
                 beneficiary,
                 coverageAmount,
                 startTime,
-                endTime,
+                claimValidityPeriodEndTime,
                 policy
             )
         );
@@ -187,7 +189,7 @@ contract ClaimsManager is
             policyHash,
             coverageAmount,
             startTime,
-            endTime,
+            claimValidityPeriodEndTime,
             policy,
             msg.sender
         );
@@ -197,19 +199,18 @@ contract ClaimsManager is
         address beneficiary,
         uint256 coverageAmount,
         uint256 startTime,
-        uint256 endTime,
+        uint256 claimValidityPeriodEndTime,
         string calldata policy,
         uint256 claimAmount,
         string calldata evidence
     ) external override returns (uint256 claimIndex) {
-        endTime += claimValidityPeriod;
         bytes32 policyHash = keccak256(
             abi.encodePacked(
                 msg.sender,
                 beneficiary,
                 coverageAmount,
                 startTime,
-                endTime,
+                claimValidityPeriodEndTime,
                 policy
             )
         );
@@ -217,7 +218,10 @@ contract ClaimsManager is
         require(claimAmount != 0, "Claim amount zero");
         require(bytes(evidence).length != 0, "Evidence address empty");
         require(block.timestamp >= startTime, "Policy not active yet");
-        require(block.timestamp <= endTime, "Claim validity period expired");
+        require(
+            block.timestamp <= claimValidityPeriodEndTime,
+            "Claim validity period expired"
+        );
         require(claimAmount <= coverageAmount, "Claim larger than coverage");
         claimIndex = claimCount++;
         claims[claimIndex] = Claim({
@@ -235,7 +239,7 @@ contract ClaimsManager is
             beneficiary,
             coverageAmount,
             startTime,
-            endTime,
+            claimValidityPeriodEndTime,
             policy,
             claimAmount,
             evidence,
