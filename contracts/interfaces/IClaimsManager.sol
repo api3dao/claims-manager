@@ -35,6 +35,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address sender
     );
 
+    event SetClaimValidityPeriod(uint256 claimValidityPeriod);
+
     event SetQuota(
         address indexed account,
         uint256 period,
@@ -50,7 +52,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         bytes32 indexed policyHash,
         uint256 coverageAmount,
         uint256 startTime,
-        uint256 endTime,
+        uint256 claimValidityPeriodEndTime,
         string policy,
         address sender
     );
@@ -62,7 +64,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address beneficiary,
         uint256 coverageAmount,
         uint256 startTime,
-        uint256 endTime,
+        uint256 claimValidityPeriodEndTime,
         string policy,
         uint256 claimAmount,
         string evidence,
@@ -133,6 +135,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint256 arbitratorResponsePeriod
     ) external;
 
+    function setClaimValidityPeriod(uint256 _claimValidityPeriod) external;
+
     function setQuota(
         address account,
         uint256 period,
@@ -146,7 +150,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address beneficiary,
         uint256 coverageAmount,
         uint256 startTime,
-        uint256 endTime,
+        uint256 claimValidityPeriodEndTime,
         string calldata policy
     ) external returns (bytes32 policyHash);
 
@@ -154,7 +158,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address beneficiary,
         uint256 coverageAmount,
         uint256 startTime,
-        uint256 endTime,
+        uint256 claimValidityPeriodEndTime,
         string calldata policy,
         uint256 claimAmount,
         string calldata evidence
