@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@api3/airnode-protocol-v1/contracts/access-control-registry/AccessControlRegistryAdminnedWithManager.sol";
 import "@api3/api3-dao-contracts/contracts/interfaces/IApi3Pool.sol";
+import "./interfaces/IApi3ToUsdReader.sol";
 import "./interfaces/IClaimsManager.sol";
 
 contract ClaimsManager is
@@ -32,6 +33,7 @@ contract ClaimsManager is
     bytes32 public immutable override mediatorRole;
     bytes32 public immutable override arbitratorRole;
 
+    address public override api3ToUsdReader;
     address public override api3Pool;
     uint256 public override mediatorResponsePeriod;
     uint256 public override claimantResponsePeriod;
@@ -90,6 +92,13 @@ contract ClaimsManager is
         _setApi3Pool(_api3Pool);
         _setMediatorResponsePeriod(_mediatorResponsePeriod);
         _setClaimantResponsePeriod(_claimantResponsePeriod);
+    }
+
+    function setApi3ToUsdReader(address _api3ToUsdReader) external override {
+        require(manager == msg.sender, "Sender not manager");
+        require(_api3ToUsdReader != address(0), "Api3ToUsdReader address zero");
+        api3ToUsdReader = _api3ToUsdReader;
+        emit SetApi3ToUsdReader(_api3ToUsdReader);
     }
 
     function setApi3Pool(address _api3Pool) external override {
@@ -567,6 +576,11 @@ contract ClaimsManager is
             getQuotaUsage(account) <= accountToQuota[account].amount,
             "Quota exceeded"
         );
+    }
+
+    function readApi3ToUsd() private view returns (int224) {
+        require(api3ToUsdReader != address(0), "Api3ToUsdReader not set");
+        return IApi3ToUsdReader(api3ToUsdReader).read();
     }
 
     function getValueAt(Checkpoint[] storage checkpoints, uint256 _timestamp)

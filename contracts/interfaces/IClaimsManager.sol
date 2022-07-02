@@ -23,6 +23,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         PaySettlement
     }
 
+    event SetApi3ToUsdReader(address api3ToUsdReader);
+
     event SetApi3Pool(address api3Pool);
 
     event SetMediatorResponsePeriod(uint256 mediatorResponsePeriod);
@@ -120,6 +122,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     event TimedOutClaim(uint256 indexed claimIndex, address indexed claimant);
 
+    function setApi3ToUsdReader(address _api3ToUsdReader) external;
+
     function setApi3Pool(address _api3Pool) external;
 
     function setMediatorResponsePeriod(uint256 _mediatorResponsePeriod)
@@ -192,6 +196,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function mediatorRole() external view returns (bytes32);
 
     function arbitratorRole() external view returns (bytes32);
+
+    function api3ToUsdReader() external view returns (address);
 
     function api3Pool() external view returns (address);
 
