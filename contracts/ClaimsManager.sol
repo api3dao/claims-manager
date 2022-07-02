@@ -159,8 +159,8 @@ contract ClaimsManager is
         address claimant,
         address beneficiary,
         uint256 coverageAmountInUsd,
-        uint256 startTime,
-        uint256 endTime,
+        uint256 claimsAllowedFrom,
+        uint256 claimsAllowedUntil,
         string calldata policy
     ) external override returns (bytes32 policyHash) {
         require(
@@ -170,16 +170,19 @@ contract ClaimsManager is
         require(claimant != address(0), "Claimant address zero");
         require(beneficiary != address(0), "Beneficiary address zero");
         require(coverageAmountInUsd != 0, "Coverage amount zero");
-        require(startTime != 0, "Start time zero");
-        require(endTime > startTime, "Start not earlier than end");
+        require(claimsAllowedFrom != 0, "Start time zero");
+        require(
+            claimsAllowedUntil > claimsAllowedFrom,
+            "Start not earlier than end"
+        );
         require(bytes(policy).length != 0, "Policy address empty");
         policyHash = keccak256(
             abi.encodePacked(
                 claimant,
                 beneficiary,
                 coverageAmountInUsd,
-                startTime,
-                endTime,
+                claimsAllowedFrom,
+                claimsAllowedUntil,
                 policy
             )
         );
@@ -189,8 +192,8 @@ contract ClaimsManager is
             claimant,
             policyHash,
             coverageAmountInUsd,
-            startTime,
-            endTime,
+            claimsAllowedFrom,
+            claimsAllowedUntil,
             policy,
             msg.sender
         );
@@ -199,8 +202,8 @@ contract ClaimsManager is
     function createClaim(
         address beneficiary,
         uint256 coverageAmountInUsd,
-        uint256 startTime,
-        uint256 endTime,
+        uint256 claimsAllowedFrom,
+        uint256 claimsAllowedUntil,
         string calldata policy,
         uint256 claimAmountInUsd,
         string calldata evidence
@@ -210,19 +213,22 @@ contract ClaimsManager is
                 msg.sender,
                 beneficiary,
                 coverageAmountInUsd,
-                startTime,
-                endTime,
+                claimsAllowedFrom,
+                claimsAllowedUntil,
                 policy
             )
         );
         require(policyWithHashExists[policyHash], "Policy does not exist");
         require(claimAmountInUsd != 0, "Claim amount zero");
         require(bytes(evidence).length != 0, "Evidence address empty");
-        require(block.timestamp >= startTime, "Policy not active yet");
-        require(block.timestamp <= endTime, "Policy expired");
         require(
             claimAmountInUsd <= coverageAmountInUsd,
             "Claim larger than coverage"
+        );
+        require(block.timestamp >= claimsAllowedFrom, "Claims not allowed yet");
+        require(
+            block.timestamp <= claimsAllowedUntil,
+            "Claims not allowed anymore"
         );
         claimIndex = claimCount++;
         claims[claimIndex] = Claim({
@@ -239,8 +245,8 @@ contract ClaimsManager is
             policyHash,
             beneficiary,
             coverageAmountInUsd,
-            startTime,
-            endTime,
+            claimsAllowedFrom,
+            claimsAllowedUntil,
             policy,
             claimAmountInUsd,
             evidence,

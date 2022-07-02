@@ -51,8 +51,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address indexed claimant,
         bytes32 indexed policyHash,
         uint256 coverageAmountInUsd,
-        uint256 startTime,
-        uint256 endTime,
+        uint256 claimsAllowedFrom,
+        uint256 claimsAllowedUntil,
         string policy,
         address sender
     );
@@ -63,8 +63,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         bytes32 indexed policyHash,
         address beneficiary,
         uint256 coverageAmountInUsd,
-        uint256 startTime,
-        uint256 endTime,
+        uint256 claimsAllowedFrom,
+        uint256 claimsAllowedUntil,
         string policy,
         uint256 claimAmountInUsd,
         string evidence,
@@ -150,16 +150,16 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address claimant,
         address beneficiary,
         uint256 coverageAmountInUsd,
-        uint256 startTime,
-        uint256 endTime,
+        uint256 claimsAllowedFrom,
+        uint256 claimsAllowedUntil,
         string calldata policy
     ) external returns (bytes32 policyHash);
 
     function createClaim(
         address beneficiary,
         uint256 coverageAmountInUsd,
-        uint256 startTime,
-        uint256 endTime,
+        uint256 claimsAllowedFrom,
+        uint256 claimsAllowedUntil,
         string calldata policy,
         uint256 claimAmountInUsd,
         string calldata evidence
