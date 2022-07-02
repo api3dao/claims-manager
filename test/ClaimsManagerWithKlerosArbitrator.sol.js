@@ -1,7 +1,13 @@
 const hre = require('hardhat');
 
 describe('ClaimsManagerWithKlerosArbitrator', function () {
-  let claimsManagerWithKlerosArbitrator, accessControlRegistry, mockApi3Pool, mockKlerosArbitrator;
+  let accessControlRegistry,
+    mockApi3Pool,
+    mockKlerosArbitrator,
+    claimsManagerWithKlerosArbitrator,
+    mockDapiServer,
+    api3ToUsdReader;
+
   let roles;
 
   beforeEach(async () => {
@@ -32,11 +38,18 @@ describe('ClaimsManagerWithKlerosArbitrator', function () {
       40 * 24 * 60 * 60,
       '/ipfs/Qm...testhash/metaevidence.json'
     );
+    const mockDapiServerFactory = await hre.ethers.getContractFactory('MockDapiServer', roles.deployer);
+    mockDapiServer = await mockDapiServerFactory.deploy();
+    const api3ToUsdReaderFactory = await hre.ethers.getContractFactory('Api3ToUsdReader', roles.deployer);
+    api3ToUsdReader = await api3ToUsdReaderFactory.deploy(
+      mockDapiServer.address,
+      claimsManagerWithKlerosArbitrator.address
+    );
   });
 
   describe('constructor', function () {
     it('works', async function () {
-      console.log(claimsManagerWithKlerosArbitrator.address);
+      console.log(api3ToUsdReader.address);
     });
   });
 });
