@@ -233,6 +233,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         external
         view
         returns (
+            bytes32 policyHash,
             address claimant,
             address beneficiary,
             uint256 amountInUsd,

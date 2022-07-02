@@ -11,6 +11,7 @@ contract ClaimsManager is
     IClaimsManager
 {
     struct Claim {
+        bytes32 policyHash;
         address claimant;
         address beneficiary;
         uint256 amountInUsd;
@@ -239,6 +240,7 @@ contract ClaimsManager is
         );
         claimIndex = claimCount++;
         claims[claimIndex] = Claim({
+            policyHash: policyHash,
             claimant: msg.sender,
             beneficiary: beneficiary,
             amountInUsd: claimAmountInUsd,
