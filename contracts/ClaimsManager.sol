@@ -13,7 +13,7 @@ contract ClaimsManager is
     struct Claim {
         address claimant;
         address beneficiary;
-        uint256 amount;
+        uint256 amountInUsd;
         string evidence;
         uint256 updateTime;
         ClaimStatus status;
@@ -26,7 +26,7 @@ contract ClaimsManager is
 
     struct Quota {
         uint256 period;
-        uint256 amount;
+        uint256 amountInApi3;
     }
 
     bytes32 public immutable override policyCreatorRole;
@@ -48,7 +48,10 @@ contract ClaimsManager is
     mapping(uint256 => Claim) public override claims;
     mapping(uint256 => uint256)
         public
-        override claimIndexToProposedSettlementAmount;
+        override claimIndexToProposedSettlementAmountInUsd;
+    mapping(uint256 => uint256)
+        public
+        override claimIndexToProposedSettlementAmountInApi3;
     mapping(uint256 => address) public override claimIndexToArbitrator;
 
     modifier onlyManagerOrAdmin() {
@@ -133,26 +136,29 @@ contract ClaimsManager is
     function setQuota(
         address account,
         uint256 period,
-        uint256 amount
+        uint256 amountInApi3
     ) external override onlyManagerOrAdmin {
         require(account != address(0), "Account address zero");
         require(period != 0, "Quota period zero");
-        require(amount != 0, "Quota amount zero");
-        accountToQuota[account] = Quota({period: period, amount: amount});
-        emit SetQuota(account, period, amount, msg.sender);
+        require(amountInApi3 != 0, "Quota amount zero");
+        accountToQuota[account] = Quota({
+            period: period,
+            amountInApi3: amountInApi3
+        });
+        emit SetQuota(account, period, amountInApi3, msg.sender);
     }
 
     // Means the account will not be limited
     function resetQuota(address account) external override onlyManagerOrAdmin {
         require(account != address(0), "Account address zero");
-        accountToQuota[account] = Quota({period: 0, amount: 0});
+        accountToQuota[account] = Quota({period: 0, amountInApi3: 0});
         emit ResetQuota(account, msg.sender);
     }
 
     function createPolicy(
         address claimant,
         address beneficiary,
-        uint256 coverageAmount,
+        uint256 coverageAmountInUsd,
         uint256 startTime,
         uint256 endTime,
         string calldata policy
@@ -163,7 +169,7 @@ contract ClaimsManager is
         );
         require(claimant != address(0), "Claimant address zero");
         require(beneficiary != address(0), "Beneficiary address zero");
-        require(coverageAmount != 0, "Coverage amount zero");
+        require(coverageAmountInUsd != 0, "Coverage amount zero");
         require(startTime != 0, "Start time zero");
         require(endTime > startTime, "Start not earlier than end");
         require(bytes(policy).length != 0, "Policy address empty");
@@ -171,7 +177,7 @@ contract ClaimsManager is
             abi.encodePacked(
                 claimant,
                 beneficiary,
-                coverageAmount,
+                coverageAmountInUsd,
                 startTime,
                 endTime,
                 policy
@@ -182,7 +188,7 @@ contract ClaimsManager is
             beneficiary,
             claimant,
             policyHash,
-            coverageAmount,
+            coverageAmountInUsd,
             startTime,
             endTime,
             policy,
@@ -192,34 +198,37 @@ contract ClaimsManager is
 
     function createClaim(
         address beneficiary,
-        uint256 coverageAmount,
+        uint256 coverageAmountInUsd,
         uint256 startTime,
         uint256 endTime,
         string calldata policy,
-        uint256 claimAmount,
+        uint256 claimAmountInUsd,
         string calldata evidence
     ) external override returns (uint256 claimIndex) {
         bytes32 policyHash = keccak256(
             abi.encodePacked(
                 msg.sender,
                 beneficiary,
-                coverageAmount,
+                coverageAmountInUsd,
                 startTime,
                 endTime,
                 policy
             )
         );
         require(policyWithHashExists[policyHash], "Policy does not exist");
-        require(claimAmount != 0, "Claim amount zero");
+        require(claimAmountInUsd != 0, "Claim amount zero");
         require(bytes(evidence).length != 0, "Evidence address empty");
         require(block.timestamp >= startTime, "Policy not active yet");
         require(block.timestamp <= endTime, "Policy expired");
-        require(claimAmount <= coverageAmount, "Claim larger than coverage");
+        require(
+            claimAmountInUsd <= coverageAmountInUsd,
+            "Claim larger than coverage"
+        );
         claimIndex = claimCount++;
         claims[claimIndex] = Claim({
             claimant: msg.sender,
             beneficiary: beneficiary,
-            amount: claimAmount,
+            amountInUsd: claimAmountInUsd,
             evidence: evidence,
             updateTime: block.timestamp,
             status: ClaimStatus.ClaimCreated
@@ -229,11 +238,11 @@ contract ClaimsManager is
             msg.sender,
             policyHash,
             beneficiary,
-            coverageAmount,
+            coverageAmountInUsd,
             startTime,
             endTime,
             policy,
-            claimAmount,
+            claimAmountInUsd,
             evidence,
             block.timestamp
         );
@@ -254,20 +263,20 @@ contract ClaimsManager is
             "Too late to accept claim"
         );
         claim.status = ClaimStatus.ClaimAccepted;
-        updateQuotaUsage(msg.sender, claim.amount);
+        uint256 amountInApi3 = convertUsdToApi3(claim.amountInUsd);
+        updateQuotaUsage(msg.sender, amountInApi3);
         address beneficiary = claim.beneficiary;
-        uint256 amount = claim.amount;
         emit AcceptedClaim(
             claimIndex,
             claim.claimant,
             beneficiary,
-            amount,
+            amountInApi3,
             msg.sender
         );
-        IApi3Pool(api3Pool).payOutClaim(beneficiary, amount);
+        IApi3Pool(api3Pool).payOutClaim(beneficiary, amountInApi3);
     }
 
-    function proposeSettlement(uint256 claimIndex, uint256 amount)
+    function proposeSettlement(uint256 claimIndex, uint256 amountInUsd)
         external
         override
     {
@@ -275,7 +284,7 @@ contract ClaimsManager is
             hasMediatorRoleOrIsManager(msg.sender),
             "Sender cannot propose settlement"
         );
-        require(amount != 0, "Settlement amount zero");
+        require(amountInUsd != 0, "Settlement amount zero");
         Claim storage claim = claims[claimIndex];
         require(
             claim.status == ClaimStatus.ClaimCreated,
@@ -285,12 +294,23 @@ contract ClaimsManager is
             claim.updateTime + mediatorResponsePeriod > block.timestamp,
             "Too late to propose settlement"
         );
-        require(amount < claim.amount, "Settlement amount not smaller");
+        require(
+            amountInUsd < claim.amountInUsd,
+            "Settlement amount not smaller"
+        );
         claim.status = ClaimStatus.SettlementProposed;
         claim.updateTime = block.timestamp;
-        claimIndexToProposedSettlementAmount[claimIndex] = amount;
-        updateQuotaUsage(msg.sender, amount);
-        emit ProposedSettlement(claimIndex, claim.claimant, amount, msg.sender);
+        uint256 amountInApi3 = convertUsdToApi3(amountInUsd);
+        claimIndexToProposedSettlementAmountInUsd[claimIndex] = amountInUsd;
+        claimIndexToProposedSettlementAmountInApi3[claimIndex] = amountInApi3;
+        updateQuotaUsage(msg.sender, amountInApi3);
+        emit ProposedSettlement(
+            claimIndex,
+            claim.claimant,
+            amountInUsd,
+            amountInApi3,
+            msg.sender
+        );
     }
 
     function acceptSettlement(uint256 claimIndex) external override {
@@ -306,11 +326,14 @@ contract ClaimsManager is
             "Too late to accept settlement"
         );
         claim.status = ClaimStatus.SettlementAccepted;
-        uint256 settlementAmount = claimIndexToProposedSettlementAmount[
-            claimIndex
-        ];
-        emit AcceptedSettlement(claimIndex, claimant, settlementAmount);
-        IApi3Pool(api3Pool).payOutClaim(claim.beneficiary, settlementAmount);
+        uint256 settlementAmountInApi3 = claimIndexToProposedSettlementAmountInApi3[
+                claimIndex
+            ];
+        emit AcceptedSettlement(claimIndex, claimant, settlementAmountInApi3);
+        IApi3Pool(api3Pool).payOutClaim(
+            claim.beneficiary,
+            settlementAmountInApi3
+        );
     }
 
     function createDispute(uint256 claimIndex, address arbitrator)
@@ -381,21 +404,21 @@ contract ClaimsManager is
             );
         } else if (result == ArbitratorDecision.PayClaim) {
             claim.status = ClaimStatus.DisputeResolvedWithClaimPayout;
-            uint256 claimAmount = claim.amount;
-            updateQuotaUsage(msg.sender, claimAmount);
+            uint256 amountInApi3 = convertUsdToApi3(claim.amountInUsd);
+            updateQuotaUsage(msg.sender, amountInApi3);
             emit ResolvedDisputeByAcceptingClaim(
                 claimIndex,
                 claim.claimant,
                 claim.beneficiary,
-                claimAmount,
+                amountInApi3,
                 msg.sender
             );
-            IApi3Pool(api3Pool).payOutClaim(claim.beneficiary, claimAmount);
+            IApi3Pool(api3Pool).payOutClaim(claim.beneficiary, amountInApi3);
         } else if (result == ArbitratorDecision.PaySettlement) {
-            uint256 settlementAmount = claimIndexToProposedSettlementAmount[
-                claimIndex
-            ];
-            if (settlementAmount == 0) {
+            uint256 settlementAmountInUsd = claimIndexToProposedSettlementAmountInUsd[
+                    claimIndex
+                ];
+            if (settlementAmountInUsd == 0) {
                 claim.status = ClaimStatus.DisputeResolvedWithoutPayout;
                 emit ResolvedDisputeByRejectingClaim(
                     claimIndex,
@@ -404,17 +427,18 @@ contract ClaimsManager is
                 );
             } else {
                 claim.status = ClaimStatus.DisputeResolvedWithSettlementPayout;
-                updateQuotaUsage(msg.sender, settlementAmount);
+                uint256 amountInApi3 = convertUsdToApi3(settlementAmountInUsd);
+                updateQuotaUsage(msg.sender, amountInApi3);
                 emit ResolvedDisputeByAcceptingSettlement(
                     claimIndex,
                     claim.claimant,
                     claim.beneficiary,
-                    settlementAmount,
+                    amountInApi3,
                     msg.sender
                 );
                 IApi3Pool(api3Pool).payOutClaim(
                     claim.beneficiary,
-                    settlementAmount
+                    amountInApi3
                 );
             }
         }
@@ -555,12 +579,12 @@ contract ClaimsManager is
         );
     }
 
-    function updateQuotaUsage(address account, uint256 amount) private {
+    function updateQuotaUsage(address account, uint256 amountInApi3) private {
         Checkpoint[]
             storage accumulatedQuotaUsageCheckpoints = accountToAccumulatedQuotaUsageCheckpoints[
                 account
             ];
-        uint256 accumulatedQuotaUsage = amount;
+        uint256 accumulatedQuotaUsage = amountInApi3;
         if (accumulatedQuotaUsageCheckpoints.length > 0) {
             accumulatedQuotaUsage += accumulatedQuotaUsageCheckpoints[
                 accumulatedQuotaUsageCheckpoints.length - 1
@@ -573,14 +597,21 @@ contract ClaimsManager is
             })
         );
         require(
-            getQuotaUsage(account) <= accountToQuota[account].amount,
+            getQuotaUsage(account) <= accountToQuota[account].amountInApi3,
             "Quota exceeded"
         );
     }
 
-    function readApi3ToUsd() private view returns (int224) {
+    // Assuming the API3/USD rate has 18 decimals
+    function convertUsdToApi3(uint256 amountInUsd)
+        private
+        view
+        returns (uint256 amountInApi3)
+    {
         require(api3ToUsdReader != address(0), "Api3ToUsdReader not set");
-        return IApi3ToUsdReader(api3ToUsdReader).read();
+        int224 signedApi3ToUsd = IApi3ToUsdReader(api3ToUsdReader).read();
+        require(signedApi3ToUsd > 0, "Invalid API3 to USD");
+        amountInApi3 = (amountInUsd * uint224(signedApi3ToUsd)) / 10**18;
     }
 
     function getValueAt(Checkpoint[] storage checkpoints, uint256 _timestamp)

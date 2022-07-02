@@ -40,7 +40,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     event SetQuota(
         address indexed account,
         uint256 period,
-        uint256 amount,
+        uint256 amountInApi3,
         address sender
     );
 
@@ -50,7 +50,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address beneficiary,
         address indexed claimant,
         bytes32 indexed policyHash,
-        uint256 coverageAmount,
+        uint256 coverageAmountInUsd,
         uint256 startTime,
         uint256 endTime,
         string policy,
@@ -62,11 +62,11 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address indexed claimant,
         bytes32 indexed policyHash,
         address beneficiary,
-        uint256 coverageAmount,
+        uint256 coverageAmountInUsd,
         uint256 startTime,
         uint256 endTime,
         string policy,
-        uint256 claimAmount,
+        uint256 claimAmountInUsd,
         string evidence,
         uint256 claimCreationTime
     );
@@ -75,21 +75,22 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint256 indexed claimIndex,
         address indexed claimant,
         address beneficiary,
-        uint256 claimAmount,
+        uint256 amountInApi3,
         address sender
     );
 
     event ProposedSettlement(
         uint256 indexed claimIndex,
         address indexed claimant,
-        uint256 amount,
+        uint256 amountInUsd,
+        uint256 amountInApi3,
         address sender
     );
 
     event AcceptedSettlement(
         uint256 indexed claimIndex,
         address indexed claimant,
-        uint256 amount
+        uint256 amountInApi3
     );
 
     event CreatedDispute(
@@ -108,7 +109,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint256 indexed claimIndex,
         address indexed claimant,
         address beneficiary,
-        uint256 amount,
+        uint256 amountInApi3,
         address arbitrator
     );
 
@@ -116,7 +117,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint256 indexed claimIndex,
         address indexed claimant,
         address beneficiary,
-        uint256 amount,
+        uint256 amountInApi3,
         address arbitrator
     );
 
@@ -140,7 +141,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function setQuota(
         address account,
         uint256 period,
-        uint256 amount
+        uint256 amountInApi3
     ) external;
 
     function resetQuota(address account) external;
@@ -148,7 +149,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function createPolicy(
         address claimant,
         address beneficiary,
-        uint256 coverageAmount,
+        uint256 coverageAmountInUsd,
         uint256 startTime,
         uint256 endTime,
         string calldata policy
@@ -156,17 +157,18 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     function createClaim(
         address beneficiary,
-        uint256 coverageAmount,
+        uint256 coverageAmountInUsd,
         uint256 startTime,
         uint256 endTime,
         string calldata policy,
-        uint256 claimAmount,
+        uint256 claimAmountInUsd,
         string calldata evidence
     ) external returns (uint256 claimIndex);
 
     function acceptClaim(uint256 claimIndex) external;
 
-    function proposeSettlement(uint256 claimIndex, uint256 amount) external;
+    function proposeSettlement(uint256 claimIndex, uint256 amountInUsd)
+        external;
 
     function acceptSettlement(uint256 claimIndex) external;
 
@@ -218,7 +220,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function accountToQuota(address account)
         external
         view
-        returns (uint256 period, uint256 amount);
+        returns (uint256 period, uint256 amountInApi3);
 
     function policyWithHashExists(bytes32 policyHash)
         external
@@ -233,13 +235,18 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         returns (
             address claimant,
             address beneficiary,
-            uint256 amount,
+            uint256 amountInUsd,
             string memory evidence,
             uint256 updateTime,
             ClaimStatus status
         );
 
-    function claimIndexToProposedSettlementAmount(uint256 claimIndex)
+    function claimIndexToProposedSettlementAmountInUsd(uint256 claimIndex)
+        external
+        view
+        returns (uint256);
+
+    function claimIndexToProposedSettlementAmountInApi3(uint256 claimIndex)
         external
         view
         returns (uint256);
