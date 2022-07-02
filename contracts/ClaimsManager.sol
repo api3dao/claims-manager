@@ -43,7 +43,9 @@ contract ClaimsManager is
         override accountToAccumulatedQuotaUsageCheckpoints;
     mapping(address => Quota) public override accountToQuota;
 
-    mapping(bytes32 => bool) public override policyWithHashExists;
+    mapping(bytes32 => uint256)
+        public
+        override policyHashToRemainingCoverageAmountInUsd;
     uint256 public override claimCount = 0;
     mapping(uint256 => Claim) public override claims;
     mapping(uint256 => uint256)
@@ -186,7 +188,9 @@ contract ClaimsManager is
                 policy
             )
         );
-        policyWithHashExists[policyHash] = true;
+        policyHashToRemainingCoverageAmountInUsd[
+            policyHash
+        ] = coverageAmountInUsd;
         emit CreatedPolicy(
             beneficiary,
             claimant,
@@ -218,7 +222,10 @@ contract ClaimsManager is
                 policy
             )
         );
-        require(policyWithHashExists[policyHash], "Policy does not exist");
+        require(
+            policyHashToRemainingCoverageAmountInUsd[policyHash] > 0,
+            "Policy has no coverage"
+        );
         require(claimAmountInUsd != 0, "Claim amount zero");
         require(bytes(evidence).length != 0, "Evidence address empty");
         require(

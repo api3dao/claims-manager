@@ -222,10 +222,10 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         view
         returns (uint256 period, uint256 amountInApi3);
 
-    function policyWithHashExists(bytes32 policyHash)
+    function policyHashToRemainingCoverageAmountInUsd(bytes32 policyHash)
         external
         view
-        returns (bool);
+        returns (uint256);
 
     function claimCount() external view returns (uint256);
 
