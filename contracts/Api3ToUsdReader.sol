@@ -5,7 +5,7 @@ import "@api3/airnode-protocol-v1/contracts/dapis/DapiReader.sol";
 import "./interfaces/IApi3ToUsdReader.sol";
 
 contract Api3ToUsdReader is DapiReader, IApi3ToUsdReader {
-    address public immutable override reader;
+    address public immutable reader;
 
     constructor(address _dapiServer, address _reader) DapiReader(_dapiServer) {
         reader = _reader;
