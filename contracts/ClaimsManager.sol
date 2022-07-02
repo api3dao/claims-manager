@@ -146,7 +146,8 @@ contract ClaimsManager is
         uint256 coverageAmount,
         uint256 startTime,
         uint256 endTime,
-        string calldata policy
+        string calldata policy,
+        string calldata metadata
     ) external override returns (bytes32 policyHash) {
         require(
             hasPolicyCreatorRoleOrIsManager(msg.sender),
@@ -177,6 +178,7 @@ contract ClaimsManager is
             startTime,
             endTime,
             policy,
+            metadata,
             msg.sender
         );
     }

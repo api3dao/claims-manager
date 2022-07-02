@@ -52,6 +52,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint256 startTime,
         uint256 endTime,
         string policy,
+        string metadata,
         address sender
     );
 
@@ -147,7 +148,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint256 coverageAmount,
         uint256 startTime,
         uint256 endTime,
-        string calldata policy
+        string calldata policy,
+        string calldata metadata
     ) external returns (bytes32 policyHash);
 
     function createClaim(
