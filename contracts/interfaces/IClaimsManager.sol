@@ -35,8 +35,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address sender
     );
 
-    event SetClaimValidityPeriod(uint256 claimValidityPeriod);
-
     event SetQuota(
         address indexed account,
         uint256 period,
@@ -134,8 +132,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address arbitrator,
         uint256 arbitratorResponsePeriod
     ) external;
-
-    function setClaimValidityPeriod(uint256 _claimValidityPeriod) external;
 
     function setQuota(
         address account,

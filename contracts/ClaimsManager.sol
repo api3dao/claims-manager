@@ -35,7 +35,6 @@ contract ClaimsManager is
     address public override api3Pool;
     uint256 public override mediatorResponsePeriod;
     uint256 public override claimantResponsePeriod;
-    uint256 public override claimValidityPeriod;
     mapping(address => uint256) public override arbitratorToResponsePeriod;
     mapping(address => Checkpoint[])
         public
@@ -68,8 +67,7 @@ contract ClaimsManager is
         address _manager,
         address _api3Pool,
         uint256 _mediatorResponsePeriod,
-        uint256 _claimantResponsePeriod,
-        uint256 _claimValidityPeriod
+        uint256 _claimantResponsePeriod
     )
         AccessControlRegistryAdminnedWithManager(
             _accessControlRegistry,
@@ -92,7 +90,6 @@ contract ClaimsManager is
         _setApi3Pool(_api3Pool);
         _setMediatorResponsePeriod(_mediatorResponsePeriod);
         _setClaimantResponsePeriod(_claimantResponsePeriod);
-        _setClaimValidityPeriod(_claimValidityPeriod);
     }
 
     function setApi3Pool(address _api3Pool) external override {
@@ -121,14 +118,6 @@ contract ClaimsManager is
         uint256 arbitratorResponsePeriod
     ) external override onlyManagerOrAdmin {
         _setArbitratorResponsePeriod(arbitrator, arbitratorResponsePeriod);
-    }
-
-    function setClaimValidityPeriod(uint256 _claimValidityPeriod)
-        external
-        override
-    {
-        require(manager == msg.sender, "Sender not manager");
-        _setClaimValidityPeriod(_claimValidityPeriod);
     }
 
     // Allows setting a quota that is currently exceeded
@@ -561,11 +550,6 @@ contract ClaimsManager is
             arbitratorResponsePeriod,
             msg.sender
         );
-    }
-
-    function _setClaimValidityPeriod(uint256 _claimValidityPeriod) internal {
-        claimValidityPeriod = _claimValidityPeriod;
-        emit SetClaimValidityPeriod(_claimValidityPeriod);
     }
 
     function updateQuotaUsage(address account, uint256 amount) private {
