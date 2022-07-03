@@ -6,7 +6,7 @@ import "@kleros/erc-792/contracts/IArbitrable.sol";
 import "./IClaimsManager.sol";
 import "@kleros/erc-792/contracts/IArbitrator.sol";
 
-interface IClaimsManagerWithKlerosArbitrator is
+interface IClaimsManagerWithKlerosArbitration is
     IEvidence,
     IArbitrable,
     IClaimsManager
@@ -14,7 +14,7 @@ interface IClaimsManagerWithKlerosArbitrator is
     event CreatedDisputeWithKlerosArbitrator(
         uint256 indexed claimIndex,
         address indexed claimant,
-        uint256 indexed klerosArbitratorDisputeId
+        uint256 indexed disputeId
     );
 
     event SubmittedEvidenceToKlerosArbitrator(
@@ -23,10 +23,10 @@ interface IClaimsManagerWithKlerosArbitrator is
         string evidence
     );
 
-    event AppealedKlerosArbitratorDecision(
+    event AppealedKlerosArbitratorRuling(
         uint256 indexed claimIndex,
         address indexed sender,
-        uint256 indexed klerosArbitratorDisputeId
+        uint256 indexed disputeId
     );
 
     function createDisputeWithKlerosArbitrator(uint256 claimIndex)
@@ -35,19 +35,19 @@ interface IClaimsManagerWithKlerosArbitrator is
 
     function submitEvidenceToKlerosArbitrator(
         uint256 claimIndex,
+        uint256 disputeId,
         string calldata evidence
     ) external;
 
-    function appealKlerosArbitratorDecision(
-        uint256 claimIndex,
-        uint256 klerosArbitratorDisputeId
-    ) external payable;
+    function appealKlerosArbitratorRuling(uint256 claimIndex, uint256 disputeId)
+        external
+        payable;
 
     function klerosArbitrator() external returns (IArbitrator);
 
     function klerosArbitratorExtraData() external returns (bytes memory);
 
-    function klerosArbitratorAndDisputeIdToClaimIndex(
+    function klerosArbitratorToDisputeIdToClaimIndex(
         address arbitrator,
         uint256 disputeId
     ) external returns (uint256);
