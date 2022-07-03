@@ -1,7 +1,7 @@
 const hre = require('hardhat');
 
-describe('ClaimsManagerWithKlerosArbitrator', function () {
-  let claimsManagerWithKlerosArbitrator, accessControlRegistry, mockApi3Pool, mockKlerosArbitrator;
+describe('ClaimsManagerWithKlerosArbitration', function () {
+  let claimsManagerWithKlerosArbitration, accessControlRegistry, mockApi3Pool, mockKlerosArbitrator;
   let roles;
 
   beforeEach(async () => {
@@ -16,11 +16,11 @@ describe('ClaimsManagerWithKlerosArbitrator', function () {
     mockApi3Pool = await mockApi3PoolFactory.deploy();
     const mockKlerosArbitratorFactory = await hre.ethers.getContractFactory('MockKlerosArbitrator', roles.deployer);
     mockKlerosArbitrator = await mockKlerosArbitratorFactory.deploy();
-    const claimsManagerWithKlerosArbitratorFactory = await hre.ethers.getContractFactory(
-      'ClaimsManagerWithKlerosArbitrator',
+    const claimsManagerWithKlerosArbitrationFactory = await hre.ethers.getContractFactory(
+      'ClaimsManagerWithKlerosArbitration',
       roles.deployer
     );
-    claimsManagerWithKlerosArbitrator = await claimsManagerWithKlerosArbitratorFactory.deploy(
+    claimsManagerWithKlerosArbitration = await claimsManagerWithKlerosArbitrationFactory.deploy(
       accessControlRegistry.address,
       'ClaimsManager admin',
       roles.manager.address,
@@ -29,14 +29,14 @@ describe('ClaimsManagerWithKlerosArbitrator', function () {
       3 * 24 * 60 * 60,
       mockKlerosArbitrator.address,
       '0x123456',
-      40 * 24 * 60 * 60,
-      '/ipfs/Qm...testhash/metaevidence.json'
+      '/ipfs/Qm...testhash/metaevidence.json',
+      40 * 24 * 60 * 60
     );
   });
 
   describe('constructor', function () {
     it('works', async function () {
-      console.log(claimsManagerWithKlerosArbitrator.address);
+      console.log(claimsManagerWithKlerosArbitration.address);
     });
   });
 });
