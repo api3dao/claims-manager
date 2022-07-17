@@ -202,7 +202,8 @@ contract ClaimsManager is
         uint256 coverageAmountInUsd,
         uint256 claimsAllowedFrom,
         uint256 claimsAllowedUntil,
-        string calldata policy
+        string calldata policy,
+        string calldata metadata
     )
         external
         override
@@ -237,6 +238,7 @@ contract ClaimsManager is
             claimsAllowedFrom,
             claimsAllowedUntil,
             policy,
+            metadata,
             msg.sender
         );
     }
