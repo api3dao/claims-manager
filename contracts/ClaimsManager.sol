@@ -15,17 +15,17 @@ contract ClaimsManager is
         address beneficiary;
         uint256 amountInUsd;
         string evidence;
-        uint256 updateTime;
+        uint32 updateTime;
         ClaimStatus status;
     }
 
     struct Checkpoint {
-        uint256 fromTimestamp;
+        uint32 fromTimestamp;
         uint256 value;
     }
 
     struct Quota {
-        uint256 period;
+        uint32 period;
         uint256 amountInApi3;
     }
 
@@ -176,7 +176,7 @@ contract ClaimsManager is
     // Allows setting a quota that is currently exceeded
     function setQuota(
         address account,
-        uint256 period,
+        uint32 period,
         uint256 amountInApi3
     ) external override onlyManagerOrAdmin {
         require(account != address(0), "Account address zero");
@@ -278,7 +278,7 @@ contract ClaimsManager is
             beneficiary: beneficiary,
             amountInUsd: claimAmountInUsd,
             evidence: evidence,
-            updateTime: block.timestamp,
+            updateTime: uint32(block.timestamp),
             status: ClaimStatus.ClaimCreated
         });
         emit CreatedClaim(
@@ -344,7 +344,7 @@ contract ClaimsManager is
             "Settlement amount not smaller"
         );
         claim.status = ClaimStatus.SettlementProposed;
-        claim.updateTime = block.timestamp;
+        claim.updateTime = uint32(block.timestamp);
         uint256 amountInApi3 = convertUsdToApi3(amountInUsd);
         claimIndexToProposedSettlementAmountInUsd[claimIndex] = amountInUsd;
         claimIndexToProposedSettlementAmountInApi3[claimIndex] = amountInApi3;
@@ -421,7 +421,7 @@ contract ClaimsManager is
             "Arbitrator response period zero"
         );
         claim.status = ClaimStatus.DisputeCreated;
-        claim.updateTime = block.timestamp;
+        claim.updateTime = uint32(block.timestamp);
         claimIndexToArbitrator[claimIndex] = arbitrator;
         emit CreatedDispute(claimIndex, msg.sender, arbitrator);
     }
@@ -602,7 +602,7 @@ contract ClaimsManager is
         }
         accumulatedQuotaUsageCheckpoints.push(
             Checkpoint({
-                fromTimestamp: block.timestamp,
+                fromTimestamp: uint32(block.timestamp),
                 value: accumulatedQuotaUsage
             })
         );
