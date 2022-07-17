@@ -111,7 +111,7 @@ contract ClaimsManagerWithKlerosArbitration is
         uint256 claimIndex,
         uint256 disputeId,
         string calldata evidence
-    ) external override {
+    ) external override onlyManagerOrMediator {
         KlerosArbitrationParameters
             storage klerosArbitrationParameters = klerosArbitrationParametersHistory[
                 claimIndexToKlerosArbitrationParametersHistoryIndex[claimIndex]
