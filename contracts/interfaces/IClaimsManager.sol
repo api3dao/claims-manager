@@ -203,7 +203,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function accountToAccumulatedQuotaUsageCheckpoints(
         address account,
         uint256 checkpointIndex
-    ) external view returns (uint32 fromTimestamp, uint256 value);
+    ) external view returns (uint32 fromTimestamp, uint224 value);
 
     function accountToQuota(address account)
         external

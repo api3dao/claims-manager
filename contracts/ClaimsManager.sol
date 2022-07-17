@@ -21,7 +21,7 @@ contract ClaimsManager is
 
     struct Checkpoint {
         uint32 fromTimestamp;
-        uint256 value;
+        uint224 value;
     }
 
     struct Quota {
@@ -603,7 +603,7 @@ contract ClaimsManager is
         accumulatedQuotaUsageCheckpoints.push(
             Checkpoint({
                 fromTimestamp: uint32(block.timestamp),
-                value: accumulatedQuotaUsage
+                value: uint224(accumulatedQuotaUsage)
             })
         );
         require(
