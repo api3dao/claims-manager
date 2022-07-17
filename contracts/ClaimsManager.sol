@@ -66,6 +66,41 @@ contract ClaimsManager is
         _;
     }
 
+    modifier onlyManagerOrPolicyCreator() {
+        require(
+            manager == msg.sender ||
+                IAccessControlRegistry(accessControlRegistry).hasRole(
+                    policyCreatorRole,
+                    msg.sender
+                ),
+            "Sender cannot create policy"
+        );
+        _;
+    }
+
+    modifier onlyManagerOrMediator() {
+        require(
+            manager == msg.sender ||
+                IAccessControlRegistry(accessControlRegistry).hasRole(
+                    mediatorRole,
+                    msg.sender
+                ),
+            "Sender cannot mediate"
+        );
+        _;
+    }
+
+    modifier onlyArbitrator() {
+        require(
+            IAccessControlRegistry(accessControlRegistry).hasRole(
+                arbitratorRole,
+                msg.sender
+            ),
+            "Sender cannot arbitrate"
+        );
+        _;
+    }
+
     constructor(
         address _accessControlRegistry,
         string memory _adminRoleDescription,
@@ -168,11 +203,12 @@ contract ClaimsManager is
         uint256 claimsAllowedFrom,
         uint256 claimsAllowedUntil,
         string calldata policy
-    ) external override returns (bytes32 policyHash) {
-        require(
-            hasPolicyCreatorRoleOrIsManager(msg.sender),
-            "Sender cannot create policy"
-        );
+    )
+        external
+        override
+        onlyManagerOrPolicyCreator
+        returns (bytes32 policyHash)
+    {
         require(claimant != address(0), "Claimant address zero");
         require(beneficiary != address(0), "Beneficiary address zero");
         require(coverageAmountInUsd != 0, "Coverage amount zero");
@@ -260,11 +296,11 @@ contract ClaimsManager is
         );
     }
 
-    function acceptClaim(uint256 claimIndex) external override {
-        require(
-            hasMediatorRoleOrIsManager(msg.sender),
-            "Sender cannot accept claim"
-        );
+    function acceptClaim(uint256 claimIndex)
+        external
+        override
+        onlyManagerOrMediator
+    {
         Claim storage claim = claims[claimIndex];
         require(
             claim.status == ClaimStatus.ClaimCreated,
@@ -291,11 +327,8 @@ contract ClaimsManager is
     function proposeSettlement(uint256 claimIndex, uint256 amountInUsd)
         external
         override
+        onlyManagerOrMediator
     {
-        require(
-            hasMediatorRoleOrIsManager(msg.sender),
-            "Sender cannot propose settlement"
-        );
         require(amountInUsd != 0, "Settlement amount zero");
         Claim storage claim = claims[claimIndex];
         require(
@@ -376,7 +409,13 @@ contract ClaimsManager is
             revert("Claim is not disputable");
         }
 
-        require(hasArbitratorRole(arbitrator), "Arbitrator lacks role");
+        require(
+            IAccessControlRegistry(accessControlRegistry).hasRole(
+                arbitratorRole,
+                arbitrator
+            ),
+            "Arbitrator lacks role"
+        );
         require(
             arbitratorToResponsePeriod[arbitrator] > 0,
             "Arbitrator response period zero"
@@ -391,8 +430,8 @@ contract ClaimsManager is
         public
         virtual
         override
+        onlyArbitrator
     {
-        require(hasArbitratorRole(msg.sender), "Sender lacks arbitrator role");
         require(
             msg.sender == claimIndexToArbitrator[claimIndex],
             "Sender wrong arbitrator"
@@ -486,47 +525,6 @@ contract ClaimsManager is
         }
         claim.status = ClaimStatus.TimedOut;
         emit TimedOutClaim(claimIndex, claim.claimant);
-    }
-
-    function hasPolicyCreatorRoleOrIsManager(address account)
-        public
-        view
-        override
-        returns (bool)
-    {
-        return
-            manager == account ||
-            IAccessControlRegistry(accessControlRegistry).hasRole(
-                policyCreatorRole,
-                account
-            );
-    }
-
-    function hasMediatorRoleOrIsManager(address account)
-        public
-        view
-        override
-        returns (bool)
-    {
-        return
-            manager == account ||
-            IAccessControlRegistry(accessControlRegistry).hasRole(
-                mediatorRole,
-                account
-            );
-    }
-
-    function hasArbitratorRole(address account)
-        public
-        view
-        override
-        returns (bool)
-    {
-        return
-            IAccessControlRegistry(accessControlRegistry).hasRole(
-                arbitratorRole,
-                account
-            );
     }
 
     function getQuotaUsage(address account)
