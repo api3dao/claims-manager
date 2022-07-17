@@ -26,7 +26,7 @@ contract ClaimsManager is
 
     struct Quota {
         uint32 period;
-        uint256 amountInApi3;
+        uint224 amountInApi3;
     }
 
     bytes32 public immutable override policyCreatorRole;
@@ -177,7 +177,7 @@ contract ClaimsManager is
     function setQuota(
         address account,
         uint32 period,
-        uint256 amountInApi3
+        uint224 amountInApi3
     ) external override onlyManagerOrAdmin {
         require(account != address(0), "Account address zero");
         require(period != 0, "Quota period zero");

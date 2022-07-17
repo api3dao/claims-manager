@@ -40,7 +40,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     event SetQuota(
         address indexed account,
         uint32 period,
-        uint256 amountInApi3,
+        uint224 amountInApi3,
         address sender
     );
 
@@ -141,7 +141,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function setQuota(
         address account,
         uint32 period,
-        uint256 amountInApi3
+        uint224 amountInApi3
     ) external;
 
     function resetQuota(address account) external;
@@ -208,7 +208,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function accountToQuota(address account)
         external
         view
-        returns (uint32 period, uint256 amountInApi3);
+        returns (uint32 period, uint224 amountInApi3);
 
     function policyWithHashExists(bytes32 policyHash)
         external
