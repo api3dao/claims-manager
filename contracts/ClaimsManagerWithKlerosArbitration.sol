@@ -148,6 +148,31 @@ contract ClaimsManagerWithKlerosArbitration is
                 ],
             "Invalid claim-dispute pair"
         );
+        // Ruling options
+        // 0: Kleros refused to arbitrate. We allow both parties to appeal to this.
+        // 1: Pay the claim. Only the mediator can appeal to this.
+        // 2: Pay the settlement. Only the claimant can appeal to this.
+        // We don't check the dispute status (if it's appealable), as the appeal() call
+        // below should revert in that case anyway.
+        if (msg.sender == claims[claimIndex].claimant) {
+            require(
+                arbitrator.currentRuling(disputeId) != 1,
+                "Ruling agrees with claimant"
+            );
+        } else if (
+            manager == msg.sender ||
+            IAccessControlRegistry(accessControlRegistry).hasRole(
+                mediatorRole,
+                msg.sender
+            )
+        ) {
+            require(
+                arbitrator.currentRuling(disputeId) != 2,
+                "Ruling agrees with mediator"
+            );
+        } else {
+            revert("Only parties can appeal");
+        }
         emit AppealedKlerosArbitratorRuling(claimIndex, msg.sender, disputeId);
         arbitrator.appeal{value: msg.value}(
             disputeId,
