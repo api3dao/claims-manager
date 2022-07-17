@@ -97,15 +97,21 @@ contract ClaimsManager is
         _setClaimantResponsePeriod(_claimantResponsePeriod);
     }
 
-    function setApi3ToUsdReader(address _api3ToUsdReader) external override {
-        require(manager == msg.sender, "Sender not manager");
+    function setApi3ToUsdReader(address _api3ToUsdReader)
+        external
+        override
+        onlyManagerOrAdmin
+    {
         require(_api3ToUsdReader != address(0), "Api3ToUsdReader address zero");
         api3ToUsdReader = _api3ToUsdReader;
         emit SetApi3ToUsdReader(_api3ToUsdReader);
     }
 
-    function setApi3Pool(address _api3Pool) external override {
-        require(manager == msg.sender, "Sender not manager");
+    function setApi3Pool(address _api3Pool)
+        external
+        override
+        onlyManagerOrAdmin
+    {
         _setApi3Pool(_api3Pool);
     }
 
