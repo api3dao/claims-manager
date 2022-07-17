@@ -11,12 +11,12 @@ contract ClaimsManager is
     IClaimsManager
 {
     struct Claim {
+        ClaimStatus status;
         address claimant;
         address beneficiary;
+        uint32 updateTime;
         uint256 amountInUsd;
         string evidence;
-        uint32 updateTime;
-        ClaimStatus status;
     }
 
     struct Checkpoint {
@@ -274,12 +274,12 @@ contract ClaimsManager is
         );
         claimIndex = claimCount++;
         claims[claimIndex] = Claim({
+            status: ClaimStatus.ClaimCreated,
             claimant: msg.sender,
             beneficiary: beneficiary,
-            amountInUsd: claimAmountInUsd,
-            evidence: evidence,
             updateTime: uint32(block.timestamp),
-            status: ClaimStatus.ClaimCreated
+            amountInUsd: claimAmountInUsd,
+            evidence: evidence
         });
         emit CreatedClaim(
             claimIndex,

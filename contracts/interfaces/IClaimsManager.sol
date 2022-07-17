@@ -221,12 +221,12 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         external
         view
         returns (
+            ClaimStatus status,
             address claimant,
             address beneficiary,
-            uint256 amountInUsd,
-            string memory evidence,
             uint32 updateTime,
-            ClaimStatus status
+            uint256 amountInUsd,
+            string memory evidence
         );
 
     function claimIndexToProposedSettlementAmountInUsd(uint256 claimIndex)
