@@ -15,7 +15,7 @@
     "test:gas": "REPORT_GAS=true hardhat test"
   },
   "devDependencies": {
-    "@api3/airnode-protocol": "^0.6.2",
+    "@api3/airnode-protocol-v1": "^0.5.2",
     "@api3/api3-dao-contracts": "^0.1.0",
     "@kleros/erc-792": "^8.0.0",
     "@nomiclabs/hardhat-ethers": "^2.0.5",
