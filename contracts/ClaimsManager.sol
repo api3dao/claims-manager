@@ -12,22 +12,22 @@ contract ClaimsManager is
 {
     struct Claim {
         bytes32 policyHash;
+        ClaimStatus status;
         address claimant;
         address beneficiary;
+        uint32 updateTime;
         uint256 amountInUsd;
         string evidence;
-        uint256 updateTime;
-        ClaimStatus status;
     }
 
     struct Checkpoint {
-        uint256 fromTimestamp;
-        uint256 value;
+        uint32 fromTimestamp;
+        uint224 value;
     }
 
     struct Quota {
-        uint256 period;
-        uint256 amountInApi3;
+        uint32 period;
+        uint224 amountInApi3;
     }
 
     bytes32 public immutable override policyCreatorRole;
@@ -69,6 +69,41 @@ contract ClaimsManager is
         _;
     }
 
+    modifier onlyManagerOrPolicyCreator() {
+        require(
+            manager == msg.sender ||
+                IAccessControlRegistry(accessControlRegistry).hasRole(
+                    policyCreatorRole,
+                    msg.sender
+                ),
+            "Sender cannot create policy"
+        );
+        _;
+    }
+
+    modifier onlyManagerOrMediator() {
+        require(
+            manager == msg.sender ||
+                IAccessControlRegistry(accessControlRegistry).hasRole(
+                    mediatorRole,
+                    msg.sender
+                ),
+            "Sender cannot mediate"
+        );
+        _;
+    }
+
+    modifier onlyArbitrator() {
+        require(
+            IAccessControlRegistry(accessControlRegistry).hasRole(
+                arbitratorRole,
+                msg.sender
+            ),
+            "Sender cannot arbitrate"
+        );
+        _;
+    }
+
     constructor(
         address _accessControlRegistry,
         string memory _adminRoleDescription,
@@ -100,15 +135,21 @@ contract ClaimsManager is
         _setClaimantResponsePeriod(_claimantResponsePeriod);
     }
 
-    function setApi3ToUsdReader(address _api3ToUsdReader) external override {
-        require(manager == msg.sender, "Sender not manager");
+    function setApi3ToUsdReader(address _api3ToUsdReader)
+        external
+        override
+        onlyManagerOrAdmin
+    {
         require(_api3ToUsdReader != address(0), "Api3ToUsdReader address zero");
         api3ToUsdReader = _api3ToUsdReader;
         emit SetApi3ToUsdReader(_api3ToUsdReader);
     }
 
-    function setApi3Pool(address _api3Pool) external override {
-        require(manager == msg.sender, "Sender not manager");
+    function setApi3Pool(address _api3Pool)
+        external
+        override
+        onlyManagerOrAdmin
+    {
         _setApi3Pool(_api3Pool);
     }
 
@@ -138,8 +179,8 @@ contract ClaimsManager is
     // Allows setting a quota that is currently exceeded
     function setQuota(
         address account,
-        uint256 period,
-        uint256 amountInApi3
+        uint32 period,
+        uint224 amountInApi3
     ) external override onlyManagerOrAdmin {
         require(account != address(0), "Account address zero");
         require(period != 0, "Quota period zero");
@@ -164,12 +205,14 @@ contract ClaimsManager is
         uint256 coverageAmountInUsd,
         uint256 claimsAllowedFrom,
         uint256 claimsAllowedUntil,
-        string calldata policy
-    ) external override returns (bytes32 policyHash) {
-        require(
-            hasPolicyCreatorRoleOrIsManager(msg.sender),
-            "Sender cannot create policy"
-        );
+        string calldata policy,
+        string calldata metadata
+    )
+        external
+        override
+        onlyManagerOrPolicyCreator
+        returns (bytes32 policyHash)
+    {
         require(claimant != address(0), "Claimant address zero");
         require(beneficiary != address(0), "Beneficiary address zero");
         require(coverageAmountInUsd != 0, "Coverage amount zero");
@@ -200,6 +243,7 @@ contract ClaimsManager is
             claimsAllowedFrom,
             claimsAllowedUntil,
             policy,
+            metadata,
             msg.sender
         );
     }
@@ -241,12 +285,12 @@ contract ClaimsManager is
         claimIndex = claimCount++;
         claims[claimIndex] = Claim({
             policyHash: policyHash,
+            status: ClaimStatus.ClaimCreated,
             claimant: msg.sender,
             beneficiary: beneficiary,
+            updateTime: uint32(block.timestamp),
             amountInUsd: claimAmountInUsd,
-            evidence: evidence,
-            updateTime: block.timestamp,
-            status: ClaimStatus.ClaimCreated
+            evidence: evidence
         });
         emit CreatedClaim(
             claimIndex,
@@ -263,11 +307,11 @@ contract ClaimsManager is
         );
     }
 
-    function acceptClaim(uint256 claimIndex) external override {
-        require(
-            hasMediatorRoleOrIsManager(msg.sender),
-            "Sender cannot accept claim"
-        );
+    function acceptClaim(uint256 claimIndex)
+        external
+        override
+        onlyManagerOrMediator
+    {
         Claim storage claim = claims[claimIndex];
         require(
             claim.status == ClaimStatus.ClaimCreated,
@@ -298,11 +342,8 @@ contract ClaimsManager is
     function proposeSettlement(uint256 claimIndex, uint256 amountInUsd)
         external
         override
+        onlyManagerOrMediator
     {
-        require(
-            hasMediatorRoleOrIsManager(msg.sender),
-            "Sender cannot propose settlement"
-        );
         require(amountInUsd != 0, "Settlement amount zero");
         Claim storage claim = claims[claimIndex];
         require(
@@ -318,7 +359,7 @@ contract ClaimsManager is
             "Settlement amount not smaller"
         );
         claim.status = ClaimStatus.SettlementProposed;
-        claim.updateTime = block.timestamp;
+        claim.updateTime = uint32(block.timestamp);
         uint256 amountInApi3 = convertUsdToApi3(amountInUsd);
         claimIndexToProposedSettlementAmountInUsd[claimIndex] = amountInUsd;
         claimIndexToProposedSettlementAmountInApi3[claimIndex] = amountInApi3;
@@ -390,13 +431,19 @@ contract ClaimsManager is
             revert("Claim is not disputable");
         }
 
-        require(hasArbitratorRole(arbitrator), "Arbitrator lacks role");
+        require(
+            IAccessControlRegistry(accessControlRegistry).hasRole(
+                arbitratorRole,
+                arbitrator
+            ),
+            "Arbitrator lacks role"
+        );
         require(
             arbitratorToResponsePeriod[arbitrator] > 0,
             "Arbitrator response period zero"
         );
         claim.status = ClaimStatus.DisputeCreated;
-        claim.updateTime = block.timestamp;
+        claim.updateTime = uint32(block.timestamp);
         claimIndexToArbitrator[claimIndex] = arbitrator;
         emit CreatedDispute(claimIndex, msg.sender, arbitrator);
     }
@@ -405,8 +452,8 @@ contract ClaimsManager is
         public
         virtual
         override
+        onlyArbitrator
     {
-        require(hasArbitratorRole(msg.sender), "Sender lacks arbitrator role");
         require(
             msg.sender == claimIndexToArbitrator[claimIndex],
             "Sender wrong arbitrator"
@@ -510,47 +557,6 @@ contract ClaimsManager is
         emit TimedOutClaim(claimIndex, claim.claimant);
     }
 
-    function hasPolicyCreatorRoleOrIsManager(address account)
-        public
-        view
-        override
-        returns (bool)
-    {
-        return
-            manager == account ||
-            IAccessControlRegistry(accessControlRegistry).hasRole(
-                policyCreatorRole,
-                account
-            );
-    }
-
-    function hasMediatorRoleOrIsManager(address account)
-        public
-        view
-        override
-        returns (bool)
-    {
-        return
-            manager == account ||
-            IAccessControlRegistry(accessControlRegistry).hasRole(
-                mediatorRole,
-                account
-            );
-    }
-
-    function hasArbitratorRole(address account)
-        public
-        view
-        override
-        returns (bool)
-    {
-        return
-            IAccessControlRegistry(accessControlRegistry).hasRole(
-                arbitratorRole,
-                account
-            );
-    }
-
     function getQuotaUsage(address account)
         public
         view
@@ -626,8 +632,8 @@ contract ClaimsManager is
         }
         accumulatedQuotaUsageCheckpoints.push(
             Checkpoint({
-                fromTimestamp: block.timestamp,
-                value: accumulatedQuotaUsage
+                fromTimestamp: uint32(block.timestamp),
+                value: uint224(accumulatedQuotaUsage)
             })
         );
         require(

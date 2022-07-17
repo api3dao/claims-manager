@@ -39,8 +39,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     event SetQuota(
         address indexed account,
-        uint256 period,
-        uint256 amountInApi3,
+        uint32 period,
+        uint224 amountInApi3,
         address sender
     );
 
@@ -54,6 +54,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint256 claimsAllowedFrom,
         uint256 claimsAllowedUntil,
         string policy,
+        string metadata,
         address sender
     );
 
@@ -140,8 +141,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     function setQuota(
         address account,
-        uint256 period,
-        uint256 amountInApi3
+        uint32 period,
+        uint224 amountInApi3
     ) external;
 
     function resetQuota(address account) external;
@@ -152,7 +153,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint256 coverageAmountInUsd,
         uint256 claimsAllowedFrom,
         uint256 claimsAllowedUntil,
-        string calldata policy
+        string calldata policy,
+        string calldata metadata
     ) external returns (bytes32 policyHash);
 
     function createClaim(
@@ -179,18 +181,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     function timeOutClaim(uint256 claimIndex) external;
 
-    function hasPolicyCreatorRoleOrIsManager(address account)
-        external
-        view
-        returns (bool);
-
-    function hasMediatorRoleOrIsManager(address account)
-        external
-        view
-        returns (bool);
-
-    function hasArbitratorRole(address account) external view returns (bool);
-
     function getQuotaUsage(address account) external view returns (uint256);
 
     function policyCreatorRole() external view returns (bytes32);
@@ -215,12 +205,12 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function accountToAccumulatedQuotaUsageCheckpoints(
         address account,
         uint256 checkpointIndex
-    ) external view returns (uint256 fromTimestamp, uint256 value);
+    ) external view returns (uint32 fromTimestamp, uint224 value);
 
     function accountToQuota(address account)
         external
         view
-        returns (uint256 period, uint256 amountInApi3);
+        returns (uint32 period, uint224 amountInApi3);
 
     function policyHashToRemainingCoverageAmountInUsd(bytes32 policyHash)
         external
@@ -234,12 +224,12 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         view
         returns (
             bytes32 policyHash,
+            ClaimStatus status,
             address claimant,
             address beneficiary,
+            uint32 updateTime,
             uint256 amountInUsd,
-            string memory evidence,
-            uint256 updateTime,
-            ClaimStatus status
+            string memory evidence
         );
 
     function claimIndexToProposedSettlementAmountInUsd(uint256 claimIndex)
