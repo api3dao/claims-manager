@@ -267,14 +267,11 @@ contract ClaimsManager is
                 policy
             )
         );
-        require(
-            policyHashToRemainingCoverageAmountInUsd[policyHash] > 0,
-            "Policy has no coverage"
-        );
         require(claimAmountInUsd != 0, "Claim amount zero");
         require(bytes(evidence).length != 0, "Evidence address empty");
         require(
-            claimAmountInUsd <= coverageAmountInUsd,
+            claimAmountInUsd <=
+                policyHashToRemainingCoverageAmountInUsd[policyHash],
             "Claim larger than coverage"
         );
         require(block.timestamp >= claimsAllowedFrom, "Claims not allowed yet");
