@@ -279,7 +279,7 @@ contract ClaimsManager is
             block.timestamp <= claimsAllowedUntil,
             "Claims not allowed anymore"
         );
-        claimIndex = claimCount++;
+        claimIndex = ++claimCount;
         claims[claimIndex] = Claim({
             policyHash: policyHash,
             status: ClaimStatus.ClaimCreated,
