@@ -82,14 +82,7 @@ contract ClaimsManager is
     }
 
     modifier onlyManagerOrMediator() {
-        require(
-            manager == msg.sender ||
-                IAccessControlRegistry(accessControlRegistry).hasRole(
-                    mediatorRole,
-                    msg.sender
-                ),
-            "Sender cannot mediate"
-        );
+        require(isManagerOrMediator(msg.sender), "Sender cannot mediate");
         _;
     }
 
@@ -575,6 +568,20 @@ contract ClaimsManager is
             block.timestamp - accountToQuota[account].period
         );
         return accumulatedQuotaUsage - accumulatedQuotaUsageThen;
+    }
+
+    function isManagerOrMediator(address account)
+        public
+        view
+        override
+        returns (bool)
+    {
+        return
+            manager == msg.sender ||
+            IAccessControlRegistry(accessControlRegistry).hasRole(
+                mediatorRole,
+                msg.sender
+            );
     }
 
     function _setApi3Pool(address _api3Pool) private {
