@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./ClaimsManager.sol";
+import "./interfaces/IExtendedKlerosArbitrator.sol";
 import "./interfaces/IClaimsManagerWithKlerosArbitration.sol";
 
 contract ClaimsManagerWithKlerosArbitration is
@@ -136,18 +137,13 @@ contract ClaimsManagerWithKlerosArbitration is
         payable
         override
     {
-        KlerosArbitrationParameters
-            storage klerosArbitrationParameters = klerosArbitrationParametersHistory[
-                claimIndexToKlerosArbitrationParametersHistoryIndex[claimIndex]
-            ];
-        IArbitrator arbitrator = klerosArbitrationParameters.arbitrator;
-        require(
-            claimIndex ==
-                klerosArbitratorToDisputeIdToClaimIndex[address(arbitrator)][
-                    disputeId
-                ],
-            "Invalid claim-dispute pair"
-        );
+        (
+            IArbitrator arbitrator,
+            bytes memory extraData
+        ) = getKlerosArbitrationParametersForClaimDisputePair(
+                claimIndex,
+                disputeId
+            );
         // Ruling options
         // 0: Kleros refused to arbitrate or ruled that it's not appropriate to
         // pay out the claim or the settlement. We allow both parties to appeal this.
@@ -177,7 +173,7 @@ contract ClaimsManagerWithKlerosArbitration is
         emit AppealedKlerosArbitratorRuling(claimIndex, msg.sender, disputeId);
         arbitrator.appeal{value: msg.value}(
             disputeId,
-            klerosArbitrationParameters.extraData // Unused in KlerosLiquid
+            extraData // Unused in KlerosLiquid
         );
     }
 
@@ -226,19 +222,146 @@ contract ClaimsManagerWithKlerosArbitration is
         ClaimsManager.resolveDispute(claimIndex, result);
     }
 
+    function executeRuling(uint256 claimIndex, uint256 disputeId) external {
+        (
+            IArbitrator arbitrator,
+
+        ) = getKlerosArbitrationParametersForClaimDisputePair(
+                claimIndex,
+                disputeId
+            );
+        IExtendedKlerosArbitrator(address(arbitrator)).executeRuling(disputeId);
+    }
+
     // two functions below are implemented to respect the interface
-    function klerosArbitrator() external view returns (IArbitrator) {
+    function klerosArbitrator() public view returns (IArbitrator) {
         return
             klerosArbitrationParametersHistory[
                 klerosArbitrationParametersHistory.length - 1
             ].arbitrator;
     }
 
-    function klerosArbitratorExtraData() external view returns (bytes memory) {
+    function klerosArbitratorExtraData() public view returns (bytes memory) {
         return
             klerosArbitrationParametersHistory[
                 klerosArbitrationParametersHistory.length - 1
             ].extraData;
+    }
+
+    function getKlerosArbitrationParametersForClaimDisputePair(
+        uint256 claimIndex,
+        uint256 disputeId
+    ) public view returns (IArbitrator arbitrator, bytes memory extraData) {
+        KlerosArbitrationParameters
+            storage klerosArbitrationParameters = klerosArbitrationParametersHistory[
+                claimIndexToKlerosArbitrationParametersHistoryIndex[claimIndex]
+            ];
+        arbitrator = klerosArbitrationParameters.arbitrator;
+        require(
+            klerosArbitratorToDisputeIdToClaimIndex[address(arbitrator)][
+                disputeId
+            ] == claimIndex,
+            "Invalid claim-dispute pair"
+        );
+        extraData = klerosArbitrationParameters.extraData;
+    }
+
+    function arbitrationCost() external view returns (uint256) {
+        return klerosArbitrator().arbitrationCost(klerosArbitratorExtraData());
+    }
+
+    function appealCost(uint256 claimIndex, uint256 disputeId)
+        external
+        view
+        returns (uint256)
+    {
+        (
+            IArbitrator arbitrator,
+            bytes memory extraData
+        ) = getKlerosArbitrationParametersForClaimDisputePair(
+                claimIndex,
+                disputeId
+            );
+        return arbitrator.appealCost(disputeId, extraData);
+    }
+
+    function disputeStatus(uint256 claimIndex, uint256 disputeId)
+        external
+        view
+        returns (IArbitrator.DisputeStatus)
+    {
+        (
+            IArbitrator arbitrator,
+
+        ) = getKlerosArbitrationParametersForClaimDisputePair(
+                claimIndex,
+                disputeId
+            );
+        return arbitrator.disputeStatus(disputeId);
+    }
+
+    function currentRuling(uint256 claimIndex, uint256 disputeId)
+        external
+        view
+        returns (uint256)
+    {
+        (
+            IArbitrator arbitrator,
+
+        ) = getKlerosArbitrationParametersForClaimDisputePair(
+                claimIndex,
+                disputeId
+            );
+        return arbitrator.currentRuling(disputeId);
+    }
+
+    function getSubCourt(uint96 subCourtId)
+        external
+        view
+        returns (uint256[] memory children, uint256[4] memory timesPerPeriod)
+    {
+        return
+            IExtendedKlerosArbitrator(address(klerosArbitrator())).getSubCourt(
+                subCourtId
+            );
+    }
+
+    function courts(uint256 subCourtId)
+        external
+        view
+        returns (
+            uint96 parent,
+            bool hiddenVotes,
+            uint256 minStake,
+            uint256 alpha,
+            uint256 feeForJuror,
+            uint256 jurorsForCourtJump
+        )
+    {
+        return
+            IExtendedKlerosArbitrator(address(klerosArbitrator())).courts(
+                subCourtId
+            );
+    }
+
+    function disputes(uint256 disputeId)
+        external
+        view
+        returns (
+            uint96 subCourtId,
+            address arbitrated,
+            uint256 numberOfChoices,
+            uint8 period,
+            uint256 lastPeriodChange,
+            uint256 drawsInRound,
+            uint256 commitsInRound,
+            bool ruled
+        )
+    {
+        return
+            IExtendedKlerosArbitrator(address(klerosArbitrator())).disputes(
+                disputeId
+            );
     }
 
     function _setKlerosArbitrationParameters(
