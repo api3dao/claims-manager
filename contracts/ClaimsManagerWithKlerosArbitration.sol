@@ -111,7 +111,7 @@ contract ClaimsManagerWithKlerosArbitration is
         uint256 claimIndex,
         uint256 disputeId,
         string calldata evidence
-    ) external override {
+    ) external override onlyManagerOrMediator {
         KlerosArbitrationParameters
             storage klerosArbitrationParameters = klerosArbitrationParametersHistory[
                 claimIndexToKlerosArbitrationParametersHistoryIndex[claimIndex]
@@ -148,6 +148,32 @@ contract ClaimsManagerWithKlerosArbitration is
                 ],
             "Invalid claim-dispute pair"
         );
+        // Ruling options
+        // 0: Kleros refused to arbitrate or ruled that it's not appropriate to
+        // pay out the claim or the settlement. We allow both parties to appeal this.
+        // 1: Pay the claim. Only the mediator can appeal this.
+        // 2: Pay the settlement. Only the claimant can appeal this.
+        // We don't check the dispute status (if it's appealable), as the appeal() call
+        // below should revert in that case anyway.
+        if (msg.sender == claims[claimIndex].claimant) {
+            require(
+                arbitrator.currentRuling(disputeId) != 1,
+                "Ruling agrees with claimant"
+            );
+        } else if (
+            manager == msg.sender ||
+            IAccessControlRegistry(accessControlRegistry).hasRole(
+                mediatorRole,
+                msg.sender
+            )
+        ) {
+            require(
+                arbitrator.currentRuling(disputeId) != 2,
+                "Ruling agrees with mediator"
+            );
+        } else {
+            revert("Only parties can appeal");
+        }
         emit AppealedKlerosArbitratorRuling(claimIndex, msg.sender, disputeId);
         arbitrator.appeal{value: msg.value}(
             disputeId,
