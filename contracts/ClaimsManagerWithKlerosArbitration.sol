@@ -145,9 +145,10 @@ contract ClaimsManagerWithKlerosArbitration is
                 disputeId
             );
         // Ruling options
-        // 0: Kleros refused to arbitrate. We allow both parties to appeal to this.
-        // 1: Pay the claim. Only the mediator can appeal to this.
-        // 2: Pay the settlement. Only the claimant can appeal to this.
+        // 0: Kleros refused to arbitrate or ruled that it's not appropriate to
+        // pay out the claim or the settlement. We allow both parties to appeal this.
+        // 1: Pay the claim. Only the mediator can appeal this.
+        // 2: Pay the settlement. Only the claimant can appeal this.
         // We don't check the dispute status (if it's appealable), as the appeal() call
         // below should revert in that case anyway.
         if (msg.sender == claims[claimIndex].claimant) {
