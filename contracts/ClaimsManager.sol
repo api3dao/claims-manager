@@ -11,6 +11,7 @@ contract ClaimsManager is
     IClaimsManager
 {
     struct Claim {
+        bytes32 policyHash;
         ClaimStatus status;
         address claimant;
         address beneficiary;
@@ -43,7 +44,9 @@ contract ClaimsManager is
         override accountToAccumulatedQuotaUsageCheckpoints;
     mapping(address => Quota) public override accountToQuota;
 
-    mapping(bytes32 => bool) public override policyWithHashExists;
+    mapping(bytes32 => uint256)
+        public
+        override policyHashToRemainingCoverageAmountInUsd;
     uint256 public override claimCount = 0;
     mapping(uint256 => Claim) public override claims;
     mapping(uint256 => uint256)
@@ -229,7 +232,9 @@ contract ClaimsManager is
                 policy
             )
         );
-        policyWithHashExists[policyHash] = true;
+        policyHashToRemainingCoverageAmountInUsd[
+            policyHash
+        ] = coverageAmountInUsd;
         emit CreatedPolicy(
             beneficiary,
             claimant,
@@ -262,11 +267,11 @@ contract ClaimsManager is
                 policy
             )
         );
-        require(policyWithHashExists[policyHash], "Policy does not exist");
         require(claimAmountInUsd != 0, "Claim amount zero");
         require(bytes(evidence).length != 0, "Evidence address empty");
         require(
-            claimAmountInUsd <= coverageAmountInUsd,
+            claimAmountInUsd <=
+                policyHashToRemainingCoverageAmountInUsd[policyHash],
             "Claim larger than coverage"
         );
         require(block.timestamp >= claimsAllowedFrom, "Claims not allowed yet");
@@ -276,6 +281,7 @@ contract ClaimsManager is
         );
         claimIndex = claimCount++;
         claims[claimIndex] = Claim({
+            policyHash: policyHash,
             status: ClaimStatus.ClaimCreated,
             claimant: msg.sender,
             beneficiary: beneficiary,
@@ -313,7 +319,11 @@ contract ClaimsManager is
             "Too late to accept claim"
         );
         claim.status = ClaimStatus.ClaimAccepted;
-        uint256 amountInApi3 = convertUsdToApi3(claim.amountInUsd);
+        uint256 clippedAmountInUsd = updatePolicyCoverage(
+            claim.policyHash,
+            claim.amountInUsd
+        );
+        uint256 amountInApi3 = convertUsdToApi3(clippedAmountInUsd);
         updateQuotaUsage(msg.sender, amountInApi3);
         address beneficiary = claim.beneficiary;
         emit AcceptedClaim(
@@ -373,14 +383,21 @@ contract ClaimsManager is
             "Too late to accept settlement"
         );
         claim.status = ClaimStatus.SettlementAccepted;
+        // If settlement amount in USD causes the policy coverage to be exceeded, clip the API3 amount being paid out
         uint256 settlementAmountInApi3 = claimIndexToProposedSettlementAmountInApi3[
                 claimIndex
             ];
-        emit AcceptedSettlement(claimIndex, claimant, settlementAmountInApi3);
-        IApi3Pool(api3Pool).payOutClaim(
-            claim.beneficiary,
-            settlementAmountInApi3
+        uint256 settlementAmountInUsd = claimIndexToProposedSettlementAmountInUsd[
+                claimIndex
+            ];
+        uint256 clippedAmountInUsd = updatePolicyCoverage(
+            claim.policyHash,
+            settlementAmountInUsd
         );
+        uint256 clippedAmountInApi3 = (settlementAmountInApi3 *
+            clippedAmountInUsd) / settlementAmountInUsd;
+        emit AcceptedSettlement(claimIndex, claimant, clippedAmountInApi3);
+        IApi3Pool(api3Pool).payOutClaim(claim.beneficiary, clippedAmountInApi3);
     }
 
     function createDispute(uint256 claimIndex, address arbitrator)
@@ -457,7 +474,11 @@ contract ClaimsManager is
             );
         } else if (result == ArbitratorDecision.PayClaim) {
             claim.status = ClaimStatus.DisputeResolvedWithClaimPayout;
-            uint256 amountInApi3 = convertUsdToApi3(claim.amountInUsd);
+            uint256 clippedAmountInUsd = updatePolicyCoverage(
+                claim.policyHash,
+                claim.amountInUsd
+            );
+            uint256 amountInApi3 = convertUsdToApi3(clippedAmountInUsd);
             updateQuotaUsage(msg.sender, amountInApi3);
             emit ResolvedDisputeByAcceptingClaim(
                 claimIndex,
@@ -480,7 +501,11 @@ contract ClaimsManager is
                 );
             } else {
                 claim.status = ClaimStatus.DisputeResolvedWithSettlementPayout;
-                uint256 amountInApi3 = convertUsdToApi3(settlementAmountInUsd);
+                uint256 clippedAmountInUsd = updatePolicyCoverage(
+                    claim.policyHash,
+                    settlementAmountInUsd
+                );
+                uint256 amountInApi3 = convertUsdToApi3(clippedAmountInUsd);
                 updateQuotaUsage(msg.sender, amountInApi3);
                 emit ResolvedDisputeByAcceptingSettlement(
                     claimIndex,
@@ -612,6 +637,21 @@ contract ClaimsManager is
             getQuotaUsage(account) <= accountToQuota[account].amountInApi3,
             "Quota exceeded"
         );
+    }
+
+    function updatePolicyCoverage(bytes32 policyHash, uint256 amountInUsd)
+        private
+        returns (uint256 clippedAmountInUsd)
+    {
+        uint256 remainingCoverageAmountInUsd = policyHashToRemainingCoverageAmountInUsd[
+                policyHash
+            ];
+        clippedAmountInUsd = amountInUsd > remainingCoverageAmountInUsd
+            ? remainingCoverageAmountInUsd
+            : amountInUsd;
+        policyHashToRemainingCoverageAmountInUsd[
+            policyHash
+        ] -= clippedAmountInUsd;
     }
 
     // Assuming the API3/USD rate has 18 decimals
