@@ -11,6 +11,8 @@ contract KlerosLiquidProxy is IKlerosLiquidProxy {
 
     bytes public override klerosArbitratorExtraData; // Kleros expects this exact name
 
+    uint256 private constant META_EVIDENCE_ID = 0;
+
     mapping(uint256 => uint256) public override disputeIdToClaimIndex;
 
     mapping(uint256 => uint256) public override claimIndexToDisputeId;
@@ -29,7 +31,7 @@ contract KlerosLiquidProxy is IKlerosLiquidProxy {
         claimsManager = IClaimsManager(_claimsManager);
         klerosArbitrator = IArbitrator(_klerosArbitrator);
         klerosArbitratorExtraData = _klerosArbitratorExtraData;
-        emit MetaEvidence(0, _metaEvidence);
+        emit MetaEvidence(META_EVIDENCE_ID, _metaEvidence);
     }
 
     function forwardDisputeToKlerosArbitrator(uint256 claimIndex)
@@ -69,7 +71,7 @@ contract KlerosLiquidProxy is IKlerosLiquidProxy {
             claimant,
             disputeId
         );
-        emit Dispute(klerosArbitrator, disputeId, 0, claimIndex);
+        emit Dispute(klerosArbitrator, disputeId, META_EVIDENCE_ID, claimIndex);
         emit Evidence(klerosArbitrator, claimIndex, claimant, evidence);
     }
 
