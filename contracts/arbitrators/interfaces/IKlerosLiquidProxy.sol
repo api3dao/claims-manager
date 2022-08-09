@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@kleros/erc-792/contracts/erc-1497/IEvidence.sol";
 import "@kleros/erc-792/contracts/IArbitrable.sol";
 import "@kleros/erc-792/contracts/IArbitrator.sol";
-import "./IClaimsManager.sol";
+import "../../interfaces/IClaimsManager.sol";
 
 interface IKlerosLiquidProxy is IEvidence, IArbitrable {
     event CreatedDispute(

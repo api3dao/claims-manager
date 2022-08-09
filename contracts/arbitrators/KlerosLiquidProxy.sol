@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./interfaces/IKlerosLiquidProxy.sol";
-import "./interfaces/IExtendedKlerosArbitrator.sol";
+import "./interfaces/IKlerosLiquid.sol";
 
 contract KlerosLiquidProxy is IKlerosLiquidProxy {
     IClaimsManager public immutable override claimsManager;
@@ -127,7 +127,7 @@ contract KlerosLiquidProxy is IKlerosLiquidProxy {
         override
         onlyClaimForwardedToKleros(claimIndex)
     {
-        IExtendedKlerosArbitrator(address(klerosArbitrator)).executeRuling(
+        IKlerosLiquid(address(klerosArbitrator)).executeRuling(
             claimIndexToDisputeId[claimIndex]
         );
     }
@@ -177,10 +177,7 @@ contract KlerosLiquidProxy is IKlerosLiquidProxy {
         override
         returns (uint256[] memory children, uint256[4] memory timesPerPeriod)
     {
-        return
-            IExtendedKlerosArbitrator(address(klerosArbitrator)).getSubCourt(
-                subCourtId
-            );
+        return IKlerosLiquid(address(klerosArbitrator)).getSubCourt(subCourtId);
     }
 
     function courts(uint256 subCourtId)
@@ -196,10 +193,7 @@ contract KlerosLiquidProxy is IKlerosLiquidProxy {
             uint256 jurorsForCourtJump
         )
     {
-        return
-            IExtendedKlerosArbitrator(address(klerosArbitrator)).courts(
-                subCourtId
-            );
+        return IKlerosLiquid(address(klerosArbitrator)).courts(subCourtId);
     }
 
     function claimIndexToDispute(uint256 claimIndex)
@@ -219,7 +213,7 @@ contract KlerosLiquidProxy is IKlerosLiquidProxy {
         )
     {
         return
-            IExtendedKlerosArbitrator(address(klerosArbitrator)).disputes(
+            IKlerosLiquid(address(klerosArbitrator)).disputes(
                 claimIndexToDisputeId[claimIndex]
             );
     }
