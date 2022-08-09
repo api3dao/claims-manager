@@ -34,31 +34,13 @@ contract KlerosLiquidProxy is IKlerosLiquidProxy {
         emit MetaEvidence(META_EVIDENCE_ID, _metaEvidence);
     }
 
-    function forwardDisputeToKlerosArbitrator(uint256 claimIndex)
-        external
-        payable
-        override
-    {
-        (
-            ,
-            IClaimsManager.ClaimStatus claimStatus,
-            address claimant,
-            ,
-            ,
-            ,
-            string memory evidence
-        ) = claimsManager.claims(claimIndex);
-        require(
-            claimStatus == IClaimsManager.ClaimStatus.DisputeCreated,
-            "Dispute not created"
-        );
+    function createDispute(uint256 claimIndex) external payable override {
+        (, , address claimant, , , , string memory evidence) = claimsManager
+            .claims(claimIndex);
+        require(msg.sender == claimant, "Sender not claimant");
         require(
             claimIndexToDisputeId[claimIndex] == 0,
-            "Dispute already forwarded"
-        );
-        require(
-            claimsManager.claimIndexToArbitrator(claimIndex) == address(this),
-            "Different arbitrator"
+            "Dispute already created"
         );
         uint256 disputeId = klerosArbitrator.createDispute{value: msg.value}(
             uint256(type(IClaimsManager.ArbitratorDecision).max),
@@ -66,13 +48,10 @@ contract KlerosLiquidProxy is IKlerosLiquidProxy {
         );
         disputeIdToClaimIndex[disputeId] = claimIndex;
         claimIndexToDisputeId[claimIndex] = disputeId;
-        emit ForwardedDisputeToKlerosArbitrator(
-            claimIndex,
-            claimant,
-            disputeId
-        );
+        emit CreatedDispute(claimIndex, claimant, disputeId);
         emit Dispute(klerosArbitrator, disputeId, META_EVIDENCE_ID, claimIndex);
         emit Evidence(klerosArbitrator, claimIndex, claimant, evidence);
+        claimsManager.createDispute(claimIndex);
     }
 
     function submitEvidenceToKlerosArbitrator(

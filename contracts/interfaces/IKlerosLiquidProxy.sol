@@ -7,7 +7,7 @@ import "@kleros/erc-792/contracts/IArbitrator.sol";
 import "./IClaimsManager.sol";
 
 interface IKlerosLiquidProxy is IEvidence, IArbitrable {
-    event ForwardedDisputeToKlerosArbitrator(
+    event CreatedDispute(
         uint256 indexed claimIndex,
         address indexed claimant,
         uint256 indexed disputeId
@@ -25,9 +25,7 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
         uint256 indexed disputeId
     );
 
-    function forwardDisputeToKlerosArbitrator(uint256 claimIndex)
-        external
-        payable;
+    function createDispute(uint256 claimIndex) external payable;
 
     function submitEvidenceToKlerosArbitrator(
         uint256 claimIndex,
