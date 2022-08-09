@@ -577,10 +577,10 @@ contract ClaimsManager is
         returns (bool)
     {
         return
-            manager == msg.sender ||
+            manager == account ||
             IAccessControlRegistry(accessControlRegistry).hasRole(
                 mediatorRole,
-                msg.sender
+                account
             );
     }
 
