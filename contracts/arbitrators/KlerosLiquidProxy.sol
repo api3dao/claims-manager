@@ -1,10 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/utils/Multicall.sol";
 import "./interfaces/IKlerosLiquidProxy.sol";
 import "./interfaces/IKlerosLiquid.sol";
 
-contract KlerosLiquidProxy is IKlerosLiquidProxy {
+contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
     IClaimsManager public immutable override claimsManager;
 
     IArbitrator public immutable override klerosArbitrator; // Kleros expects this exact name
