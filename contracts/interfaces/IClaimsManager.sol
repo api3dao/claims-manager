@@ -174,7 +174,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     function acceptSettlement(uint256 claimIndex) external;
 
-    function createDispute(uint256 claimIndex, address arbitrator) external;
+    function createDispute(uint256 claimIndex) external;
 
     function resolveDispute(uint256 claimIndex, ArbitratorDecision result)
         external;
