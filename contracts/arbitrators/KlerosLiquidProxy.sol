@@ -114,6 +114,10 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
     }
 
     function rule(uint256 disputeId, uint256 ruling) external override {
+        require(
+            msg.sender == address(klerosArbitrator),
+            "Sender not KlerosLiquid"
+        );
         uint256 claimIndex = disputeIdToClaimIndex[disputeId];
         require(claimIndex != 0, "No dispute for sender to rule");
         emit Ruling(IArbitrator(msg.sender), disputeId, ruling);
