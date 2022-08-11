@@ -47,6 +47,11 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
 
     function currentRuling(uint256 claimIndex) external view returns (uint256);
 
+    function appealPeriod(uint256 claimIndex)
+        external
+        view
+        returns (uint256 start, uint256 end);
+
     function getSubCourt(uint96 subCourtId)
         external
         view

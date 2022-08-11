@@ -4,6 +4,11 @@ pragma solidity ^0.8.0;
 interface IKlerosLiquid {
     function executeRuling(uint256 disputeId) external;
 
+    function appealPeriod(uint256 disputeId)
+        external
+        view
+        returns (uint256 start, uint256 end);
+
     function getSubCourt(uint96 subCourtId)
         external
         view

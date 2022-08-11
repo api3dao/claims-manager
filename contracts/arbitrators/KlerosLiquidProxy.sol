@@ -176,6 +176,18 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
             klerosArbitrator.currentRuling(claimIndexToDisputeId[claimIndex]);
     }
 
+    function appealPeriod(uint256 claimIndex)
+        external
+        view
+        override
+        onlyClaimForwardedToKleros(claimIndex)
+        returns (uint256 start, uint256 end)
+    {
+        (start, end) = IKlerosLiquid(address(klerosArbitrator)).appealPeriod(
+            claimIndexToDisputeId[claimIndex]
+        );
+    }
+
     function getSubCourt(uint96 subCourtId)
         external
         view
