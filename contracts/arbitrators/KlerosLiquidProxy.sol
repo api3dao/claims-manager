@@ -18,7 +18,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
 
     mapping(uint256 => uint256) public override claimIndexToDisputeId;
 
-    modifier onlyClaimForwardedToKleros(uint256 claimIndex) {
+    modifier onlyDisputedClaim(uint256 claimIndex) {
         require(claimIndexToDisputeId[claimIndex] != 0, "Invalid claim index");
         _;
     }
@@ -58,7 +58,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
     function submitEvidenceToKlerosArbitrator(
         uint256 claimIndex,
         string calldata evidence
-    ) external override onlyClaimForwardedToKleros(claimIndex) {
+    ) external override onlyDisputedClaim(claimIndex) {
         require(
             claimsManager.isManagerOrMediator(msg.sender),
             "Sender cannot mediate"
@@ -75,7 +75,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         external
         payable
         override
-        onlyClaimForwardedToKleros(claimIndex)
+        onlyDisputedClaim(claimIndex)
     {
         (, , address claimant, , , , ) = claimsManager.claims(claimIndex);
         // Ruling options
@@ -130,7 +130,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
     function executeRuling(uint256 claimIndex)
         external
         override
-        onlyClaimForwardedToKleros(claimIndex)
+        onlyDisputedClaim(claimIndex)
     {
         IKlerosLiquid(address(klerosArbitrator)).executeRuling(
             claimIndexToDisputeId[claimIndex]
@@ -145,7 +145,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         external
         view
         override
-        onlyClaimForwardedToKleros(claimIndex)
+        onlyDisputedClaim(claimIndex)
         returns (uint256)
     {
         return
@@ -159,7 +159,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         external
         view
         override
-        onlyClaimForwardedToKleros(claimIndex)
+        onlyDisputedClaim(claimIndex)
         returns (IArbitrator.DisputeStatus)
     {
         return
@@ -169,7 +169,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
     function currentRuling(uint256 claimIndex)
         external
         view
-        onlyClaimForwardedToKleros(claimIndex)
+        onlyDisputedClaim(claimIndex)
         returns (uint256)
     {
         return
@@ -180,7 +180,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         external
         view
         override
-        onlyClaimForwardedToKleros(claimIndex)
+        onlyDisputedClaim(claimIndex)
         returns (uint256 start, uint256 end)
     {
         (start, end) = IKlerosLiquid(address(klerosArbitrator)).appealPeriod(
@@ -217,7 +217,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         external
         view
         override
-        onlyClaimForwardedToKleros(claimIndex)
+        onlyDisputedClaim(claimIndex)
         returns (
             uint96 subCourtId,
             address arbitrated,
