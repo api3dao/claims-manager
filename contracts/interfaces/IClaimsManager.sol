@@ -174,7 +174,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     function acceptSettlement(uint256 claimIndex) external;
 
-    function createDispute(uint256 claimIndex, address arbitrator) external;
+    function createDispute(uint256 claimIndex) external;
 
     function resolveDispute(uint256 claimIndex, ArbitratorDecision result)
         external;
@@ -182,6 +182,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function timeOutClaim(uint256 claimIndex) external;
 
     function getQuotaUsage(address account) external view returns (uint256);
+
+    function isManagerOrMediator(address account) external view returns (bool);
 
     function policyCreatorRole() external view returns (bytes32);
 

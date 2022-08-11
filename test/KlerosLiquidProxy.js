@@ -1,10 +1,11 @@
 const hre = require('hardhat');
 
-describe('ClaimsManagerWithKlerosArbitration', function () {
+describe('KlerosLiquidProxy', function () {
   let accessControlRegistry,
     mockApi3Pool,
     mockKlerosArbitrator,
-    claimsManagerWithKlerosArbitration,
+    claimsManager,
+    klerosLiquidProxy,
     mockDapiServer,
     api3ToUsdReader;
   let roles;
@@ -21,33 +22,31 @@ describe('ClaimsManagerWithKlerosArbitration', function () {
     mockApi3Pool = await mockApi3PoolFactory.deploy();
     const mockKlerosArbitratorFactory = await hre.ethers.getContractFactory('MockKlerosArbitrator', roles.deployer);
     mockKlerosArbitrator = await mockKlerosArbitratorFactory.deploy();
-    const claimsManagerWithKlerosArbitrationFactory = await hre.ethers.getContractFactory(
-      'ClaimsManagerWithKlerosArbitration',
-      roles.deployer
-    );
-    claimsManagerWithKlerosArbitration = await claimsManagerWithKlerosArbitrationFactory.deploy(
+    const claimsManagerFactory = await hre.ethers.getContractFactory('ClaimsManager', roles.deployer);
+    claimsManager = await claimsManagerFactory.deploy(
       accessControlRegistry.address,
       'ClaimsManager admin',
       roles.manager.address,
       mockApi3Pool.address,
       3 * 24 * 60 * 60,
-      3 * 24 * 60 * 60,
+      3 * 24 * 60 * 60
+    );
+    const klerosLiquidProxyFactory = await hre.ethers.getContractFactory('KlerosLiquidProxy', roles.deployer);
+    klerosLiquidProxy = await klerosLiquidProxyFactory.deploy(
+      claimsManager.address,
       mockKlerosArbitrator.address,
       '0x123456',
-      '/ipfs/Qm...testhash/metaevidence.json',
-      40 * 24 * 60 * 60
+      '/ipfs/Qm...testhash/metaevidence.json'
     );
     const mockDapiServerFactory = await hre.ethers.getContractFactory('MockDapiServer', roles.deployer);
     mockDapiServer = await mockDapiServerFactory.deploy();
     const api3ToUsdReaderFactory = await hre.ethers.getContractFactory('Api3ToUsdReader', roles.deployer);
-    api3ToUsdReader = await api3ToUsdReaderFactory.deploy(
-      mockDapiServer.address,
-      claimsManagerWithKlerosArbitration.address
-    );
+    api3ToUsdReader = await api3ToUsdReaderFactory.deploy(mockDapiServer.address, claimsManager.address);
   });
 
   describe('constructor', function () {
     it('works', async function () {
+      console.log(klerosLiquidProxy.address);
       console.log(api3ToUsdReader.address);
     });
   });

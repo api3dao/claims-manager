@@ -82,14 +82,7 @@ contract ClaimsManager is
     }
 
     modifier onlyManagerOrMediator() {
-        require(
-            manager == msg.sender ||
-                IAccessControlRegistry(accessControlRegistry).hasRole(
-                    mediatorRole,
-                    msg.sender
-                ),
-            "Sender cannot mediate"
-        );
+        require(isManagerOrMediator(msg.sender), "Sender cannot mediate");
         _;
     }
 
@@ -400,13 +393,17 @@ contract ClaimsManager is
         IApi3Pool(api3Pool).payOutClaim(claim.beneficiary, clippedAmountInApi3);
     }
 
-    function createDispute(uint256 claimIndex, address arbitrator)
+    function createDispute(uint256 claimIndex)
         public
         virtual
         override
+        onlyArbitrator
     {
+        require(
+            arbitratorToResponsePeriod[msg.sender] > 0,
+            "Arbitrator response period zero"
+        );
         Claim storage claim = claims[claimIndex];
-        require(msg.sender == claim.claimant, "Sender not claimant");
         if (claim.status == ClaimStatus.ClaimCreated) {
             require(
                 claim.updateTime + mediatorResponsePeriod <= block.timestamp,
@@ -427,22 +424,10 @@ contract ClaimsManager is
         } else {
             revert("Claim is not disputable");
         }
-
-        require(
-            IAccessControlRegistry(accessControlRegistry).hasRole(
-                arbitratorRole,
-                arbitrator
-            ),
-            "Arbitrator lacks role"
-        );
-        require(
-            arbitratorToResponsePeriod[arbitrator] > 0,
-            "Arbitrator response period zero"
-        );
         claim.status = ClaimStatus.DisputeCreated;
         claim.updateTime = uint32(block.timestamp);
-        claimIndexToArbitrator[claimIndex] = arbitrator;
-        emit CreatedDispute(claimIndex, msg.sender, arbitrator);
+        claimIndexToArbitrator[claimIndex] = msg.sender;
+        emit CreatedDispute(claimIndex, claim.claimant, msg.sender);
     }
 
     function resolveDispute(uint256 claimIndex, ArbitratorDecision result)
@@ -575,6 +560,20 @@ contract ClaimsManager is
             block.timestamp - accountToQuota[account].period
         );
         return accumulatedQuotaUsage - accumulatedQuotaUsageThen;
+    }
+
+    function isManagerOrMediator(address account)
+        public
+        view
+        override
+        returns (bool)
+    {
+        return
+            manager == account ||
+            IAccessControlRegistry(accessControlRegistry).hasRole(
+                mediatorRole,
+                account
+            );
     }
 
     function _setApi3Pool(address _api3Pool) private {
