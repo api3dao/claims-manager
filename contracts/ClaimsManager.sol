@@ -86,12 +86,13 @@ contract ClaimsManager is
         _;
     }
 
-    modifier onlyArbitrator() {
+    modifier onlyManagerOrArbitrator() {
         require(
-            IAccessControlRegistry(accessControlRegistry).hasRole(
-                arbitratorRole,
-                msg.sender
-            ),
+            manager == msg.sender ||
+                IAccessControlRegistry(accessControlRegistry).hasRole(
+                    arbitratorRole,
+                    msg.sender
+                ),
             "Sender cannot arbitrate"
         );
         _;
@@ -397,7 +398,7 @@ contract ClaimsManager is
         public
         virtual
         override
-        onlyArbitrator
+        onlyManagerOrArbitrator
     {
         require(
             arbitratorToResponsePeriod[msg.sender] > 0,
@@ -434,7 +435,7 @@ contract ClaimsManager is
         public
         virtual
         override
-        onlyArbitrator
+        onlyManagerOrArbitrator
     {
         require(
             msg.sender == claimIndexToArbitrator[claimIndex],
