@@ -58,6 +58,18 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address sender
     );
 
+    event UpgradedPolicy(
+        address beneficiary,
+        address indexed claimant,
+        bytes32 indexed policyHash,
+        uint256 coverageAmountInUsd,
+        uint256 claimsAllowedFrom,
+        uint256 claimsAllowedUntil,
+        string policy,
+        string metadata,
+        address sender
+    );
+
     event CreatedClaim(
         uint256 indexed claimIndex,
         address indexed claimant,

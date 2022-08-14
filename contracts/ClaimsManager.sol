@@ -239,6 +239,45 @@ contract ClaimsManager is
         );
     }
 
+    function upgradePolicy(
+        address claimant,
+        address beneficiary,
+        uint256 coverageAmountInUsd,
+        uint256 claimsAllowedFrom,
+        uint256 claimsAllowedUntil,
+        string calldata policy,
+        string calldata metadata
+    ) external onlyManagerOrPolicyCreator returns (bytes32 policyHash) {
+        policyHash = keccak256(
+            abi.encodePacked(claimant, beneficiary, claimsAllowedFrom, policy)
+        );
+        PolicyState storage policyState = policyHashToState[policyHash];
+        require(policyState.claimsAllowedUntil != 0, "Policy does not exist");
+        require(
+            policyState.coverageAmountInUsd <= coverageAmountInUsd,
+            "Policy coverage amount larger"
+        );
+        require(
+            policyState.claimsAllowedUntil <= claimsAllowedUntil,
+            "Policy allows claims for longer"
+        );
+        policyHashToState[policyHash] = PolicyState({
+            claimsAllowedUntil: uint32(claimsAllowedUntil),
+            coverageAmountInUsd: uint224(coverageAmountInUsd)
+        });
+        emit UpgradedPolicy(
+            beneficiary,
+            claimant,
+            policyHash,
+            coverageAmountInUsd,
+            claimsAllowedFrom,
+            claimsAllowedUntil,
+            policy,
+            metadata,
+            msg.sender
+        );
+    }
+
     function createClaim(
         address beneficiary,
         uint256 claimsAllowedFrom,
