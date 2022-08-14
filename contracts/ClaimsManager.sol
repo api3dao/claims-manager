@@ -220,14 +220,7 @@ contract ClaimsManager is
         );
         require(bytes(policy).length != 0, "Policy address empty");
         policyHash = keccak256(
-            abi.encodePacked(
-                claimant,
-                beneficiary,
-                coverageAmountInUsd,
-                claimsAllowedFrom,
-                claimsAllowedUntil,
-                policy
-            )
+            abi.encodePacked(claimant, beneficiary, claimsAllowedFrom, policy)
         );
         policyHashToState[policyHash] = PolicyState({
             claimsAllowedUntil: uint32(claimsAllowedUntil),
@@ -248,33 +241,24 @@ contract ClaimsManager is
 
     function createClaim(
         address beneficiary,
-        uint256 coverageAmountInUsd,
         uint256 claimsAllowedFrom,
-        uint256 claimsAllowedUntil,
         string calldata policy,
         uint256 claimAmountInUsd,
         string calldata evidence
     ) external override returns (uint256 claimIndex) {
         bytes32 policyHash = keccak256(
-            abi.encodePacked(
-                msg.sender,
-                beneficiary,
-                coverageAmountInUsd,
-                claimsAllowedFrom,
-                claimsAllowedUntil,
-                policy
-            )
+            abi.encodePacked(msg.sender, beneficiary, claimsAllowedFrom, policy)
         );
+        PolicyState storage policyState = policyHashToState[policyHash];
         require(claimAmountInUsd != 0, "Claim amount zero");
         require(bytes(evidence).length != 0, "Evidence address empty");
         require(
-            claimAmountInUsd <=
-                policyHashToState[policyHash].coverageAmountInUsd,
+            claimAmountInUsd <= policyState.coverageAmountInUsd,
             "Claim larger than coverage"
         );
         require(block.timestamp >= claimsAllowedFrom, "Claims not allowed yet");
         require(
-            block.timestamp <= claimsAllowedUntil,
+            block.timestamp <= policyState.claimsAllowedUntil,
             "Claims not allowed anymore"
         );
         claimIndex = ++claimCount;
@@ -292,9 +276,7 @@ contract ClaimsManager is
             msg.sender,
             policyHash,
             beneficiary,
-            coverageAmountInUsd,
             claimsAllowedFrom,
-            claimsAllowedUntil,
             policy,
             claimAmountInUsd,
             evidence,

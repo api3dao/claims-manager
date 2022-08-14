@@ -63,9 +63,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address indexed claimant,
         bytes32 indexed policyHash,
         address beneficiary,
-        uint256 coverageAmountInUsd,
         uint256 claimsAllowedFrom,
-        uint256 claimsAllowedUntil,
         string policy,
         uint256 claimAmountInUsd,
         string evidence,
@@ -159,9 +157,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     function createClaim(
         address beneficiary,
-        uint256 coverageAmountInUsd,
         uint256 claimsAllowedFrom,
-        uint256 claimsAllowedUntil,
         string calldata policy,
         uint256 claimAmountInUsd,
         string calldata evidence
