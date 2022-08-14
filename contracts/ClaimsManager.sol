@@ -30,6 +30,11 @@ contract ClaimsManager is
         uint224 amountInApi3;
     }
 
+    struct PolicyState {
+        uint32 claimsAllowedUntil;
+        uint224 coverageAmountInUsd;
+    }
+
     bytes32 public immutable override policyCreatorRole;
     bytes32 public immutable override mediatorRole;
     bytes32 public immutable override arbitratorRole;
@@ -44,9 +49,7 @@ contract ClaimsManager is
         override accountToAccumulatedQuotaUsageCheckpoints;
     mapping(address => Quota) public override accountToQuota;
 
-    mapping(bytes32 => uint256)
-        public
-        override policyHashToRemainingCoverageAmountInUsd;
+    mapping(bytes32 => PolicyState) public override policyHashToState;
     uint256 public override claimCount = 0;
     mapping(uint256 => Claim) public override claims;
     mapping(uint256 => uint256)
@@ -226,9 +229,10 @@ contract ClaimsManager is
                 policy
             )
         );
-        policyHashToRemainingCoverageAmountInUsd[
-            policyHash
-        ] = coverageAmountInUsd;
+        policyHashToState[policyHash] = PolicyState({
+            claimsAllowedUntil: uint32(claimsAllowedUntil),
+            coverageAmountInUsd: uint224(coverageAmountInUsd)
+        });
         emit CreatedPolicy(
             beneficiary,
             claimant,
@@ -265,7 +269,7 @@ contract ClaimsManager is
         require(bytes(evidence).length != 0, "Evidence address empty");
         require(
             claimAmountInUsd <=
-                policyHashToRemainingCoverageAmountInUsd[policyHash],
+                policyHashToState[policyHash].coverageAmountInUsd,
             "Claim larger than coverage"
         );
         require(block.timestamp >= claimsAllowedFrom, "Claims not allowed yet");
@@ -643,15 +647,14 @@ contract ClaimsManager is
         private
         returns (uint256 clippedAmountInUsd)
     {
-        uint256 remainingCoverageAmountInUsd = policyHashToRemainingCoverageAmountInUsd[
-                policyHash
-            ];
+        uint256 remainingCoverageAmountInUsd = policyHashToState[policyHash]
+            .coverageAmountInUsd;
         clippedAmountInUsd = amountInUsd > remainingCoverageAmountInUsd
             ? remainingCoverageAmountInUsd
             : amountInUsd;
-        policyHashToRemainingCoverageAmountInUsd[
-            policyHash
-        ] -= clippedAmountInUsd;
+        policyHashToState[policyHash].coverageAmountInUsd -= uint224(
+            clippedAmountInUsd
+        );
     }
 
     // Assuming the API3/USD rate has 18 decimals
