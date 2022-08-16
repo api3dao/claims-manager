@@ -38,7 +38,7 @@ contract ClaimsManager is
     address public override api3Pool;
     uint256 public override mediatorResponsePeriod;
     uint256 public override claimantResponsePeriod;
-    mapping(address => uint256) public override arbitratorToResponsePeriod;
+    uint256 public override arbitratorResponsePeriod;
     mapping(address => Checkpoint[])
         public
         override accountToAccumulatedQuotaUsageCheckpoints;
@@ -163,11 +163,12 @@ contract ClaimsManager is
         _setClaimantResponsePeriod(_claimantResponsePeriod);
     }
 
-    function setArbitratorResponsePeriod(
-        address arbitrator,
-        uint256 arbitratorResponsePeriod
-    ) external override onlyManagerOrAdmin {
-        _setArbitratorResponsePeriod(arbitrator, arbitratorResponsePeriod);
+    function setArbitratorResponsePeriod(uint256 _arbitratorResponsePeriod)
+        external
+        override
+        onlyManagerOrAdmin
+    {
+        _setArbitratorResponsePeriod(_arbitratorResponsePeriod);
     }
 
     // Allows setting a quota that is currently exceeded
@@ -400,10 +401,6 @@ contract ClaimsManager is
         override
         onlyManagerOrArbitrator
     {
-        require(
-            arbitratorToResponsePeriod[msg.sender] > 0,
-            "Arbitrator response period zero"
-        );
         Claim storage claim = claims[claimIndex];
         if (claim.status == ClaimStatus.ClaimCreated) {
             require(
@@ -447,8 +444,7 @@ contract ClaimsManager is
             "No dispute to be resolved"
         );
         require(
-            claim.updateTime + arbitratorToResponsePeriod[msg.sender] >
-                block.timestamp,
+            claim.updateTime + arbitratorResponsePeriod > block.timestamp,
             "Too late to resolve dispute"
         );
         if (result == ArbitratorDecision.DoNotPay) {
@@ -567,21 +563,15 @@ contract ClaimsManager is
         emit SetClaimantResponsePeriod(_claimantResponsePeriod);
     }
 
-    function _setArbitratorResponsePeriod(
-        address arbitrator,
-        uint256 arbitratorResponsePeriod
-    ) internal {
-        require(arbitrator != address(0), "Arbitrator address zero");
+    function _setArbitratorResponsePeriod(uint256 _arbitratorResponsePeriod)
+        internal
+    {
         require(
-            arbitratorResponsePeriod != 0,
+            _arbitratorResponsePeriod != 0,
             "Arbitrator response period zero"
         );
-        arbitratorToResponsePeriod[arbitrator] = arbitratorResponsePeriod;
-        emit SetArbitratorResponsePeriod(
-            arbitrator,
-            arbitratorResponsePeriod,
-            msg.sender
-        );
+        arbitratorResponsePeriod = _arbitratorResponsePeriod;
+        emit SetArbitratorResponsePeriod(_arbitratorResponsePeriod, msg.sender);
     }
 
     function updateQuotaUsage(address account, uint256 amountInApi3) private {
