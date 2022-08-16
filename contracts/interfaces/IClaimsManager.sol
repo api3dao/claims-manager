@@ -24,11 +24,17 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     event SetApi3ToUsdReader(address api3ToUsdReader);
 
-    event SetApi3Pool(address api3Pool);
+    event SetApi3Pool(address api3Pool, address sender);
 
-    event SetMediatorResponsePeriod(uint256 mediatorResponsePeriod);
+    event SetMediatorResponsePeriod(
+        uint256 mediatorResponsePeriod,
+        address sender
+    );
 
-    event SetClaimantResponsePeriod(uint256 claimantResponsePeriod);
+    event SetClaimantResponsePeriod(
+        uint256 claimantResponsePeriod,
+        address sender
+    );
 
     event SetArbitratorResponsePeriod(
         uint256 arbitratorResponsePeriod,

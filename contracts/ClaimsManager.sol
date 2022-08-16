@@ -544,7 +544,7 @@ contract ClaimsManager is
     function _setApi3Pool(address _api3Pool) private {
         require(_api3Pool != address(0), "Api3Pool address zero");
         api3Pool = _api3Pool;
-        emit SetApi3Pool(_api3Pool);
+        emit SetApi3Pool(_api3Pool, msg.sender);
     }
 
     function _setMediatorResponsePeriod(uint256 _mediatorResponsePeriod)
@@ -552,7 +552,7 @@ contract ClaimsManager is
     {
         require(_mediatorResponsePeriod != 0, "Mediator response period zero");
         mediatorResponsePeriod = _mediatorResponsePeriod;
-        emit SetMediatorResponsePeriod(_mediatorResponsePeriod);
+        emit SetMediatorResponsePeriod(_mediatorResponsePeriod, msg.sender);
     }
 
     function _setClaimantResponsePeriod(uint256 _claimantResponsePeriod)
@@ -560,7 +560,7 @@ contract ClaimsManager is
     {
         require(_claimantResponsePeriod != 0, "Claimant response period zero");
         claimantResponsePeriod = _claimantResponsePeriod;
-        emit SetClaimantResponsePeriod(_claimantResponsePeriod);
+        emit SetClaimantResponsePeriod(_claimantResponsePeriod, msg.sender);
     }
 
     function _setArbitratorResponsePeriod(uint256 _arbitratorResponsePeriod)
