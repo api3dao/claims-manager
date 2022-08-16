@@ -89,7 +89,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     event AcceptedSettlement(
         uint256 indexed claimIndex,
         address indexed claimant,
-        uint256 amountInApi3
+        uint256 clippedAmountInApi3
     );
 
     event CreatedDispute(
@@ -108,7 +108,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint256 indexed claimIndex,
         address indexed claimant,
         address beneficiary,
-        uint256 amountInApi3,
+        uint256 clippedAmountInApi3,
         address arbitrator
     );
 
@@ -116,7 +116,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint256 indexed claimIndex,
         address indexed claimant,
         address beneficiary,
-        uint256 amountInApi3,
+        uint256 clippedAmountInApi3,
         address arbitrator
     );
 
@@ -175,7 +175,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function createDispute(uint256 claimIndex) external;
 
     function resolveDispute(uint256 claimIndex, ArbitratorDecision result)
-        external;
+        external
+        returns (uint256 clippedAmountInApi3);
 
     function getQuotaUsage(address account) external view returns (uint256);
 

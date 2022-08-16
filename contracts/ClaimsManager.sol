@@ -434,6 +434,7 @@ contract ClaimsManager is
         virtual
         override
         onlyManagerOrArbitrator
+        returns (uint256 clippedAmountInApi3)
     {
         require(
             msg.sender == claimIndexToArbitrator[claimIndex],
@@ -462,16 +463,19 @@ contract ClaimsManager is
                 claim.policyHash,
                 claim.amountInUsd
             );
-            uint256 amountInApi3 = convertUsdToApi3(clippedAmountInUsd);
-            updateQuotaUsage(msg.sender, amountInApi3);
+            clippedAmountInApi3 = convertUsdToApi3(clippedAmountInUsd);
+            updateQuotaUsage(msg.sender, clippedAmountInApi3);
             emit ResolvedDisputeByAcceptingClaim(
                 claimIndex,
                 claim.claimant,
                 claim.beneficiary,
-                amountInApi3,
+                clippedAmountInApi3,
                 msg.sender
             );
-            IApi3Pool(api3Pool).payOutClaim(claim.beneficiary, amountInApi3);
+            IApi3Pool(api3Pool).payOutClaim(
+                claim.beneficiary,
+                clippedAmountInApi3
+            );
         } else if (result == ArbitratorDecision.PaySettlement) {
             uint256 settlementAmountInUsd = claimIndexToProposedSettlementAmountInUsd[
                     claimIndex
@@ -489,18 +493,18 @@ contract ClaimsManager is
                     claim.policyHash,
                     settlementAmountInUsd
                 );
-                uint256 amountInApi3 = convertUsdToApi3(clippedAmountInUsd);
-                updateQuotaUsage(msg.sender, amountInApi3);
+                clippedAmountInApi3 = convertUsdToApi3(clippedAmountInUsd);
+                updateQuotaUsage(msg.sender, clippedAmountInApi3);
                 emit ResolvedDisputeByAcceptingSettlement(
                     claimIndex,
                     claim.claimant,
                     claim.beneficiary,
-                    amountInApi3,
+                    clippedAmountInApi3,
                     msg.sender
                 );
                 IApi3Pool(api3Pool).payOutClaim(
                     claim.beneficiary,
-                    amountInApi3
+                    clippedAmountInApi3
                 );
             }
         }
