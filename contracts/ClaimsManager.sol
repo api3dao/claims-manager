@@ -104,7 +104,8 @@ contract ClaimsManager is
         address _manager,
         address _api3Pool,
         uint256 _mediatorResponsePeriod,
-        uint256 _claimantResponsePeriod
+        uint256 _claimantResponsePeriod,
+        uint256 _arbitratorResponsePeriod
     )
         AccessControlRegistryAdminnedWithManager(
             _accessControlRegistry,
@@ -127,6 +128,7 @@ contract ClaimsManager is
         _setApi3Pool(_api3Pool);
         _setMediatorResponsePeriod(_mediatorResponsePeriod);
         _setClaimantResponsePeriod(_claimantResponsePeriod);
+        _setArbitratorResponsePeriod(_arbitratorResponsePeriod);
     }
 
     function setApi3ToUsdReader(address _api3ToUsdReader)
