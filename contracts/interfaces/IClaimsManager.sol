@@ -13,8 +13,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         DisputeCreated,
         DisputeResolvedWithoutPayout,
         DisputeResolvedWithClaimPayout,
-        DisputeResolvedWithSettlementPayout,
-        TimedOut
+        DisputeResolvedWithSettlementPayout
     }
 
     enum ArbitratorDecision {
@@ -132,8 +131,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address arbitrator
     );
 
-    event TimedOutClaim(uint256 indexed claimIndex, address indexed claimant);
-
     function setApi3ToUsdReader(address _api3ToUsdReader) external;
 
     function setApi3Pool(address _api3Pool) external;
@@ -186,8 +183,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     function resolveDispute(uint256 claimIndex, ArbitratorDecision result)
         external;
-
-    function timeOutClaim(uint256 claimIndex) external;
 
     function getQuotaUsage(address account) external view returns (uint256);
 

@@ -533,38 +533,6 @@ contract ClaimsManager is
         }
     }
 
-    function timeOutClaim(uint256 claimIndex) external override {
-        Claim storage claim = claims[claimIndex];
-        ClaimStatus status = claim.status;
-        if (status == ClaimStatus.ClaimCreated) {
-            require(
-                claim.updateTime +
-                    mediatorResponsePeriod +
-                    claimantResponsePeriod <=
-                    block.timestamp,
-                "Awaiting claimant response"
-            );
-        } else if (status == ClaimStatus.SettlementProposed) {
-            require(
-                claim.updateTime + claimantResponsePeriod <= block.timestamp,
-                "Awaiting claimant response"
-            );
-        } else if (status == ClaimStatus.DisputeCreated) {
-            require(
-                claim.updateTime +
-                    arbitratorToResponsePeriod[
-                        claimIndexToArbitrator[claimIndex]
-                    ] <=
-                    block.timestamp,
-                "Awaiting arbitrator response"
-            );
-        } else {
-            revert("Claim cannot be timed out");
-        }
-        claim.status = ClaimStatus.TimedOut;
-        emit TimedOutClaim(claimIndex, claim.claimant);
-    }
-
     function getQuotaUsage(address account)
         public
         view
