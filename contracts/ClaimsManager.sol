@@ -134,7 +134,9 @@ contract ClaimsManager is
         override
         onlyManagerOrAdmin
     {
-        _setApi3ToUsdReader(_api3ToUsdReader);
+        require(_api3ToUsdReader != address(0), "Api3ToUsdReader address zero");
+        api3ToUsdReader = _api3ToUsdReader;
+        emit SetApi3ToUsdReader(_api3ToUsdReader);
     }
 
     function setApi3Pool(address _api3Pool)
@@ -537,12 +539,6 @@ contract ClaimsManager is
                 mediatorRole,
                 account
             );
-    }
-
-    function _setApi3ToUsdReader(address _api3ToUsdReader) private {
-        require(_api3ToUsdReader != address(0), "Api3ToUsdReader address zero");
-        api3ToUsdReader = _api3ToUsdReader;
-        emit SetApi3ToUsdReader(_api3ToUsdReader, msg.sender);
     }
 
     function _setApi3Pool(address _api3Pool) private {
