@@ -361,7 +361,12 @@ contract ClaimsManager is
         );
     }
 
-    function acceptSettlement(uint256 claimIndex) external override {
+    // The user can do a static call to this function to see how much API3 they will receive
+    function acceptSettlement(uint256 claimIndex)
+        external
+        override
+        returns (uint256 clippedAmountInApi3)
+    {
         Claim storage claim = claims[claimIndex];
         address claimant = claim.claimant;
         require(msg.sender == claimant, "Sender not claimant");
@@ -382,7 +387,7 @@ contract ClaimsManager is
             claim.policyHash,
             settlementAmountInUsd
         );
-        uint256 clippedAmountInApi3 = convertUsdToApi3(clippedAmountInUsd);
+        clippedAmountInApi3 = convertUsdToApi3(clippedAmountInUsd);
         emit AcceptedSettlement(claimIndex, claimant, clippedAmountInApi3);
         IApi3Pool(api3Pool).payOutClaim(claim.beneficiary, clippedAmountInApi3);
     }
