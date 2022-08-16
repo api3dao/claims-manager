@@ -22,7 +22,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         PaySettlement
     }
 
-    event SetApi3ToUsdReader(address api3ToUsdReader);
+    event SetApi3ToUsdReader(address api3ToUsdReader, address sender);
 
     event SetApi3Pool(address api3Pool, address sender);
 

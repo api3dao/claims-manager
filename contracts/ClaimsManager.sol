@@ -136,7 +136,7 @@ contract ClaimsManager is
     {
         require(_api3ToUsdReader != address(0), "Api3ToUsdReader address zero");
         api3ToUsdReader = _api3ToUsdReader;
-        emit SetApi3ToUsdReader(_api3ToUsdReader);
+        emit SetApi3ToUsdReader(_api3ToUsdReader, msg.sender);
     }
 
     function setApi3Pool(address _api3Pool)
