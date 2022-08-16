@@ -508,33 +508,6 @@ contract ClaimsManager is
         }
     }
 
-    function claimIsTimedOut(uint256 claimIndex)
-        external
-        view
-        override
-        returns (bool)
-    {
-        Claim storage claim = claims[claimIndex];
-        ClaimStatus status = claim.status;
-        if (status == ClaimStatus.ClaimCreated) {
-            return
-                claim.updateTime +
-                    mediatorResponsePeriod +
-                    claimantResponsePeriod <=
-                block.timestamp;
-        } else if (status == ClaimStatus.SettlementProposed) {
-            return claim.updateTime + claimantResponsePeriod <= block.timestamp;
-        } else if (status == ClaimStatus.DisputeCreated) {
-            return
-                claim.updateTime +
-                    arbitratorToResponsePeriod[
-                        claimIndexToArbitrator[claimIndex]
-                    ] <=
-                block.timestamp;
-        }
-        return false;
-    }
-
     function getQuotaUsage(address account)
         public
         view
