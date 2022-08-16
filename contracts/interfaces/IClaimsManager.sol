@@ -83,7 +83,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint256 indexed claimIndex,
         address indexed claimant,
         uint256 amountInUsd,
-        uint256 amountInApi3,
         address sender
     );
 
@@ -230,11 +229,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         );
 
     function claimIndexToProposedSettlementAmountInUsd(uint256 claimIndex)
-        external
-        view
-        returns (uint256);
-
-    function claimIndexToProposedSettlementAmountInApi3(uint256 claimIndex)
         external
         view
         returns (uint256);

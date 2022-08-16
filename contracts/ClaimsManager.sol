@@ -52,9 +52,6 @@ contract ClaimsManager is
     mapping(uint256 => uint256)
         public
         override claimIndexToProposedSettlementAmountInUsd;
-    mapping(uint256 => uint256)
-        public
-        override claimIndexToProposedSettlementAmountInApi3;
     mapping(uint256 => address) public override claimIndexToArbitrator;
 
     modifier onlyManagerOrAdmin() {
@@ -351,15 +348,15 @@ contract ClaimsManager is
         );
         claim.status = ClaimStatus.SettlementProposed;
         claim.updateTime = uint32(block.timestamp);
-        uint256 amountInApi3 = convertUsdToApi3(amountInUsd);
+        // The mediator quota in API3 has to be updated here
+        // We're pessimistically using the unclipped amount
+        // Current price has to be used as an approximation
+        updateQuotaUsage(msg.sender, convertUsdToApi3(amountInUsd));
         claimIndexToProposedSettlementAmountInUsd[claimIndex] = amountInUsd;
-        claimIndexToProposedSettlementAmountInApi3[claimIndex] = amountInApi3;
-        updateQuotaUsage(msg.sender, amountInApi3);
         emit ProposedSettlement(
             claimIndex,
             claim.claimant,
             amountInUsd,
-            amountInApi3,
             msg.sender
         );
     }
@@ -378,9 +375,6 @@ contract ClaimsManager is
         );
         claim.status = ClaimStatus.SettlementAccepted;
         // If settlement amount in USD causes the policy coverage to be exceeded, clip the API3 amount being paid out
-        uint256 settlementAmountInApi3 = claimIndexToProposedSettlementAmountInApi3[
-                claimIndex
-            ];
         uint256 settlementAmountInUsd = claimIndexToProposedSettlementAmountInUsd[
                 claimIndex
             ];
@@ -388,8 +382,7 @@ contract ClaimsManager is
             claim.policyHash,
             settlementAmountInUsd
         );
-        uint256 clippedAmountInApi3 = (settlementAmountInApi3 *
-            clippedAmountInUsd) / settlementAmountInUsd;
+        uint256 clippedAmountInApi3 = convertUsdToApi3(clippedAmountInUsd);
         emit AcceptedSettlement(claimIndex, claimant, clippedAmountInApi3);
         IApi3Pool(api3Pool).payOutClaim(claim.beneficiary, clippedAmountInApi3);
     }
