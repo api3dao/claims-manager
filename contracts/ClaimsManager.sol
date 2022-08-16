@@ -216,6 +216,7 @@ contract ClaimsManager is
             "Start not earlier than end"
         );
         require(bytes(policy).length != 0, "Policy address empty");
+        // metadata is allowed to be empty
         policyHash = keccak256(
             abi.encodePacked(
                 claimant,
@@ -223,7 +224,8 @@ contract ClaimsManager is
                 coverageAmountInUsd,
                 claimsAllowedFrom,
                 claimsAllowedUntil,
-                policy
+                policy,
+                metadata
             )
         );
         policyHashToRemainingCoverageAmountInUsd[
@@ -249,7 +251,8 @@ contract ClaimsManager is
         uint256 claimsAllowedUntil,
         string calldata policy,
         uint256 claimAmountInUsd,
-        string calldata evidence
+        string calldata evidence,
+        string calldata metadata
     ) external override returns (uint256 claimIndex) {
         bytes32 policyHash = keccak256(
             abi.encodePacked(
@@ -258,7 +261,8 @@ contract ClaimsManager is
                 coverageAmountInUsd,
                 claimsAllowedFrom,
                 claimsAllowedUntil,
-                policy
+                policy,
+                metadata
             )
         );
         require(claimAmountInUsd != 0, "Claim amount zero");
@@ -294,6 +298,7 @@ contract ClaimsManager is
             policy,
             claimAmountInUsd,
             evidence,
+            metadata,
             block.timestamp
         );
     }
