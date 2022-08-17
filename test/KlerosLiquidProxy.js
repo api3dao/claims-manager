@@ -29,7 +29,8 @@ describe('KlerosLiquidProxy', function () {
       roles.manager.address,
       mockApi3Pool.address,
       3 * 24 * 60 * 60,
-      3 * 24 * 60 * 60
+      3 * 24 * 60 * 60,
+      30 * 24 * 60 * 60
     );
     const klerosLiquidProxyFactory = await hre.ethers.getContractFactory('KlerosLiquidProxy', roles.deployer);
     klerosLiquidProxy = await klerosLiquidProxyFactory.deploy(
