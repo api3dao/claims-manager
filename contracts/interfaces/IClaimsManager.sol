@@ -83,6 +83,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         string policy,
         uint256 claimAmountInUsd,
         string evidence,
+        string metadata,
         uint256 claimCreationTime
     );
 
@@ -175,7 +176,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint256 claimsAllowedFrom,
         string calldata policy,
         uint256 claimAmountInUsd,
-        string calldata evidence
+        string calldata evidence,
+        string calldata metadata
     ) external returns (uint256 claimIndex);
 
     function acceptClaim(uint256 claimIndex) external;
