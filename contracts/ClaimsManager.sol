@@ -30,6 +30,11 @@ contract ClaimsManager is
         uint224 amountInApi3;
     }
 
+    struct PolicyState {
+        uint32 claimsAllowedUntil;
+        uint224 coverageAmountInUsd;
+    }
+
     bytes32 public immutable override policyCreatorRole;
     bytes32 public immutable override mediatorRole;
     bytes32 public immutable override arbitratorRole;
@@ -44,9 +49,7 @@ contract ClaimsManager is
         override accountToAccumulatedQuotaUsageCheckpoints;
     mapping(address => Quota) public override accountToQuota;
 
-    mapping(bytes32 => uint256)
-        public
-        override policyHashToRemainingCoverageAmountInUsd;
+    mapping(bytes32 => PolicyState) public override policyHashToState;
     uint256 public override claimCount = 0;
     mapping(uint256 => Claim) public override claims;
     mapping(uint256 => uint256)
@@ -217,19 +220,52 @@ contract ClaimsManager is
         );
         require(bytes(policy).length != 0, "Policy address empty");
         policyHash = keccak256(
-            abi.encodePacked(
-                claimant,
-                beneficiary,
-                coverageAmountInUsd,
-                claimsAllowedFrom,
-                claimsAllowedUntil,
-                policy
-            )
+            abi.encodePacked(claimant, beneficiary, claimsAllowedFrom, policy)
         );
-        policyHashToRemainingCoverageAmountInUsd[
-            policyHash
-        ] = coverageAmountInUsd;
+        policyHashToState[policyHash] = PolicyState({
+            claimsAllowedUntil: uint32(claimsAllowedUntil),
+            coverageAmountInUsd: uint224(coverageAmountInUsd)
+        });
         emit CreatedPolicy(
+            beneficiary,
+            claimant,
+            policyHash,
+            coverageAmountInUsd,
+            claimsAllowedFrom,
+            claimsAllowedUntil,
+            policy,
+            metadata,
+            msg.sender
+        );
+    }
+
+    function upgradePolicy(
+        address claimant,
+        address beneficiary,
+        uint256 coverageAmountInUsd,
+        uint256 claimsAllowedFrom,
+        uint256 claimsAllowedUntil,
+        string calldata policy,
+        string calldata metadata
+    ) external onlyManagerOrPolicyCreator returns (bytes32 policyHash) {
+        policyHash = keccak256(
+            abi.encodePacked(claimant, beneficiary, claimsAllowedFrom, policy)
+        );
+        PolicyState storage policyState = policyHashToState[policyHash];
+        require(policyState.claimsAllowedUntil != 0, "Policy does not exist");
+        require(
+            policyState.coverageAmountInUsd <= coverageAmountInUsd,
+            "Policy coverage amount larger"
+        );
+        require(
+            policyState.claimsAllowedUntil <= claimsAllowedUntil,
+            "Policy allows claims for longer"
+        );
+        policyHashToState[policyHash] = PolicyState({
+            claimsAllowedUntil: uint32(claimsAllowedUntil),
+            coverageAmountInUsd: uint224(coverageAmountInUsd)
+        });
+        emit UpgradedPolicy(
             beneficiary,
             claimant,
             policyHash,
@@ -244,33 +280,24 @@ contract ClaimsManager is
 
     function createClaim(
         address beneficiary,
-        uint256 coverageAmountInUsd,
         uint256 claimsAllowedFrom,
-        uint256 claimsAllowedUntil,
         string calldata policy,
         uint256 claimAmountInUsd,
         string calldata evidence
     ) external override returns (uint256 claimIndex) {
         bytes32 policyHash = keccak256(
-            abi.encodePacked(
-                msg.sender,
-                beneficiary,
-                coverageAmountInUsd,
-                claimsAllowedFrom,
-                claimsAllowedUntil,
-                policy
-            )
+            abi.encodePacked(msg.sender, beneficiary, claimsAllowedFrom, policy)
         );
+        PolicyState storage policyState = policyHashToState[policyHash];
         require(claimAmountInUsd != 0, "Claim amount zero");
         require(bytes(evidence).length != 0, "Evidence address empty");
         require(
-            claimAmountInUsd <=
-                policyHashToRemainingCoverageAmountInUsd[policyHash],
+            claimAmountInUsd <= policyState.coverageAmountInUsd,
             "Claim larger than coverage"
         );
         require(block.timestamp >= claimsAllowedFrom, "Claims not allowed yet");
         require(
-            block.timestamp <= claimsAllowedUntil,
+            block.timestamp <= policyState.claimsAllowedUntil,
             "Claims not allowed anymore"
         );
         claimIndex = ++claimCount;
@@ -288,9 +315,7 @@ contract ClaimsManager is
             msg.sender,
             policyHash,
             beneficiary,
-            coverageAmountInUsd,
             claimsAllowedFrom,
-            claimsAllowedUntil,
             policy,
             claimAmountInUsd,
             evidence,
@@ -611,15 +636,14 @@ contract ClaimsManager is
         private
         returns (uint256 clippedAmountInUsd)
     {
-        uint256 remainingCoverageAmountInUsd = policyHashToRemainingCoverageAmountInUsd[
-                policyHash
-            ];
+        uint256 remainingCoverageAmountInUsd = policyHashToState[policyHash]
+            .coverageAmountInUsd;
         clippedAmountInUsd = amountInUsd > remainingCoverageAmountInUsd
             ? remainingCoverageAmountInUsd
             : amountInUsd;
-        policyHashToRemainingCoverageAmountInUsd[
-            policyHash
-        ] -= clippedAmountInUsd;
+        policyHashToState[policyHash].coverageAmountInUsd -= uint224(
+            clippedAmountInUsd
+        );
     }
 
     // Assuming the API3/USD rate has 18 decimals
