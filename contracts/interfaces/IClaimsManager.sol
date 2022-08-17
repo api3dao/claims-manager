@@ -85,7 +85,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint256 indexed claimIndex,
         address indexed claimant,
         address beneficiary,
-        uint256 amountInApi3,
+        uint256 clippedAmountInApi3,
         address sender
     );
 
