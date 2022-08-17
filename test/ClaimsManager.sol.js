@@ -21,7 +21,8 @@ describe('ClaimsManager', function () {
       roles.manager.address,
       mockApi3Pool.address,
       3 * 24 * 60 * 60,
-      3 * 24 * 60 * 60
+      3 * 24 * 60 * 60,
+      30 * 24 * 60 * 60
     );
     const mockDapiServerFactory = await hre.ethers.getContractFactory('MockDapiServer', roles.deployer);
     mockDapiServer = await mockDapiServerFactory.deploy();

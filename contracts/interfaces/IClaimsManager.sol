@@ -22,16 +22,21 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         PaySettlement
     }
 
-    event SetApi3ToUsdReader(address api3ToUsdReader);
+    event SetApi3ToUsdReader(address api3ToUsdReader, address sender);
 
-    event SetApi3Pool(address api3Pool);
+    event SetApi3Pool(address api3Pool, address sender);
 
-    event SetMediatorResponsePeriod(uint256 mediatorResponsePeriod);
+    event SetMediatorResponsePeriod(
+        uint256 mediatorResponsePeriod,
+        address sender
+    );
 
-    event SetClaimantResponsePeriod(uint256 claimantResponsePeriod);
+    event SetClaimantResponsePeriod(
+        uint256 claimantResponsePeriod,
+        address sender
+    );
 
     event SetArbitratorResponsePeriod(
-        address indexed arbitrator,
         uint256 arbitratorResponsePeriod,
         address sender
     );
@@ -144,10 +149,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function setClaimantResponsePeriod(uint256 _claimantResponsePeriod)
         external;
 
-    function setArbitratorResponsePeriod(
-        address arbitrator,
-        uint256 arbitratorResponsePeriod
-    ) external;
+    function setArbitratorResponsePeriod(uint256 _arbitratorResponsePeriod)
+        external;
 
     function setQuota(
         address account,
@@ -208,10 +211,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     function claimantResponsePeriod() external view returns (uint256);
 
-    function arbitratorToResponsePeriod(address arbitrator)
-        external
-        view
-        returns (uint256);
+    function arbitratorResponsePeriod() external view returns (uint256);
 
     function accountToAccumulatedQuotaUsageCheckpoints(
         address account,
