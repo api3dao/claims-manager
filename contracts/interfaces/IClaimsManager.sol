@@ -85,7 +85,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint256 indexed claimIndex,
         address indexed claimant,
         address beneficiary,
-        uint256 amountInApi3,
+        uint256 clippedAmountInUsd,
+        uint256 clippedAmountInApi3,
         address sender
     );
 
@@ -93,14 +94,14 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint256 indexed claimIndex,
         address indexed claimant,
         uint256 amountInUsd,
-        uint256 amountInApi3,
         address sender
     );
 
     event AcceptedSettlement(
         uint256 indexed claimIndex,
         address indexed claimant,
-        uint256 amountInApi3
+        uint256 clippedAmountInUsd,
+        uint256 clippedAmountInApi3
     );
 
     event CreatedDispute(
@@ -119,7 +120,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint256 indexed claimIndex,
         address indexed claimant,
         address beneficiary,
-        uint256 amountInApi3,
+        uint256 clippedAmountInUsd,
+        uint256 clippedAmountInApi3,
         address arbitrator
     );
 
@@ -127,7 +129,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint256 indexed claimIndex,
         address indexed claimant,
         address beneficiary,
-        uint256 amountInApi3,
+        uint256 clippedAmountInUsd,
+        uint256 clippedAmountInApi3,
         address arbitrator
     );
 
@@ -177,12 +180,15 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function proposeSettlement(uint256 claimIndex, uint256 amountInUsd)
         external;
 
-    function acceptSettlement(uint256 claimIndex) external;
+    function acceptSettlement(uint256 claimIndex)
+        external
+        returns (uint256 clippedAmountInApi3);
 
     function createDispute(uint256 claimIndex) external;
 
     function resolveDispute(uint256 claimIndex, ArbitratorDecision result)
-        external;
+        external
+        returns (uint256 clippedAmountInApi3);
 
     function getQuotaUsage(address account) external view returns (uint256);
 
@@ -238,11 +244,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         );
 
     function claimIndexToProposedSettlementAmountInUsd(uint256 claimIndex)
-        external
-        view
-        returns (uint256);
-
-    function claimIndexToProposedSettlementAmountInApi3(uint256 claimIndex)
         external
         view
         returns (uint256);
