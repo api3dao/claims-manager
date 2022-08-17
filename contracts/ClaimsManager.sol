@@ -229,6 +229,10 @@ contract ClaimsManager is
                 metadata
             )
         );
+        require(
+            policyHashToState[policyHash].claimsAllowedUntil == 0,
+            "Policy created before"
+        );
         policyHashToState[policyHash] = PolicyState({
             claimsAllowedUntil: uint32(claimsAllowedUntil),
             coverageAmountInUsd: uint224(coverageAmountInUsd)
