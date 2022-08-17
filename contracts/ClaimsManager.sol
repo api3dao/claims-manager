@@ -339,17 +339,18 @@ contract ClaimsManager is
             claim.policyHash,
             claim.amountInUsd
         );
-        uint256 amountInApi3 = convertUsdToApi3(clippedAmountInUsd);
-        updateQuotaUsage(msg.sender, amountInApi3);
+        uint256 clippedAmountInApi3 = convertUsdToApi3(clippedAmountInUsd);
+        updateQuotaUsage(msg.sender, clippedAmountInApi3);
         address beneficiary = claim.beneficiary;
         emit AcceptedClaim(
             claimIndex,
             claim.claimant,
             beneficiary,
-            amountInApi3,
+            clippedAmountInUsd,
+            clippedAmountInApi3,
             msg.sender
         );
-        IApi3Pool(api3Pool).payOutClaim(beneficiary, amountInApi3);
+        IApi3Pool(api3Pool).payOutClaim(beneficiary, clippedAmountInApi3);
     }
 
     function proposeSettlement(uint256 claimIndex, uint256 amountInUsd)
@@ -413,7 +414,12 @@ contract ClaimsManager is
             settlementAmountInUsd
         );
         clippedAmountInApi3 = convertUsdToApi3(clippedAmountInUsd);
-        emit AcceptedSettlement(claimIndex, claimant, clippedAmountInApi3);
+        emit AcceptedSettlement(
+            claimIndex,
+            claimant,
+            clippedAmountInUsd,
+            clippedAmountInApi3
+        );
         IApi3Pool(api3Pool).payOutClaim(claim.beneficiary, clippedAmountInApi3);
     }
 
@@ -494,6 +500,7 @@ contract ClaimsManager is
                 claimIndex,
                 claim.claimant,
                 claim.beneficiary,
+                clippedAmountInUsd,
                 clippedAmountInApi3,
                 msg.sender
             );
@@ -524,6 +531,7 @@ contract ClaimsManager is
                     claimIndex,
                     claim.claimant,
                     claim.beneficiary,
+                    clippedAmountInUsd,
                     clippedAmountInApi3,
                     msg.sender
                 );

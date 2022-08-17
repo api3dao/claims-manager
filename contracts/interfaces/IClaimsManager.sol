@@ -85,6 +85,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint256 indexed claimIndex,
         address indexed claimant,
         address beneficiary,
+        uint256 clippedAmountInUsd,
         uint256 clippedAmountInApi3,
         address sender
     );
@@ -99,6 +100,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     event AcceptedSettlement(
         uint256 indexed claimIndex,
         address indexed claimant,
+        uint256 clippedAmountInUsd,
         uint256 clippedAmountInApi3
     );
 
@@ -118,6 +120,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint256 indexed claimIndex,
         address indexed claimant,
         address beneficiary,
+        uint256 clippedAmountInUsd,
         uint256 clippedAmountInApi3,
         address arbitrator
     );
@@ -126,6 +129,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint256 indexed claimIndex,
         address indexed claimant,
         address beneficiary,
+        uint256 clippedAmountInUsd,
         uint256 clippedAmountInApi3,
         address arbitrator
     );
