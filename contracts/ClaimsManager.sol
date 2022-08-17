@@ -249,7 +249,13 @@ contract ClaimsManager is
         string calldata metadata
     ) external onlyManagerOrPolicyCreator returns (bytes32 policyHash) {
         policyHash = keccak256(
-            abi.encodePacked(claimant, beneficiary, claimsAllowedFrom, policy)
+            abi.encodePacked(
+                claimant,
+                beneficiary,
+                claimsAllowedFrom,
+                policy,
+                metadata
+            )
         );
         PolicyState storage policyState = policyHashToState[policyHash];
         require(policyState.claimsAllowedUntil != 0, "Policy does not exist");
