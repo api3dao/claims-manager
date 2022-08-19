@@ -11,13 +11,9 @@ contract ClaimsManager is
     IClaimsManager
 {
     struct Claim {
-        bytes32 policyHash;
         ClaimStatus status;
-        address claimant;
-        address beneficiary;
         uint32 updateTime;
-        uint256 amountInUsd;
-        string evidence;
+        bytes27 hash_;
     }
 
     struct Checkpoint {
@@ -326,13 +322,19 @@ contract ClaimsManager is
         );
         claimIndex = ++claimCount;
         claims[claimIndex] = Claim({
-            policyHash: policyHash,
             status: ClaimStatus.ClaimCreated,
-            claimant: msg.sender,
-            beneficiary: beneficiary,
             updateTime: uint32(block.timestamp),
-            amountInUsd: claimAmountInUsd,
-            evidence: evidence
+            hash_: bytes27(
+                keccak256(
+                    abi.encodePacked(
+                        policyHash,
+                        msg.sender,
+                        beneficiary,
+                        claimAmountInUsd,
+                        evidence
+                    )
+                )
+            )
         });
         emit CreatedClaim(
             claimIndex,
@@ -348,12 +350,30 @@ contract ClaimsManager is
         );
     }
 
-    function acceptClaim(uint256 claimIndex)
-        external
-        override
-        onlyManagerOrMediator
-    {
+    function acceptClaim(
+        uint256 claimIndex,
+        bytes32 policyHash,
+        address claimant,
+        address beneficiary,
+        uint256 claimAmountInUsd,
+        string calldata evidence
+    ) external onlyManagerOrMediator {
         Claim storage claim = claims[claimIndex];
+        require(
+            claim.hash_ ==
+                bytes27(
+                    keccak256(
+                        abi.encodePacked(
+                            policyHash,
+                            claimant,
+                            beneficiary,
+                            claimAmountInUsd,
+                            evidence
+                        )
+                    )
+                ),
+            "No such claim"
+        );
         require(
             claim.status == ClaimStatus.ClaimCreated,
             "Claim is not acceptable"
@@ -363,31 +383,51 @@ contract ClaimsManager is
             "Too late to accept claim"
         );
         claim.status = ClaimStatus.ClaimAccepted;
-        uint256 clippedAmountInUsd = updatePolicyCoverage(
-            claim.policyHash,
-            claim.amountInUsd
+        uint256 clippedPayoutAmountInUsd = updatePolicyCoverage(
+            policyHash,
+            claimAmountInUsd
         );
-        uint256 clippedAmountInApi3 = convertUsdToApi3(clippedAmountInUsd);
-        updateQuotaUsage(msg.sender, clippedAmountInApi3);
-        address beneficiary = claim.beneficiary;
+        uint256 clippedPayoutAmountInApi3 = convertUsdToApi3(
+            clippedPayoutAmountInUsd
+        );
+        updateQuotaUsage(msg.sender, clippedPayoutAmountInApi3);
         emit AcceptedClaim(
             claimIndex,
-            claim.claimant,
+            claimant,
             beneficiary,
-            clippedAmountInUsd,
-            clippedAmountInApi3,
+            clippedPayoutAmountInUsd,
+            clippedPayoutAmountInApi3,
             msg.sender
         );
-        IApi3Pool(api3Pool).payOutClaim(beneficiary, clippedAmountInApi3);
+        IApi3Pool(api3Pool).payOutClaim(beneficiary, clippedPayoutAmountInApi3);
     }
 
-    function proposeSettlement(uint256 claimIndex, uint256 amountInUsd)
-        external
-        override
-        onlyManagerOrMediator
-    {
-        require(amountInUsd != 0, "Settlement amount zero");
+    function proposeSettlement(
+        uint256 claimIndex,
+        bytes32 policyHash,
+        address claimant,
+        address beneficiary,
+        uint256 claimAmountInUsd,
+        string calldata evidence,
+        uint256 settlementAmountInUsd
+    ) external onlyManagerOrMediator {
+        require(settlementAmountInUsd != 0, "Settlement amount zero");
         Claim storage claim = claims[claimIndex];
+        require(
+            claim.hash_ ==
+                bytes27(
+                    keccak256(
+                        abi.encodePacked(
+                            policyHash,
+                            claimant,
+                            beneficiary,
+                            claimAmountInUsd,
+                            evidence
+                        )
+                    )
+                ),
+            "No such claim"
+        );
         require(
             claim.status == ClaimStatus.ClaimCreated,
             "Claim is not settleable"
@@ -397,7 +437,7 @@ contract ClaimsManager is
             "Too late to propose settlement"
         );
         require(
-            amountInUsd < claim.amountInUsd,
+            settlementAmountInUsd < claimAmountInUsd,
             "Settlement amount not smaller"
         );
         claim.status = ClaimStatus.SettlementProposed;
@@ -405,24 +445,43 @@ contract ClaimsManager is
         // The mediator quota in API3 has to be updated here
         // We're pessimistically using the unclipped amount
         // Current price has to be used as an approximation
-        updateQuotaUsage(msg.sender, convertUsdToApi3(amountInUsd));
-        claimIndexToProposedSettlementAmountInUsd[claimIndex] = amountInUsd;
+        updateQuotaUsage(msg.sender, convertUsdToApi3(settlementAmountInUsd));
+        claimIndexToProposedSettlementAmountInUsd[
+            claimIndex
+        ] = settlementAmountInUsd;
         emit ProposedSettlement(
             claimIndex,
-            claim.claimant,
-            amountInUsd,
+            claimant,
+            settlementAmountInUsd,
             msg.sender
         );
     }
 
     // The user can do a static call to this function to see how much API3 they will receive
-    function acceptSettlement(uint256 claimIndex)
-        external
-        override
-        returns (uint256 clippedAmountInApi3)
-    {
+    function acceptSettlement(
+        uint256 claimIndex,
+        bytes32 policyHash,
+        address claimant,
+        address beneficiary,
+        uint256 claimAmountInUsd,
+        string calldata evidence
+    ) external returns (uint256 clippedPayoutAmountInApi3) {
         Claim storage claim = claims[claimIndex];
-        address claimant = claim.claimant;
+        require(
+            claim.hash_ ==
+                bytes27(
+                    keccak256(
+                        abi.encodePacked(
+                            policyHash,
+                            claimant,
+                            beneficiary,
+                            claimAmountInUsd,
+                            evidence
+                        )
+                    )
+                ),
+            "No such claim"
+        );
         require(msg.sender == claimant, "Sender not claimant");
         require(
             claim.status == ClaimStatus.SettlementProposed,
@@ -437,27 +496,44 @@ contract ClaimsManager is
         uint256 settlementAmountInUsd = claimIndexToProposedSettlementAmountInUsd[
                 claimIndex
             ];
-        uint256 clippedAmountInUsd = updatePolicyCoverage(
-            claim.policyHash,
+        uint256 clippedPayoutAmountInUsd = updatePolicyCoverage(
+            policyHash,
             settlementAmountInUsd
         );
-        clippedAmountInApi3 = convertUsdToApi3(clippedAmountInUsd);
+        clippedPayoutAmountInApi3 = convertUsdToApi3(clippedPayoutAmountInUsd);
         emit AcceptedSettlement(
             claimIndex,
             claimant,
-            clippedAmountInUsd,
-            clippedAmountInApi3
+            clippedPayoutAmountInUsd,
+            clippedPayoutAmountInApi3
         );
-        IApi3Pool(api3Pool).payOutClaim(claim.beneficiary, clippedAmountInApi3);
+        IApi3Pool(api3Pool).payOutClaim(beneficiary, clippedPayoutAmountInApi3);
     }
 
-    function createDispute(uint256 claimIndex)
-        public
-        virtual
-        override
-        onlyManagerOrArbitrator
-    {
+    function createDispute(
+        uint256 claimIndex,
+        bytes32 policyHash,
+        address claimant,
+        address beneficiary,
+        uint256 claimAmountInUsd,
+        string calldata evidence
+    ) public override onlyManagerOrArbitrator {
         Claim storage claim = claims[claimIndex];
+        require(
+            claim.hash_ ==
+                bytes27(
+                    keccak256(
+                        abi.encodePacked(
+                            policyHash,
+                            claimant,
+                            beneficiary,
+                            claimAmountInUsd,
+                            evidence
+                        )
+                    )
+                ),
+            "No such claim"
+        );
         if (claim.status == ClaimStatus.ClaimCreated) {
             require(
                 claim.updateTime + mediatorResponsePeriod <= block.timestamp,
@@ -481,21 +557,42 @@ contract ClaimsManager is
         claim.status = ClaimStatus.DisputeCreated;
         claim.updateTime = uint32(block.timestamp);
         claimIndexToArbitrator[claimIndex] = msg.sender;
-        emit CreatedDispute(claimIndex, claim.claimant, msg.sender);
+        emit CreatedDispute(claimIndex, claimant, msg.sender);
     }
 
-    function resolveDispute(uint256 claimIndex, ArbitratorDecision result)
+    function resolveDispute(
+        uint256 claimIndex,
+        bytes32 policyHash,
+        address claimant,
+        address beneficiary,
+        uint256 claimAmountInUsd,
+        string calldata evidence,
+        ArbitratorDecision result
+    )
         public
-        virtual
-        override
         onlyManagerOrArbitrator
-        returns (uint256 clippedAmountInApi3)
+        returns (uint256 clippedPayoutAmountInApi3)
     {
         require(
             msg.sender == claimIndexToArbitrator[claimIndex],
             "Sender wrong arbitrator"
         );
         Claim storage claim = claims[claimIndex];
+        require(
+            claim.hash_ ==
+                bytes27(
+                    keccak256(
+                        abi.encodePacked(
+                            policyHash,
+                            claimant,
+                            beneficiary,
+                            claimAmountInUsd,
+                            evidence
+                        )
+                    )
+                ),
+            "No such claim"
+        );
         require(
             claim.status == ClaimStatus.DisputeCreated,
             "No dispute to be resolved"
@@ -508,28 +605,30 @@ contract ClaimsManager is
             claim.status = ClaimStatus.DisputeResolvedWithoutPayout;
             emit ResolvedDisputeByRejectingClaim(
                 claimIndex,
-                claim.claimant,
+                claimant,
                 msg.sender
             );
         } else if (result == ArbitratorDecision.PayClaim) {
             claim.status = ClaimStatus.DisputeResolvedWithClaimPayout;
-            uint256 clippedAmountInUsd = updatePolicyCoverage(
-                claim.policyHash,
-                claim.amountInUsd
+            uint256 clippedPayoutAmountInUsd = updatePolicyCoverage(
+                policyHash,
+                claimAmountInUsd
             );
-            clippedAmountInApi3 = convertUsdToApi3(clippedAmountInUsd);
-            updateQuotaUsage(msg.sender, clippedAmountInApi3);
+            clippedPayoutAmountInApi3 = convertUsdToApi3(
+                clippedPayoutAmountInUsd
+            );
+            updateQuotaUsage(msg.sender, clippedPayoutAmountInApi3);
             emit ResolvedDisputeByAcceptingClaim(
                 claimIndex,
-                claim.claimant,
-                claim.beneficiary,
-                clippedAmountInUsd,
-                clippedAmountInApi3,
+                claimant,
+                beneficiary,
+                clippedPayoutAmountInUsd,
+                clippedPayoutAmountInApi3,
                 msg.sender
             );
             IApi3Pool(api3Pool).payOutClaim(
-                claim.beneficiary,
-                clippedAmountInApi3
+                beneficiary,
+                clippedPayoutAmountInApi3
             );
         } else if (result == ArbitratorDecision.PaySettlement) {
             uint256 settlementAmountInUsd = claimIndexToProposedSettlementAmountInUsd[
@@ -539,28 +638,30 @@ contract ClaimsManager is
                 claim.status = ClaimStatus.DisputeResolvedWithoutPayout;
                 emit ResolvedDisputeByRejectingClaim(
                     claimIndex,
-                    claim.claimant,
+                    claimant,
                     msg.sender
                 );
             } else {
                 claim.status = ClaimStatus.DisputeResolvedWithSettlementPayout;
-                uint256 clippedAmountInUsd = updatePolicyCoverage(
-                    claim.policyHash,
+                uint256 clippedPayoutAmountInUsd = updatePolicyCoverage(
+                    policyHash,
                     settlementAmountInUsd
                 );
-                clippedAmountInApi3 = convertUsdToApi3(clippedAmountInUsd);
-                updateQuotaUsage(msg.sender, clippedAmountInApi3);
+                clippedPayoutAmountInApi3 = convertUsdToApi3(
+                    clippedPayoutAmountInUsd
+                );
+                updateQuotaUsage(msg.sender, clippedPayoutAmountInApi3);
                 emit ResolvedDisputeByAcceptingSettlement(
                     claimIndex,
-                    claim.claimant,
-                    claim.beneficiary,
-                    clippedAmountInUsd,
-                    clippedAmountInApi3,
+                    claimant,
+                    beneficiary,
+                    clippedPayoutAmountInUsd,
+                    clippedPayoutAmountInApi3,
                     msg.sender
                 );
                 IApi3Pool(api3Pool).payOutClaim(
-                    claim.beneficiary,
-                    clippedAmountInApi3
+                    beneficiary,
+                    clippedPayoutAmountInApi3
                 );
             }
         }
@@ -659,17 +760,18 @@ contract ClaimsManager is
         );
     }
 
-    function updatePolicyCoverage(bytes32 policyHash, uint256 amountInUsd)
+    function updatePolicyCoverage(bytes32 policyHash, uint256 payoutAmountInUsd)
         private
-        returns (uint256 clippedAmountInUsd)
+        returns (uint256 clippedPayoutAmountInUsd)
     {
         uint256 remainingCoverageAmountInUsd = policyHashToState[policyHash]
             .coverageAmountInUsd;
-        clippedAmountInUsd = amountInUsd > remainingCoverageAmountInUsd
+        clippedPayoutAmountInUsd = payoutAmountInUsd >
+            remainingCoverageAmountInUsd
             ? remainingCoverageAmountInUsd
-            : amountInUsd;
+            : payoutAmountInUsd;
         policyHashToState[policyHash].coverageAmountInUsd -= uint224(
-            clippedAmountInUsd
+            clippedPayoutAmountInUsd
         );
     }
 

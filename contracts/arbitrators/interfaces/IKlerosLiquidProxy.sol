@@ -25,14 +25,28 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
         uint256 indexed disputeId
     );
 
-    function createDispute(uint256 claimIndex) external payable;
+    function createDispute(
+        uint256 claimIndex,
+        bytes32 policyHash,
+        address claimant,
+        address beneficiary,
+        uint256 claimAmountInUsd,
+        string calldata evidence
+    ) external payable;
 
     function submitEvidenceToKlerosArbitrator(
         uint256 claimIndex,
         string calldata evidence
     ) external;
 
-    function appealKlerosArbitratorRuling(uint256 claimIndex) external payable;
+    function appealKlerosArbitratorRuling(
+        uint256 claimIndex,
+        bytes32 policyHash,
+        address claimant,
+        address beneficiary,
+        uint256 claimAmountInUsd,
+        string calldata evidence
+    ) external payable;
 
     function executeRuling(uint256 disputeId) external;
 

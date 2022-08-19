@@ -6,6 +6,14 @@ import "./interfaces/IKlerosLiquidProxy.sol";
 import "./interfaces/IKlerosLiquid.sol";
 
 contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
+    struct ClaimDetails {
+        bytes32 policyHash;
+        address claimant;
+        address beneficiary;
+        uint256 amountInUsd;
+        string evidence;
+    }
+
     IClaimsManager public immutable override claimsManager;
 
     IArbitrator public immutable override klerosArbitrator; // Kleros expects this exact name
@@ -17,6 +25,8 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
     mapping(uint256 => uint256) public override disputeIdToClaimIndex;
 
     mapping(uint256 => uint256) public override claimIndexToDisputeId;
+
+    mapping(uint256 => ClaimDetails) public disputeIdToClaimDetails;
 
     modifier onlyDisputedClaim(uint256 claimIndex) {
         require(claimIndexToDisputeId[claimIndex] != 0, "Invalid claim index");
@@ -35,9 +45,30 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         emit MetaEvidence(META_EVIDENCE_ID, _metaEvidence);
     }
 
-    function createDispute(uint256 claimIndex) external payable override {
-        (, , address claimant, , , , string memory evidence) = claimsManager
-            .claims(claimIndex);
+    function createDispute(
+        uint256 claimIndex,
+        bytes32 policyHash,
+        address claimant,
+        address beneficiary,
+        uint256 claimAmountInUsd,
+        string calldata evidence
+    ) external payable override {
+        (, , bytes27 claimHash) = claimsManager.claims(claimIndex);
+        require(
+            claimHash ==
+                bytes27(
+                    keccak256(
+                        abi.encodePacked(
+                            policyHash,
+                            claimant,
+                            beneficiary,
+                            claimAmountInUsd,
+                            evidence
+                        )
+                    )
+                ),
+            "No such claim"
+        );
         require(msg.sender == claimant, "Sender not claimant");
         require(
             claimIndexToDisputeId[claimIndex] == 0,
@@ -48,11 +79,25 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
             klerosArbitratorExtraData
         );
         disputeIdToClaimIndex[disputeId] = claimIndex;
+        disputeIdToClaimDetails[disputeId] = ClaimDetails({
+            policyHash: policyHash,
+            claimant: claimant,
+            beneficiary: beneficiary,
+            amountInUsd: claimAmountInUsd,
+            evidence: evidence
+        });
         claimIndexToDisputeId[claimIndex] = disputeId;
         emit CreatedDispute(claimIndex, claimant, disputeId);
         emit Dispute(klerosArbitrator, disputeId, META_EVIDENCE_ID, claimIndex);
         emit Evidence(klerosArbitrator, claimIndex, claimant, evidence);
-        claimsManager.createDispute(claimIndex);
+        claimsManager.createDispute(
+            claimIndex,
+            policyHash,
+            claimant,
+            beneficiary,
+            claimAmountInUsd,
+            evidence
+        );
     }
 
     function submitEvidenceToKlerosArbitrator(
@@ -71,13 +116,30 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         emit Evidence(klerosArbitrator, claimIndex, msg.sender, evidence);
     }
 
-    function appealKlerosArbitratorRuling(uint256 claimIndex)
-        external
-        payable
-        override
-        onlyDisputedClaim(claimIndex)
-    {
-        (, , address claimant, , , , ) = claimsManager.claims(claimIndex);
+    function appealKlerosArbitratorRuling(
+        uint256 claimIndex,
+        bytes32 policyHash,
+        address claimant,
+        address beneficiary,
+        uint256 claimAmountInUsd,
+        string calldata evidence
+    ) external payable override onlyDisputedClaim(claimIndex) {
+        (, , bytes27 claimHash) = claimsManager.claims(claimIndex);
+        require(
+            claimHash ==
+                bytes27(
+                    keccak256(
+                        abi.encodePacked(
+                            policyHash,
+                            claimant,
+                            beneficiary,
+                            claimAmountInUsd,
+                            evidence
+                        )
+                    )
+                ),
+            "No such claim"
+        );
         // Ruling options
         // 0: Kleros refused to arbitrate or ruled that it's not appropriate to
         // pay out the claim or the settlement. We allow both parties to appeal this.
@@ -124,7 +186,16 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         // should revert if ruling > type(ArbitratorDecision).max
         IClaimsManager.ArbitratorDecision decision = IClaimsManager
             .ArbitratorDecision(ruling);
-        claimsManager.resolveDispute(claimIndex, decision);
+        ClaimDetails storage claimDetails = disputeIdToClaimDetails[disputeId];
+        claimsManager.resolveDispute(
+            claimIndex,
+            claimDetails.policyHash,
+            claimDetails.claimant,
+            claimDetails.beneficiary,
+            claimDetails.amountInUsd,
+            claimDetails.evidence,
+            decision
+        );
     }
 
     function executeRuling(uint256 claimIndex)

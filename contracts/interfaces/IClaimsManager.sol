@@ -91,15 +91,15 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint256 indexed claimIndex,
         address indexed claimant,
         address beneficiary,
-        uint256 clippedAmountInUsd,
-        uint256 clippedAmountInApi3,
+        uint256 clippedPayoutAmountInUsd,
+        uint256 clippedPayoutAmountInApi3,
         address sender
     );
 
     event ProposedSettlement(
         uint256 indexed claimIndex,
         address indexed claimant,
-        uint256 amountInUsd,
+        uint256 settlementAmountInUsd,
         address sender
     );
 
@@ -126,8 +126,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint256 indexed claimIndex,
         address indexed claimant,
         address beneficiary,
-        uint256 clippedAmountInUsd,
-        uint256 clippedAmountInApi3,
+        uint256 clippedPayoutAmountInUsd,
+        uint256 clippedPayoutAmountInApi3,
         address arbitrator
     );
 
@@ -135,8 +135,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint256 indexed claimIndex,
         address indexed claimant,
         address beneficiary,
-        uint256 clippedAmountInUsd,
-        uint256 clippedAmountInApi3,
+        uint256 clippedPayoutAmountInUsd,
+        uint256 clippedPayoutAmountInApi3,
         address arbitrator
     );
 
@@ -180,20 +180,52 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         string calldata metadata
     ) external returns (uint256 claimIndex);
 
-    function acceptClaim(uint256 claimIndex) external;
+    function acceptClaim(
+        uint256 claimIndex,
+        bytes32 policyHash,
+        address claimant,
+        address beneficiary,
+        uint256 claimAmountInUsd,
+        string calldata evidence
+    ) external;
 
-    function proposeSettlement(uint256 claimIndex, uint256 amountInUsd)
-        external;
+    function proposeSettlement(
+        uint256 claimIndex,
+        bytes32 policyHash,
+        address claimant,
+        address beneficiary,
+        uint256 claimAmountInUsd,
+        string calldata evidence,
+        uint256 settlementAmountInUsd
+    ) external;
 
-    function acceptSettlement(uint256 claimIndex)
-        external
-        returns (uint256 clippedAmountInApi3);
+    function acceptSettlement(
+        uint256 claimIndex,
+        bytes32 policyHash,
+        address claimant,
+        address beneficiary,
+        uint256 claimAmountInUsd,
+        string calldata evidence
+    ) external returns (uint256 clippedPayoutAmountInApi3);
 
-    function createDispute(uint256 claimIndex) external;
+    function createDispute(
+        uint256 claimIndex,
+        bytes32 policyHash,
+        address claimant,
+        address beneficiary,
+        uint256 claimAmountInUsd,
+        string calldata evidence
+    ) external;
 
-    function resolveDispute(uint256 claimIndex, ArbitratorDecision result)
-        external
-        returns (uint256 clippedAmountInApi3);
+    function resolveDispute(
+        uint256 claimIndex,
+        bytes32 policyHash,
+        address claimant,
+        address beneficiary,
+        uint256 claimAmountInUsd,
+        string calldata evidence,
+        ArbitratorDecision result
+    ) external returns (uint256 clippedAmountInApi3);
 
     function getQuotaUsage(address account) external view returns (uint256);
 
@@ -236,13 +268,9 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         external
         view
         returns (
-            bytes32 policyHash,
             ClaimStatus status,
-            address claimant,
-            address beneficiary,
             uint32 updateTime,
-            uint256 amountInUsd,
-            string memory evidence
+            bytes27 claimHash
         );
 
     function claimIndexToProposedSettlementAmountInUsd(uint256 claimIndex)
