@@ -103,10 +103,17 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
 
     function klerosArbitratorExtraData() external view returns (bytes memory);
 
-    function disputeIdToClaimIndex(uint256 disputeId)
+    function disputeIdToClaimDetails(uint256 disputeId)
         external
         view
-        returns (uint256 claimIndex);
+        returns (
+            uint256 claimIndex,
+            bytes32 policyHash,
+            address claimant,
+            address beneficiary,
+            uint256 amountInUsd,
+            string memory evidence
+        );
 
     function claimIndexToDisputeId(uint256 claimIndex)
         external

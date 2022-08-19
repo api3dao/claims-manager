@@ -7,6 +7,7 @@ import "./interfaces/IKlerosLiquid.sol";
 
 contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
     struct ClaimDetails {
+        uint256 claimIndex;
         bytes32 policyHash;
         address claimant;
         address beneficiary;
@@ -22,11 +23,9 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
 
     uint256 private constant META_EVIDENCE_ID = 0;
 
-    mapping(uint256 => uint256) public override disputeIdToClaimIndex;
-
     mapping(uint256 => uint256) public override claimIndexToDisputeId;
 
-    mapping(uint256 => ClaimDetails) public disputeIdToClaimDetails;
+    mapping(uint256 => ClaimDetails) public override disputeIdToClaimDetails;
 
     modifier onlyDisputedClaim(uint256 claimIndex) {
         require(claimIndexToDisputeId[claimIndex] != 0, "Invalid claim index");
@@ -78,8 +77,8 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
             uint256(type(IClaimsManager.ArbitratorDecision).max),
             klerosArbitratorExtraData
         );
-        disputeIdToClaimIndex[disputeId] = claimIndex;
         disputeIdToClaimDetails[disputeId] = ClaimDetails({
+            claimIndex: claimIndex,
             policyHash: policyHash,
             claimant: claimant,
             beneficiary: beneficiary,
@@ -180,15 +179,13 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
             msg.sender == address(klerosArbitrator),
             "Sender not KlerosLiquid"
         );
-        uint256 claimIndex = disputeIdToClaimIndex[disputeId];
-        require(claimIndex != 0, "No dispute for sender to rule");
         emit Ruling(IArbitrator(msg.sender), disputeId, ruling);
         // should revert if ruling > type(ArbitratorDecision).max
         IClaimsManager.ArbitratorDecision decision = IClaimsManager
             .ArbitratorDecision(ruling);
         ClaimDetails storage claimDetails = disputeIdToClaimDetails[disputeId];
         claimsManager.resolveDispute(
-            claimIndex,
+            claimDetails.claimIndex,
             claimDetails.policyHash,
             claimDetails.claimant,
             claimDetails.beneficiary,
