@@ -52,22 +52,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         uint256 claimAmountInUsd,
         string calldata evidence
     ) external payable override {
-        (, , bytes27 claimHash) = claimsManager.claims(claimIndex);
-        require(
-            claimHash ==
-                bytes27(
-                    keccak256(
-                        abi.encodePacked(
-                            policyHash,
-                            claimant,
-                            beneficiary,
-                            claimAmountInUsd,
-                            evidence
-                        )
-                    )
-                ),
-            "No such claim"
-        );
+        // claimsManager.createDispute() will validate the arguments so we don't need to
         require(msg.sender == claimant, "Sender not claimant");
         require(
             claimIndexToDisputeId[claimIndex] == 0,
