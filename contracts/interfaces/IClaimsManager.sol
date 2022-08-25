@@ -75,7 +75,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     );
 
     event CreatedClaim(
-        uint256 indexed claimIndex,
+        bytes32 indexed claimHash,
         address indexed claimant,
         bytes32 indexed policyHash,
         address beneficiary,
@@ -88,7 +88,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     );
 
     event AcceptedClaim(
-        uint256 indexed claimIndex,
+        bytes32 indexed claimHash,
         address indexed claimant,
         address beneficiary,
         uint256 clippedPayoutAmountInUsd,
@@ -97,33 +97,33 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     );
 
     event ProposedSettlement(
-        uint256 indexed claimIndex,
+        bytes32 indexed claimHash,
         address indexed claimant,
         uint256 settlementAmountInUsd,
         address sender
     );
 
     event AcceptedSettlement(
-        uint256 indexed claimIndex,
+        bytes32 indexed claimHash,
         address indexed claimant,
         uint256 clippedAmountInUsd,
         uint256 clippedAmountInApi3
     );
 
     event CreatedDispute(
-        uint256 indexed claimIndex,
+        bytes32 indexed claimHash,
         address indexed claimant,
         address arbitrator
     );
 
     event ResolvedDisputeByRejectingClaim(
-        uint256 indexed claimIndex,
+        bytes32 indexed claimHash,
         address indexed claimant,
         address arbitrator
     );
 
     event ResolvedDisputeByAcceptingClaim(
-        uint256 indexed claimIndex,
+        bytes32 indexed claimHash,
         address indexed claimant,
         address beneficiary,
         uint256 clippedPayoutAmountInUsd,
@@ -132,7 +132,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     );
 
     event ResolvedDisputeByAcceptingSettlement(
-        uint256 indexed claimIndex,
+        bytes32 indexed claimHash,
         address indexed claimant,
         address beneficiary,
         uint256 clippedPayoutAmountInUsd,
@@ -178,10 +178,9 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint256 claimAmountInUsd,
         string calldata evidence,
         string calldata metadata
-    ) external returns (uint256 claimIndex);
+    ) external returns (bytes32 claimHash);
 
     function acceptClaim(
-        uint256 claimIndex,
         bytes32 policyHash,
         address claimant,
         address beneficiary,
@@ -190,7 +189,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     ) external;
 
     function proposeSettlement(
-        uint256 claimIndex,
         bytes32 policyHash,
         address claimant,
         address beneficiary,
@@ -200,7 +198,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     ) external;
 
     function acceptSettlement(
-        uint256 claimIndex,
         bytes32 policyHash,
         address claimant,
         address beneficiary,
@@ -209,7 +206,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     ) external returns (uint256 clippedPayoutAmountInApi3);
 
     function createDispute(
-        uint256 claimIndex,
         bytes32 policyHash,
         address claimant,
         address beneficiary,
@@ -218,7 +214,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     ) external;
 
     function resolveDispute(
-        uint256 claimIndex,
         bytes32 policyHash,
         address claimant,
         address beneficiary,
@@ -262,24 +257,13 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         view
         returns (uint32 claimsAllowedUntil, uint224 coverageAmountInUsd);
 
-    function claimCount() external view returns (uint256);
-
-    function claims(uint256 claimIndex)
+    function claimHashToState(bytes32 claimHash)
         external
         view
         returns (
             ClaimStatus status,
             uint32 updateTime,
-            bytes27 claimHash
+            address arbitrator,
+            uint256 proposedSettlementAmountInUsd
         );
-
-    function claimIndexToProposedSettlementAmountInUsd(uint256 claimIndex)
-        external
-        view
-        returns (uint256);
-
-    function claimIndexToArbitrator(uint256 claimIndex)
-        external
-        view
-        returns (address);
 }
