@@ -359,7 +359,7 @@ contract ClaimsManager is
         bytes32 claimHash = keccak256(
             abi.encodePacked(
                 policyHash,
-                msg.sender,
+                claimant,
                 beneficiary,
                 claimAmountInUsd,
                 evidence
@@ -406,7 +406,7 @@ contract ClaimsManager is
         bytes32 claimHash = keccak256(
             abi.encodePacked(
                 policyHash,
-                msg.sender,
+                claimant,
                 beneficiary,
                 claimAmountInUsd,
                 evidence
@@ -493,7 +493,7 @@ contract ClaimsManager is
         bytes32 claimHash = keccak256(
             abi.encodePacked(
                 policyHash,
-                msg.sender,
+                claimant,
                 beneficiary,
                 claimAmountInUsd,
                 evidence
@@ -543,7 +543,7 @@ contract ClaimsManager is
         bytes32 claimHash = keccak256(
             abi.encodePacked(
                 policyHash,
-                msg.sender,
+                claimant,
                 beneficiary,
                 claimAmountInUsd,
                 evidence
