@@ -325,6 +325,10 @@ contract ClaimsManager is
                 evidence
             )
         );
+        require(
+            claimHashToState[claimHash].updateTime == 0,
+            "Claim already exists"
+        );
         claimHashToState[claimHash] = ClaimState({
             status: ClaimStatus.ClaimCreated,
             updateTime: uint32(block.timestamp),
