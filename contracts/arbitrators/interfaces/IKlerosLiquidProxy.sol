@@ -8,46 +8,58 @@ import "../../interfaces/IClaimsManager.sol";
 
 interface IKlerosLiquidProxy is IEvidence, IArbitrable {
     event CreatedDispute(
-        uint256 indexed claimIndex,
+        bytes32 indexed claimHash,
         address indexed claimant,
         uint256 indexed disputeId
     );
 
     event SubmittedEvidenceToKlerosArbitrator(
-        uint256 indexed claimIndex,
+        bytes32 indexed claimHash,
         address indexed sender,
         string evidence
     );
 
     event AppealedKlerosArbitratorRuling(
-        uint256 indexed claimIndex,
+        bytes32 indexed claimHash,
         address indexed sender,
         uint256 indexed disputeId
     );
 
-    function createDispute(uint256 claimIndex) external payable;
+    function createDispute(
+        bytes32 policyHash,
+        address claimant,
+        address beneficiary,
+        uint256 claimAmountInUsd,
+        string calldata evidence
+    ) external payable;
 
     function submitEvidenceToKlerosArbitrator(
-        uint256 claimIndex,
+        bytes32 claimHash,
         string calldata evidence
     ) external;
 
-    function appealKlerosArbitratorRuling(uint256 claimIndex) external payable;
+    function appealKlerosArbitratorRuling(
+        bytes32 policyHash,
+        address claimant,
+        address beneficiary,
+        uint256 claimAmountInUsd,
+        string calldata evidence
+    ) external payable;
 
-    function executeRuling(uint256 disputeId) external;
+    function executeRuling(bytes32 claimHash) external;
 
     function arbitrationCost() external view returns (uint256);
 
-    function appealCost(uint256 claimIndex) external view returns (uint256);
+    function appealCost(bytes32 claimHash) external view returns (uint256);
 
-    function disputeStatus(uint256 claimIndex)
+    function disputeStatus(bytes32 claimHash)
         external
         view
         returns (IArbitrator.DisputeStatus);
 
-    function currentRuling(uint256 claimIndex) external view returns (uint256);
+    function currentRuling(bytes32 claimHash) external view returns (uint256);
 
-    function appealPeriod(uint256 claimIndex)
+    function appealPeriod(bytes32 claimHash)
         external
         view
         returns (uint256 start, uint256 end);
@@ -69,7 +81,7 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
             uint256 jurorsForCourtJump
         );
 
-    function claimIndexToDispute(uint256 claimIndex)
+    function claimHashToDispute(bytes32 claimHash)
         external
         view
         returns (
@@ -89,12 +101,18 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
 
     function klerosArbitratorExtraData() external view returns (bytes memory);
 
-    function disputeIdToClaimIndex(uint256 disputeId)
+    function disputeIdToClaimDetails(uint256 disputeId)
         external
         view
-        returns (uint256 claimIndex);
+        returns (
+            bytes32 policyHash,
+            address claimant,
+            address beneficiary,
+            uint256 amountInUsd,
+            string memory evidence
+        );
 
-    function claimIndexToDisputeId(uint256 claimIndex)
+    function claimHashToDisputeId(bytes32 claimHash)
         external
         view
         returns (uint256 disputeId);
