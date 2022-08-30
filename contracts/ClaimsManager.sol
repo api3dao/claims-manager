@@ -250,7 +250,12 @@ contract ClaimsManager is
         uint256 claimsAllowedUntil,
         string calldata policy,
         string calldata metadata
-    ) external onlyManagerOrPolicyCreator returns (bytes32 policyHash) {
+    )
+        external
+        override
+        onlyManagerOrPolicyCreator
+        returns (bytes32 policyHash)
+    {
         policyHash = keccak256(
             abi.encodePacked(
                 claimant,

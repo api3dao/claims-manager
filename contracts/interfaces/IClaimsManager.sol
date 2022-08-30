@@ -171,6 +171,16 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         string calldata metadata
     ) external returns (bytes32 policyHash);
 
+    function upgradePolicy(
+        address claimant,
+        address beneficiary,
+        uint256 coverageAmountInUsd,
+        uint256 claimsAllowedFrom,
+        uint256 claimsAllowedUntil,
+        string calldata policy,
+        string calldata metadata
+    ) external returns (bytes32 policyHash);
+
     function createClaim(
         address beneficiary,
         uint256 claimsAllowedFrom,
