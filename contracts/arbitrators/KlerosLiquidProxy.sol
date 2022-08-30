@@ -176,9 +176,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         );
     }
 
-    function executeRuling(bytes32 claimHash) external override {
-        uint256 disputeId = claimHashToDisputeId[claimHash];
-        require(disputeId != 0, "Invalid claim");
+    function executeRuling(uint256 disputeId) external override {
         IKlerosLiquid(address(klerosArbitrator)).executeRuling(disputeId);
     }
 
@@ -186,43 +184,35 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         return klerosArbitrator.arbitrationCost(klerosArbitratorExtraData);
     }
 
-    function appealCost(bytes32 claimHash)
+    function appealCost(uint256 disputeId)
         external
         view
         override
         returns (uint256)
     {
-        uint256 disputeId = claimHashToDisputeId[claimHash];
-        require(disputeId != 0, "Invalid claim");
         return
             klerosArbitrator.appealCost(disputeId, klerosArbitratorExtraData);
     }
 
-    function disputeStatus(bytes32 claimHash)
+    function disputeStatus(uint256 disputeId)
         external
         view
         override
         returns (IArbitrator.DisputeStatus)
     {
-        uint256 disputeId = claimHashToDisputeId[claimHash];
-        require(disputeId != 0, "Invalid claim");
         return klerosArbitrator.disputeStatus(disputeId);
     }
 
-    function currentRuling(bytes32 claimHash) external view returns (uint256) {
-        uint256 disputeId = claimHashToDisputeId[claimHash];
-        require(disputeId != 0, "Invalid claim");
+    function currentRuling(uint256 disputeId) external view returns (uint256) {
         return klerosArbitrator.currentRuling(disputeId);
     }
 
-    function appealPeriod(bytes32 claimHash)
+    function appealPeriod(uint256 disputeId)
         external
         view
         override
         returns (uint256 start, uint256 end)
     {
-        uint256 disputeId = claimHashToDisputeId[claimHash];
-        require(disputeId != 0, "Invalid claim");
         (start, end) = IKlerosLiquid(address(klerosArbitrator)).appealPeriod(
             disputeId
         );
