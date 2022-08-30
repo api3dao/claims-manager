@@ -92,6 +92,11 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
             claimsManager.isManagerOrMediator(msg.sender),
             "Sender cannot mediate"
         );
+        (, address arbitrated, , , , , , bool ruled) = IKlerosLiquid(
+            address(klerosArbitrator)
+        ).disputes(disputeId);
+        require(arbitrated == msg.sender, "Invalid dispute ID");
+        require(!ruled, "Dispute already ruled");
         emit SubmittedEvidenceToKlerosArbitrator(
             evidence,
             msg.sender,
