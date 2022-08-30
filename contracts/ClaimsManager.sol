@@ -446,7 +446,8 @@ contract ClaimsManager is
         address claimant,
         address beneficiary,
         uint256 claimAmountInUsd,
-        string calldata evidence
+        string calldata evidence,
+        uint256 minimumPayoutAmountInApi3
     ) external returns (uint256 clippedPayoutAmountInApi3) {
         bytes32 claimHash = keccak256(
             abi.encodePacked(
@@ -474,6 +475,10 @@ contract ClaimsManager is
             claimState.proposedSettlementAmountInUsd
         );
         clippedPayoutAmountInApi3 = convertUsdToApi3(clippedPayoutAmountInUsd);
+        require(
+            clippedPayoutAmountInApi3 >= minimumPayoutAmountInApi3,
+            "Payout less than minimum"
+        );
         emit AcceptedSettlement(
             claimHash,
             claimant,
