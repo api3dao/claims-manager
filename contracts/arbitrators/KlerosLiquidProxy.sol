@@ -73,13 +73,8 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         });
         claimHashToDisputeIdPlusOne[claimHash] = disputeId + 1;
         emit CreatedDispute(claimHash, claimant, disputeId);
-        emit Dispute(
-            klerosArbitrator,
-            disputeId,
-            META_EVIDENCE_ID,
-            uint256(claimHash)
-        );
-        emit Evidence(klerosArbitrator, uint256(claimHash), claimant, evidence);
+        emit Dispute(klerosArbitrator, disputeId, META_EVIDENCE_ID, disputeId);
+        emit Evidence(klerosArbitrator, disputeId, claimant, evidence);
         claimsManager.createDispute(
             policyHash,
             claimant,
@@ -90,25 +85,19 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
     }
 
     function submitEvidenceToKlerosArbitrator(
-        bytes32 claimHash,
+        uint256 disputeId,
         string calldata evidence
     ) external override {
-        require(claimHashToDisputeIdPlusOne[claimHash] != 0, "Invalid claim");
         require(
             claimsManager.isManagerOrMediator(msg.sender),
             "Sender cannot mediate"
         );
         emit SubmittedEvidenceToKlerosArbitrator(
-            claimHash,
+            evidence,
             msg.sender,
-            evidence
+            disputeId
         );
-        emit Evidence(
-            klerosArbitrator,
-            uint256(claimHash),
-            msg.sender,
-            evidence
-        );
+        emit Evidence(klerosArbitrator, disputeId, msg.sender, evidence);
     }
 
     function appealKlerosArbitratorRuling(

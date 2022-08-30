@@ -14,9 +14,9 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
     );
 
     event SubmittedEvidenceToKlerosArbitrator(
-        bytes32 indexed claimHash,
+        string evidence,
         address indexed sender,
-        string evidence
+        uint256 indexed disputeId
     );
 
     event AppealedKlerosArbitratorRuling(
@@ -34,7 +34,7 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
     ) external payable;
 
     function submitEvidenceToKlerosArbitrator(
-        bytes32 claimHash,
+        uint256 disputeId,
         string calldata evidence
     ) external;
 
