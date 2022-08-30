@@ -112,8 +112,8 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
             string memory evidence
         );
 
-    function claimHashToDisputeId(bytes32 claimHash)
+    function claimHashToDisputeIdPlusOne(bytes32 claimHash)
         external
         view
-        returns (uint256 disputeId);
+        returns (uint256 disputeIdPlusOne);
 }

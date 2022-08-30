@@ -22,7 +22,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
 
     uint256 private constant META_EVIDENCE_ID = 0;
 
-    mapping(bytes32 => uint256) public override claimHashToDisputeId;
+    mapping(bytes32 => uint256) public override claimHashToDisputeIdPlusOne;
 
     mapping(uint256 => ClaimDetails) public override disputeIdToClaimDetails;
 
@@ -57,7 +57,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
             )
         );
         require(
-            claimHashToDisputeId[claimHash] == 0,
+            claimHashToDisputeIdPlusOne[claimHash] == 0,
             "Dispute already created"
         );
         uint256 disputeId = klerosArbitrator.createDispute{value: msg.value}(
@@ -71,7 +71,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
             amountInUsd: claimAmountInUsd,
             evidence: evidence
         });
-        claimHashToDisputeId[claimHash] = disputeId;
+        claimHashToDisputeIdPlusOne[claimHash] = disputeId + 1;
         emit CreatedDispute(claimHash, claimant, disputeId);
         emit Dispute(
             klerosArbitrator,
@@ -93,7 +93,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         bytes32 claimHash,
         string calldata evidence
     ) external override {
-        require(claimHashToDisputeId[claimHash] != 0, "Invalid claim");
+        require(claimHashToDisputeIdPlusOne[claimHash] != 0, "Invalid claim");
         require(
             claimsManager.isManagerOrMediator(msg.sender),
             "Sender cannot mediate"
@@ -127,8 +127,9 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
                 evidence
             )
         );
-        uint256 disputeId = claimHashToDisputeId[claimHash];
-        require(disputeId != 0, "Invalid claim");
+        uint256 disputeIdPlusOne = claimHashToDisputeIdPlusOne[claimHash];
+        require(disputeIdPlusOne != 0, "Invalid claim");
+        uint256 disputeId = disputeIdPlusOne - 1;
         // Ruling options
         // 0: Kleros refused to arbitrate or ruled that it's not appropriate to
         // pay out the claim or the settlement. We allow both parties to appeal this.
@@ -258,8 +259,11 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
             bool ruled
         )
     {
-        uint256 disputeId = claimHashToDisputeId[claimHash];
-        require(disputeId != 0, "Invalid claim");
-        return IKlerosLiquid(address(klerosArbitrator)).disputes(disputeId);
+        uint256 disputeIdPlusOne = claimHashToDisputeIdPlusOne[claimHash];
+        require(disputeIdPlusOne != 0, "Invalid claim");
+        return
+            IKlerosLiquid(address(klerosArbitrator)).disputes(
+                disputeIdPlusOne - 1
+            );
     }
 }
