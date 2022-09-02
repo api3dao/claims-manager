@@ -14,9 +14,9 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
     );
 
     event SubmittedEvidenceToKlerosArbitrator(
-        bytes32 indexed claimHash,
+        string evidence,
         address indexed sender,
-        string evidence
+        uint256 indexed disputeId
     );
 
     event AppealedKlerosArbitratorRuling(
@@ -34,7 +34,7 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
     ) external payable;
 
     function submitEvidenceToKlerosArbitrator(
-        bytes32 claimHash,
+        uint256 disputeId,
         string calldata evidence
     ) external;
 
@@ -46,20 +46,20 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
         string calldata evidence
     ) external payable;
 
-    function executeRuling(bytes32 claimHash) external;
+    function executeRuling(uint256 disputeId) external;
 
     function arbitrationCost() external view returns (uint256);
 
-    function appealCost(bytes32 claimHash) external view returns (uint256);
+    function appealCost(uint256 disputeId) external view returns (uint256);
 
-    function disputeStatus(bytes32 claimHash)
+    function disputeStatus(uint256 disputeId)
         external
         view
         returns (IArbitrator.DisputeStatus);
 
-    function currentRuling(bytes32 claimHash) external view returns (uint256);
+    function currentRuling(uint256 disputeId) external view returns (uint256);
 
-    function appealPeriod(bytes32 claimHash)
+    function appealPeriod(uint256 disputeId)
         external
         view
         returns (uint256 start, uint256 end);
@@ -112,8 +112,8 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
             string memory evidence
         );
 
-    function claimHashToDisputeId(bytes32 claimHash)
+    function claimHashToDisputeIdPlusOne(bytes32 claimHash)
         external
         view
-        returns (uint256 disputeId);
+        returns (uint256 disputeIdPlusOne);
 }
