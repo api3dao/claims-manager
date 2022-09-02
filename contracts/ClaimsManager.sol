@@ -318,6 +318,10 @@ contract ClaimsManager is
             "Increases coverage amount"
         );
         require(
+            claimsAllowedUntil > claimsAllowedFrom,
+            "Start not earlier than end"
+        );
+        require(
             policyState.claimsAllowedUntil >= claimsAllowedUntil,
             "Allows claims for longer"
         );
