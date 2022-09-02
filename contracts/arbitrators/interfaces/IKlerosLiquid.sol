@@ -2,6 +2,14 @@
 pragma solidity ^0.8.0;
 
 interface IKlerosLiquid {
+    enum Period {
+        evidence,
+        commit,
+        vote,
+        appeal,
+        execution
+    }
+
     function executeRuling(uint256 disputeId) external;
 
     function appealPeriod(uint256 disputeId)
