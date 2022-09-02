@@ -233,7 +233,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address claimant,
         address beneficiary,
         uint256 claimAmountInUsd,
-        string calldata evidence
+        string calldata evidence,
+        uint256 minimumPayoutAmountInApi3
     ) external returns (uint256 clippedPayoutAmountInApi3);
 
     function createDispute(
