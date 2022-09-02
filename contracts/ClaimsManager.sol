@@ -250,7 +250,12 @@ contract ClaimsManager is
         uint256 claimsAllowedUntil,
         string calldata policy,
         string calldata metadata
-    ) external onlyManagerOrPolicyCreator returns (bytes32 policyHash) {
+    )
+        external
+        override
+        onlyManagerOrPolicyCreator
+        returns (bytes32 policyHash)
+    {
         policyHash = keccak256(
             abi.encodePacked(
                 claimant,
@@ -284,6 +289,55 @@ contract ClaimsManager is
             policy,
             metadata,
             msg.sender
+        );
+    }
+
+    function downgradePolicy(
+        address claimant,
+        address beneficiary,
+        uint256 coverageAmountInUsd,
+        uint256 claimsAllowedFrom,
+        uint256 claimsAllowedUntil,
+        string calldata policy,
+        string calldata metadata
+    ) external override returns (bytes32 policyHash) {
+        require(claimant == msg.sender, "Sender not claimant");
+        policyHash = keccak256(
+            abi.encodePacked(
+                claimant,
+                beneficiary,
+                claimsAllowedFrom,
+                policy,
+                metadata
+            )
+        );
+        PolicyState storage policyState = policyHashToState[policyHash];
+        require(policyState.claimsAllowedUntil != 0, "Policy does not exist");
+        require(
+            policyState.coverageAmountInUsd >= coverageAmountInUsd,
+            "Increases coverage amount"
+        );
+        require(
+            claimsAllowedUntil > claimsAllowedFrom,
+            "Start not earlier than end"
+        );
+        require(
+            policyState.claimsAllowedUntil >= claimsAllowedUntil,
+            "Allows claims for longer"
+        );
+        policyHashToState[policyHash] = PolicyState({
+            claimsAllowedUntil: uint32(claimsAllowedUntil),
+            coverageAmountInUsd: uint224(coverageAmountInUsd)
+        });
+        emit DowngradedPolicy(
+            beneficiary,
+            claimant,
+            policyHash,
+            coverageAmountInUsd,
+            claimsAllowedFrom,
+            claimsAllowedUntil,
+            policy,
+            metadata
         );
     }
 

@@ -22,7 +22,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
 
     uint256 private constant META_EVIDENCE_ID = 0;
 
-    mapping(bytes32 => uint256) public override claimHashToDisputeId;
+    mapping(bytes32 => uint256) public override claimHashToDisputeIdPlusOne;
 
     mapping(uint256 => ClaimDetails) public override disputeIdToClaimDetails;
 
@@ -57,7 +57,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
             )
         );
         require(
-            claimHashToDisputeId[claimHash] == 0,
+            claimHashToDisputeIdPlusOne[claimHash] == 0,
             "Dispute already created"
         );
         uint256 disputeId = klerosArbitrator.createDispute{value: msg.value}(
@@ -71,15 +71,10 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
             amountInUsd: claimAmountInUsd,
             evidence: evidence
         });
-        claimHashToDisputeId[claimHash] = disputeId;
+        claimHashToDisputeIdPlusOne[claimHash] = disputeId + 1;
         emit CreatedDispute(claimHash, claimant, disputeId);
-        emit Dispute(
-            klerosArbitrator,
-            disputeId,
-            META_EVIDENCE_ID,
-            uint256(claimHash)
-        );
-        emit Evidence(klerosArbitrator, uint256(claimHash), claimant, evidence);
+        emit Dispute(klerosArbitrator, disputeId, META_EVIDENCE_ID, disputeId);
+        emit Evidence(klerosArbitrator, disputeId, claimant, evidence);
         claimsManager.createDispute(
             policyHash,
             claimant,
@@ -90,25 +85,27 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
     }
 
     function submitEvidenceToKlerosArbitrator(
-        bytes32 claimHash,
+        uint256 disputeId,
         string calldata evidence
     ) external override {
-        require(claimHashToDisputeId[claimHash] != 0, "Invalid claim");
         require(
             claimsManager.isManagerOrMediator(msg.sender),
             "Sender cannot mediate"
         );
+        (, address arbitrated, , uint8 period, , , , ) = IKlerosLiquid(
+            address(klerosArbitrator)
+        ).disputes(disputeId);
+        require(arbitrated == address(this), "Invalid dispute ID");
+        require(
+            period == uint8(IKlerosLiquid.Period.evidence),
+            "Dispute not in evidence period"
+        );
         emit SubmittedEvidenceToKlerosArbitrator(
-            claimHash,
+            evidence,
             msg.sender,
-            evidence
+            disputeId
         );
-        emit Evidence(
-            klerosArbitrator,
-            uint256(claimHash),
-            msg.sender,
-            evidence
-        );
+        emit Evidence(klerosArbitrator, disputeId, msg.sender, evidence);
     }
 
     function appealKlerosArbitratorRuling(
@@ -127,8 +124,9 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
                 evidence
             )
         );
-        uint256 disputeId = claimHashToDisputeId[claimHash];
-        require(disputeId != 0, "Invalid claim");
+        uint256 disputeIdPlusOne = claimHashToDisputeIdPlusOne[claimHash];
+        require(disputeIdPlusOne != 0, "Invalid claim");
+        uint256 disputeId = disputeIdPlusOne - 1;
         // Ruling options
         // 0: Kleros refused to arbitrate or ruled that it's not appropriate to
         // pay out the claim or the settlement. We allow both parties to appeal this.
@@ -176,9 +174,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         );
     }
 
-    function executeRuling(bytes32 claimHash) external override {
-        uint256 disputeId = claimHashToDisputeId[claimHash];
-        require(disputeId != 0, "Invalid claim");
+    function executeRuling(uint256 disputeId) external override {
         IKlerosLiquid(address(klerosArbitrator)).executeRuling(disputeId);
     }
 
@@ -186,43 +182,35 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         return klerosArbitrator.arbitrationCost(klerosArbitratorExtraData);
     }
 
-    function appealCost(bytes32 claimHash)
+    function appealCost(uint256 disputeId)
         external
         view
         override
         returns (uint256)
     {
-        uint256 disputeId = claimHashToDisputeId[claimHash];
-        require(disputeId != 0, "Invalid claim");
         return
             klerosArbitrator.appealCost(disputeId, klerosArbitratorExtraData);
     }
 
-    function disputeStatus(bytes32 claimHash)
+    function disputeStatus(uint256 disputeId)
         external
         view
         override
         returns (IArbitrator.DisputeStatus)
     {
-        uint256 disputeId = claimHashToDisputeId[claimHash];
-        require(disputeId != 0, "Invalid claim");
         return klerosArbitrator.disputeStatus(disputeId);
     }
 
-    function currentRuling(bytes32 claimHash) external view returns (uint256) {
-        uint256 disputeId = claimHashToDisputeId[claimHash];
-        require(disputeId != 0, "Invalid claim");
+    function currentRuling(uint256 disputeId) external view returns (uint256) {
         return klerosArbitrator.currentRuling(disputeId);
     }
 
-    function appealPeriod(bytes32 claimHash)
+    function appealPeriod(uint256 disputeId)
         external
         view
         override
         returns (uint256 start, uint256 end)
     {
-        uint256 disputeId = claimHashToDisputeId[claimHash];
-        require(disputeId != 0, "Invalid claim");
         (start, end) = IKlerosLiquid(address(klerosArbitrator)).appealPeriod(
             disputeId
         );
@@ -268,8 +256,11 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
             bool ruled
         )
     {
-        uint256 disputeId = claimHashToDisputeId[claimHash];
-        require(disputeId != 0, "Invalid claim");
-        return IKlerosLiquid(address(klerosArbitrator)).disputes(disputeId);
+        uint256 disputeIdPlusOne = claimHashToDisputeIdPlusOne[claimHash];
+        require(disputeIdPlusOne != 0, "Invalid claim");
+        return
+            IKlerosLiquid(address(klerosArbitrator)).disputes(
+                disputeIdPlusOne - 1
+            );
     }
 }
