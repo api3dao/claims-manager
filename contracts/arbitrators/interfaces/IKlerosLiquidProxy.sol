@@ -81,7 +81,7 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
             uint256 jurorsForCourtJump
         );
 
-    function claimHashToDispute(bytes32 claimHash)
+    function disputes(uint256 disputeId)
         external
         view
         returns (

@@ -252,7 +252,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         return IKlerosLiquid(address(klerosArbitrator)).courts(subCourtId);
     }
 
-    function claimHashToDispute(bytes32 claimHash)
+    function disputes(uint256 disputeId)
         external
         view
         override
@@ -267,11 +267,6 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
             bool ruled
         )
     {
-        uint256 disputeIdPlusOne = claimHashToDisputeIdPlusOne[claimHash];
-        require(disputeIdPlusOne != 0, "Invalid claim");
-        return
-            IKlerosLiquid(address(klerosArbitrator)).disputes(
-                disputeIdPlusOne - 1
-            );
+        return IKlerosLiquid(address(klerosArbitrator)).disputes(disputeId);
     }
 }
