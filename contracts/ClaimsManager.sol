@@ -32,7 +32,7 @@ contract ClaimsManager is
         uint224 coverageAmountInUsd;
     }
 
-    bytes32 public immutable override policyCreatorRole;
+    bytes32 public immutable override policyAgentRole;
     bytes32 public immutable override mediatorRole;
     bytes32 public immutable override arbitratorRole;
 
@@ -61,14 +61,14 @@ contract ClaimsManager is
         _;
     }
 
-    modifier onlyManagerOrPolicyCreator() {
+    modifier onlyManagerOrPolicyAgent() {
         require(
             manager == msg.sender ||
                 IAccessControlRegistry(accessControlRegistry).hasRole(
-                    policyCreatorRole,
+                    policyAgentRole,
                     msg.sender
                 ),
-            "Sender cannot create policy"
+            "Sender cannot manage policy"
         );
         _;
     }
@@ -105,9 +105,9 @@ contract ClaimsManager is
             _manager
         )
     {
-        policyCreatorRole = _deriveRole(
+        policyAgentRole = _deriveRole(
             adminRole,
-            keccak256(abi.encodePacked("Policy creator"))
+            keccak256(abi.encodePacked("Policy agent"))
         );
         mediatorRole = _deriveRole(
             adminRole,
@@ -196,12 +196,7 @@ contract ClaimsManager is
         uint256 claimsAllowedUntil,
         string calldata policy,
         string calldata metadata
-    )
-        external
-        override
-        onlyManagerOrPolicyCreator
-        returns (bytes32 policyHash)
-    {
+    ) external override onlyManagerOrPolicyAgent returns (bytes32 policyHash) {
         require(claimant != address(0), "Claimant address zero");
         require(beneficiary != address(0), "Beneficiary address zero");
         require(coverageAmountInUsd != 0, "Coverage amount zero");
@@ -250,12 +245,7 @@ contract ClaimsManager is
         uint256 claimsAllowedUntil,
         string calldata policy,
         string calldata metadata
-    )
-        external
-        override
-        onlyManagerOrPolicyCreator
-        returns (bytes32 policyHash)
-    {
+    ) external override onlyManagerOrPolicyAgent returns (bytes32 policyHash) {
         policyHash = keccak256(
             abi.encodePacked(
                 claimant,
