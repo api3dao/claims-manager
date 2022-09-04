@@ -29,7 +29,7 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
         bytes32 policyHash,
         address claimant,
         address beneficiary,
-        uint256 claimAmountInUsd,
+        uint224 claimAmountInUsd,
         string calldata evidence
     ) external payable;
 
@@ -42,7 +42,7 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
         bytes32 policyHash,
         address claimant,
         address beneficiary,
-        uint256 claimAmountInUsd,
+        uint224 claimAmountInUsd,
         string calldata evidence
     ) external payable;
 
@@ -108,7 +108,7 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
             bytes32 policyHash,
             address claimant,
             address beneficiary,
-            uint256 amountInUsd,
+            uint224 amountInUsd,
             string memory evidence
         );
 

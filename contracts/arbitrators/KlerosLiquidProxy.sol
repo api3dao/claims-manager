@@ -10,7 +10,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         bytes32 policyHash;
         address claimant;
         address beneficiary;
-        uint256 amountInUsd;
+        uint224 amountInUsd;
         string evidence;
     }
 
@@ -52,7 +52,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         bytes32 policyHash,
         address claimant,
         address beneficiary,
-        uint256 claimAmountInUsd,
+        uint224 claimAmountInUsd,
         string calldata evidence
     ) external payable override {
         // claimsManager.createDispute() will validate the arguments so we don't need to
@@ -123,7 +123,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         bytes32 policyHash,
         address claimant,
         address beneficiary,
-        uint256 claimAmountInUsd,
+        uint224 claimAmountInUsd,
         string calldata evidence
     ) external payable override {
         bytes32 claimHash = keccak256(
