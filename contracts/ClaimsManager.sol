@@ -14,7 +14,6 @@ contract ClaimsManager is
         ClaimStatus status;
         uint32 updateTime;
         address arbitrator;
-        uint256 proposedSettlementAmountInUsd;
     }
 
     struct Checkpoint {
@@ -48,6 +47,9 @@ contract ClaimsManager is
 
     mapping(bytes32 => PolicyState) public override policyHashToState;
     mapping(bytes32 => ClaimState) public override claimHashToState;
+    mapping(bytes32 => uint256)
+        public
+        override claimHashToProposedSettlementAmountInUsd;
 
     modifier onlyManagerOrAdmin() {
         require(
@@ -256,14 +258,15 @@ contract ClaimsManager is
             )
         );
         PolicyState storage policyState = policyHashToState[policyHash];
-        require(policyState.claimsAllowedUntil != 0, "Policy does not exist");
+        uint32 policyStateClaimsAllowedUntil = policyState.claimsAllowedUntil;
+        require(policyStateClaimsAllowedUntil != 0, "Policy does not exist");
         require(
             policyState.coverageAmountInUsd <= coverageAmountInUsd,
-            "Policy coverage amount larger"
+            "Reduces coverage amount"
         );
         require(
-            policyState.claimsAllowedUntil <= claimsAllowedUntil,
-            "Policy allows claims for longer"
+            policyStateClaimsAllowedUntil <= claimsAllowedUntil,
+            "Reduces claim period"
         );
         policyHashToState[policyHash] = PolicyState({
             claimsAllowedUntil: uint32(claimsAllowedUntil),
@@ -292,6 +295,10 @@ contract ClaimsManager is
         string calldata metadata
     ) external override returns (bytes32 policyHash) {
         require(claimant == msg.sender, "Sender not claimant");
+        require(
+            claimsAllowedUntil > claimsAllowedFrom,
+            "Start not earlier than end"
+        );
         policyHash = keccak256(
             abi.encodePacked(
                 claimant,
@@ -302,18 +309,15 @@ contract ClaimsManager is
             )
         );
         PolicyState storage policyState = policyHashToState[policyHash];
-        require(policyState.claimsAllowedUntil != 0, "Policy does not exist");
+        uint32 policyStateClaimsAllowedUntil = policyState.claimsAllowedUntil;
+        require(policyStateClaimsAllowedUntil != 0, "Policy does not exist");
         require(
             policyState.coverageAmountInUsd >= coverageAmountInUsd,
             "Increases coverage amount"
         );
         require(
-            claimsAllowedUntil > claimsAllowedFrom,
-            "Start not earlier than end"
-        );
-        require(
-            policyState.claimsAllowedUntil >= claimsAllowedUntil,
-            "Allows claims for longer"
+            policyStateClaimsAllowedUntil >= claimsAllowedUntil,
+            "Increases claim period"
         );
         policyHashToState[policyHash] = PolicyState({
             claimsAllowedUntil: uint32(claimsAllowedUntil),
@@ -335,10 +339,13 @@ contract ClaimsManager is
         address beneficiary,
         uint256 claimsAllowedFrom,
         string calldata policy,
+        string calldata metadata,
         uint256 claimAmountInUsd,
-        string calldata evidence,
-        string calldata metadata
+        string calldata evidence
     ) external override returns (bytes32 claimHash) {
+        require(claimAmountInUsd != 0, "Claim amount zero");
+        require(block.timestamp >= claimsAllowedFrom, "Claims not allowed yet");
+        require(bytes(evidence).length != 0, "Evidence address empty");
         bytes32 policyHash = keccak256(
             abi.encodePacked(
                 msg.sender,
@@ -349,13 +356,10 @@ contract ClaimsManager is
             )
         );
         PolicyState storage policyState = policyHashToState[policyHash];
-        require(claimAmountInUsd != 0, "Claim amount zero");
-        require(bytes(evidence).length != 0, "Evidence address empty");
         require(
             claimAmountInUsd <= policyState.coverageAmountInUsd,
             "Claim larger than coverage"
         );
-        require(block.timestamp >= claimsAllowedFrom, "Claims not allowed yet");
         require(
             block.timestamp <= policyState.claimsAllowedUntil,
             "Claims not allowed anymore"
@@ -376,8 +380,7 @@ contract ClaimsManager is
         claimHashToState[claimHash] = ClaimState({
             status: ClaimStatus.ClaimCreated,
             updateTime: uint32(block.timestamp),
-            arbitrator: address(0),
-            proposedSettlementAmountInUsd: 0
+            arbitrator: address(0)
         });
         emit CreatedClaim(
             claimHash,
@@ -386,9 +389,9 @@ contract ClaimsManager is
             beneficiary,
             claimsAllowedFrom,
             policy,
+            metadata,
             claimAmountInUsd,
             evidence,
-            metadata,
             block.timestamp
         );
     }
@@ -469,13 +472,18 @@ contract ClaimsManager is
             settlementAmountInUsd < claimAmountInUsd,
             "Settlement amount not smaller"
         );
-        claimState.status = ClaimStatus.SettlementProposed;
-        claimState.updateTime = uint32(block.timestamp);
+        claimHashToState[claimHash] = ClaimState({
+            status: ClaimStatus.SettlementProposed,
+            updateTime: uint32(block.timestamp),
+            arbitrator: address(0)
+        });
         // The mediator quota in API3 has to be updated here
         // We're pessimistically using the unclipped amount
         // Current price has to be used as an approximation
         updateQuotaUsage(msg.sender, convertUsdToApi3(settlementAmountInUsd));
-        claimState.proposedSettlementAmountInUsd = settlementAmountInUsd;
+        claimHashToProposedSettlementAmountInUsd[
+            claimHash
+        ] = settlementAmountInUsd;
         emit ProposedSettlement(
             claimHash,
             claimant,
@@ -493,6 +501,7 @@ contract ClaimsManager is
         string calldata evidence,
         uint256 minimumPayoutAmountInApi3
     ) external returns (uint256 clippedPayoutAmountInApi3) {
+        require(msg.sender == claimant, "Sender not claimant");
         bytes32 claimHash = keccak256(
             abi.encodePacked(
                 policyHash,
@@ -503,7 +512,6 @@ contract ClaimsManager is
             )
         );
         ClaimState storage claimState = claimHashToState[claimHash];
-        require(msg.sender == claimant, "Sender not claimant");
         require(
             claimState.status == ClaimStatus.SettlementProposed,
             "No settlement to accept"
@@ -516,7 +524,7 @@ contract ClaimsManager is
         // If settlement amount in USD causes the policy coverage to be exceeded, clip the API3 amount being paid out
         uint256 clippedPayoutAmountInUsd = updatePolicyCoverage(
             policyHash,
-            claimState.proposedSettlementAmountInUsd
+            claimHashToProposedSettlementAmountInUsd[claimHash]
         );
         clippedPayoutAmountInApi3 = convertUsdToApi3(clippedPayoutAmountInUsd);
         require(
@@ -571,9 +579,11 @@ contract ClaimsManager is
         } else {
             revert("Claim is not disputable");
         }
-        claimState.status = ClaimStatus.DisputeCreated;
-        claimState.updateTime = uint32(block.timestamp);
-        claimState.arbitrator = msg.sender;
+        claimHashToState[claimHash] = ClaimState({
+            status: ClaimStatus.DisputeCreated,
+            updateTime: uint32(block.timestamp),
+            arbitrator: msg.sender
+        });
         emit CreatedDispute(claimHash, claimant, msg.sender);
     }
 
@@ -638,8 +648,9 @@ contract ClaimsManager is
                 clippedPayoutAmountInApi3
             );
         } else if (result == ArbitratorDecision.PaySettlement) {
-            uint256 settlementAmountInUsd = claimState
-                .proposedSettlementAmountInUsd;
+            uint256 settlementAmountInUsd = claimHashToProposedSettlementAmountInUsd[
+                    claimHash
+                ];
             if (settlementAmountInUsd == 0) {
                 claimState.status = ClaimStatus.DisputeResolvedWithoutPayout;
                 emit ResolvedDisputeByRejectingClaim(

@@ -32,6 +32,16 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         bytes memory _klerosArbitratorExtraData,
         string memory _metaEvidence
     ) {
+        require(_claimsManager != address(0), "ClaimsManager address zero");
+        require(
+            _klerosArbitrator != address(0),
+            "KlerosArbitrator address zero"
+        );
+        require(
+            _klerosArbitratorExtraData.length != 0,
+            "KlerosArbitrator extraData empty"
+        );
+        require(bytes(_metaEvidence).length != 0, "Meta evidence empty");
         claimsManager = IClaimsManager(_claimsManager);
         klerosArbitrator = IArbitrator(_klerosArbitrator);
         klerosArbitratorExtraData = _klerosArbitratorExtraData;
@@ -88,6 +98,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         uint256 disputeId,
         string calldata evidence
     ) external override {
+        require(bytes(evidence).length != 0, "Evidence empty");
         require(
             claimsManager.isManagerOrMediator(msg.sender),
             "Sender cannot mediate"
@@ -125,7 +136,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
             )
         );
         uint256 disputeIdPlusOne = claimHashToDisputeIdPlusOne[claimHash];
-        require(disputeIdPlusOne != 0, "Invalid claim");
+        require(disputeIdPlusOne != 0, "No dispute related to claim");
         uint256 disputeId = disputeIdPlusOne - 1;
         // Ruling options
         // 0: Kleros refused to arbitrate or ruled that it's not appropriate to
@@ -241,7 +252,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         return IKlerosLiquid(address(klerosArbitrator)).courts(subCourtId);
     }
 
-    function claimHashToDispute(bytes32 claimHash)
+    function disputes(uint256 disputeId)
         external
         view
         override
@@ -256,11 +267,6 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
             bool ruled
         )
     {
-        uint256 disputeIdPlusOne = claimHashToDisputeIdPlusOne[claimHash];
-        require(disputeIdPlusOne != 0, "Invalid claim");
-        return
-            IKlerosLiquid(address(klerosArbitrator)).disputes(
-                disputeIdPlusOne - 1
-            );
+        return IKlerosLiquid(address(klerosArbitrator)).disputes(disputeId);
     }
 }
