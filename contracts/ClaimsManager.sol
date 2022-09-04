@@ -37,9 +37,9 @@ contract ClaimsManager is
 
     address public override api3ToUsdReader;
     address public override api3Pool;
-    uint256 public override mediatorResponsePeriod;
-    uint256 public override claimantResponsePeriod;
-    uint256 public override arbitratorResponsePeriod;
+    uint32 public override mediatorResponsePeriod;
+    uint32 public override claimantResponsePeriod;
+    uint32 public override arbitratorResponsePeriod;
     mapping(address => Checkpoint[])
         public
         override accountToAccumulatedQuotaUsageCheckpoints;
@@ -47,7 +47,7 @@ contract ClaimsManager is
 
     mapping(bytes32 => PolicyState) public override policyHashToState;
     mapping(bytes32 => ClaimState) public override claimHashToState;
-    mapping(bytes32 => uint256)
+    mapping(bytes32 => uint224)
         public
         override claimHashToProposedSettlementAmountInUsd;
 
@@ -97,9 +97,9 @@ contract ClaimsManager is
         string memory _adminRoleDescription,
         address _manager,
         address _api3Pool,
-        uint256 _mediatorResponsePeriod,
-        uint256 _claimantResponsePeriod,
-        uint256 _arbitratorResponsePeriod
+        uint32 _mediatorResponsePeriod,
+        uint32 _claimantResponsePeriod,
+        uint32 _arbitratorResponsePeriod
     )
         AccessControlRegistryAdminnedWithManager(
             _accessControlRegistry,
@@ -143,7 +143,7 @@ contract ClaimsManager is
         _setApi3Pool(_api3Pool);
     }
 
-    function setMediatorResponsePeriod(uint256 _mediatorResponsePeriod)
+    function setMediatorResponsePeriod(uint32 _mediatorResponsePeriod)
         external
         override
         onlyManagerOrAdmin
@@ -151,7 +151,7 @@ contract ClaimsManager is
         _setMediatorResponsePeriod(_mediatorResponsePeriod);
     }
 
-    function setClaimantResponsePeriod(uint256 _claimantResponsePeriod)
+    function setClaimantResponsePeriod(uint32 _claimantResponsePeriod)
         external
         override
         onlyManagerOrAdmin
@@ -159,7 +159,7 @@ contract ClaimsManager is
         _setClaimantResponsePeriod(_claimantResponsePeriod);
     }
 
-    function setArbitratorResponsePeriod(uint256 _arbitratorResponsePeriod)
+    function setArbitratorResponsePeriod(uint32 _arbitratorResponsePeriod)
         external
         override
         onlyManagerOrAdmin
@@ -193,9 +193,9 @@ contract ClaimsManager is
     function createPolicy(
         address claimant,
         address beneficiary,
-        uint256 coverageAmountInUsd,
-        uint256 claimsAllowedFrom,
-        uint256 claimsAllowedUntil,
+        uint224 coverageAmountInUsd,
+        uint32 claimsAllowedFrom,
+        uint32 claimsAllowedUntil,
         string calldata policy,
         string calldata metadata
     ) external override onlyManagerOrPolicyAgent returns (bytes32 policyHash) {
@@ -223,8 +223,8 @@ contract ClaimsManager is
             "Policy created before"
         );
         policyHashToState[policyHash] = PolicyState({
-            claimsAllowedUntil: uint32(claimsAllowedUntil),
-            coverageAmountInUsd: uint224(coverageAmountInUsd)
+            claimsAllowedUntil: claimsAllowedUntil,
+            coverageAmountInUsd: coverageAmountInUsd
         });
         emit CreatedPolicy(
             beneficiary,
@@ -242,9 +242,9 @@ contract ClaimsManager is
     function upgradePolicy(
         address claimant,
         address beneficiary,
-        uint256 coverageAmountInUsd,
-        uint256 claimsAllowedFrom,
-        uint256 claimsAllowedUntil,
+        uint224 coverageAmountInUsd,
+        uint32 claimsAllowedFrom,
+        uint32 claimsAllowedUntil,
         string calldata policy,
         string calldata metadata
     ) external override onlyManagerOrPolicyAgent returns (bytes32 policyHash) {
@@ -269,8 +269,8 @@ contract ClaimsManager is
             "Reduces claim period"
         );
         policyHashToState[policyHash] = PolicyState({
-            claimsAllowedUntil: uint32(claimsAllowedUntil),
-            coverageAmountInUsd: uint224(coverageAmountInUsd)
+            claimsAllowedUntil: claimsAllowedUntil,
+            coverageAmountInUsd: coverageAmountInUsd
         });
         emit UpgradedPolicy(
             beneficiary,
@@ -288,9 +288,9 @@ contract ClaimsManager is
     function downgradePolicy(
         address claimant,
         address beneficiary,
-        uint256 coverageAmountInUsd,
-        uint256 claimsAllowedFrom,
-        uint256 claimsAllowedUntil,
+        uint224 coverageAmountInUsd,
+        uint32 claimsAllowedFrom,
+        uint32 claimsAllowedUntil,
         string calldata policy,
         string calldata metadata
     ) external override returns (bytes32 policyHash) {
@@ -320,8 +320,8 @@ contract ClaimsManager is
             "Increases claim period"
         );
         policyHashToState[policyHash] = PolicyState({
-            claimsAllowedUntil: uint32(claimsAllowedUntil),
-            coverageAmountInUsd: uint224(coverageAmountInUsd)
+            claimsAllowedUntil: claimsAllowedUntil,
+            coverageAmountInUsd: coverageAmountInUsd
         });
         emit DowngradedPolicy(
             beneficiary,
@@ -337,10 +337,10 @@ contract ClaimsManager is
 
     function createClaim(
         address beneficiary,
-        uint256 claimsAllowedFrom,
+        uint32 claimsAllowedFrom,
         string calldata policy,
         string calldata metadata,
-        uint256 claimAmountInUsd,
+        uint224 claimAmountInUsd,
         string calldata evidence
     ) external override returns (bytes32 claimHash) {
         require(claimAmountInUsd != 0, "Claim amount zero");
@@ -392,7 +392,7 @@ contract ClaimsManager is
             metadata,
             claimAmountInUsd,
             evidence,
-            block.timestamp
+            uint32(block.timestamp)
         );
     }
 
@@ -400,7 +400,7 @@ contract ClaimsManager is
         bytes32 policyHash,
         address claimant,
         address beneficiary,
-        uint256 claimAmountInUsd,
+        uint224 claimAmountInUsd,
         string calldata evidence
     ) external onlyManagerOrMediator {
         bytes32 claimHash = keccak256(
@@ -422,11 +422,11 @@ contract ClaimsManager is
             "Too late to accept claim"
         );
         claimState.status = ClaimStatus.ClaimAccepted;
-        uint256 clippedPayoutAmountInUsd = updatePolicyCoverage(
+        uint224 clippedPayoutAmountInUsd = updatePolicyCoverage(
             policyHash,
             claimAmountInUsd
         );
-        uint256 clippedPayoutAmountInApi3 = convertUsdToApi3(
+        uint224 clippedPayoutAmountInApi3 = convertUsdToApi3(
             clippedPayoutAmountInUsd
         );
         updateQuotaUsage(msg.sender, clippedPayoutAmountInApi3);
@@ -445,9 +445,9 @@ contract ClaimsManager is
         bytes32 policyHash,
         address claimant,
         address beneficiary,
-        uint256 claimAmountInUsd,
+        uint224 claimAmountInUsd,
         string calldata evidence,
-        uint256 settlementAmountInUsd
+        uint224 settlementAmountInUsd
     ) external onlyManagerOrMediator {
         require(settlementAmountInUsd != 0, "Settlement amount zero");
         bytes32 claimHash = keccak256(
@@ -497,10 +497,10 @@ contract ClaimsManager is
         bytes32 policyHash,
         address claimant,
         address beneficiary,
-        uint256 claimAmountInUsd,
+        uint224 claimAmountInUsd,
         string calldata evidence,
-        uint256 minimumPayoutAmountInApi3
-    ) external returns (uint256 clippedPayoutAmountInApi3) {
+        uint224 minimumPayoutAmountInApi3
+    ) external returns (uint224 clippedPayoutAmountInApi3) {
         require(msg.sender == claimant, "Sender not claimant");
         bytes32 claimHash = keccak256(
             abi.encodePacked(
@@ -522,7 +522,7 @@ contract ClaimsManager is
         );
         claimState.status = ClaimStatus.SettlementAccepted;
         // If settlement amount in USD causes the policy coverage to be exceeded, clip the API3 amount being paid out
-        uint256 clippedPayoutAmountInUsd = updatePolicyCoverage(
+        uint224 clippedPayoutAmountInUsd = updatePolicyCoverage(
             policyHash,
             claimHashToProposedSettlementAmountInUsd[claimHash]
         );
@@ -544,7 +544,7 @@ contract ClaimsManager is
         bytes32 policyHash,
         address claimant,
         address beneficiary,
-        uint256 claimAmountInUsd,
+        uint224 claimAmountInUsd,
         string calldata evidence
     ) public override onlyManagerOrArbitrator {
         bytes32 claimHash = keccak256(
@@ -591,13 +591,13 @@ contract ClaimsManager is
         bytes32 policyHash,
         address claimant,
         address beneficiary,
-        uint256 claimAmountInUsd,
+        uint224 claimAmountInUsd,
         string calldata evidence,
         ArbitratorDecision result
     )
         public
         onlyManagerOrArbitrator
-        returns (uint256 clippedPayoutAmountInApi3)
+        returns (uint224 clippedPayoutAmountInApi3)
     {
         bytes32 claimHash = keccak256(
             abi.encodePacked(
@@ -627,7 +627,7 @@ contract ClaimsManager is
             );
         } else if (result == ArbitratorDecision.PayClaim) {
             claimState.status = ClaimStatus.DisputeResolvedWithClaimPayout;
-            uint256 clippedPayoutAmountInUsd = updatePolicyCoverage(
+            uint224 clippedPayoutAmountInUsd = updatePolicyCoverage(
                 policyHash,
                 claimAmountInUsd
             );
@@ -648,7 +648,7 @@ contract ClaimsManager is
                 clippedPayoutAmountInApi3
             );
         } else if (result == ArbitratorDecision.PaySettlement) {
-            uint256 settlementAmountInUsd = claimHashToProposedSettlementAmountInUsd[
+            uint224 settlementAmountInUsd = claimHashToProposedSettlementAmountInUsd[
                     claimHash
                 ];
             if (settlementAmountInUsd == 0) {
@@ -661,7 +661,7 @@ contract ClaimsManager is
             } else {
                 claimState.status = ClaimStatus
                     .DisputeResolvedWithSettlementPayout;
-                uint256 clippedPayoutAmountInUsd = updatePolicyCoverage(
+                uint224 clippedPayoutAmountInUsd = updatePolicyCoverage(
                     policyHash,
                     settlementAmountInUsd
                 );
@@ -689,21 +689,21 @@ contract ClaimsManager is
         public
         view
         override
-        returns (uint256)
+        returns (uint224)
     {
         Checkpoint[]
             storage accumulatedQuotaUsageCheckpoints = accountToAccumulatedQuotaUsageCheckpoints[
                 account
             ];
-        uint256 accumulatedQuotaUsage = 0;
+        uint224 accumulatedQuotaUsage = 0;
         if (accumulatedQuotaUsageCheckpoints.length > 0) {
             accumulatedQuotaUsage = accumulatedQuotaUsageCheckpoints[
                 accumulatedQuotaUsageCheckpoints.length - 1
             ].value;
         }
-        uint256 accumulatedQuotaUsageThen = getValueAt(
+        uint224 accumulatedQuotaUsageThen = getValueAt(
             accumulatedQuotaUsageCheckpoints,
-            block.timestamp - accountToQuota[account].period
+            uint32(block.timestamp) - accountToQuota[account].period
         );
         return accumulatedQuotaUsage - accumulatedQuotaUsageThen;
     }
@@ -728,7 +728,7 @@ contract ClaimsManager is
         emit SetApi3Pool(_api3Pool, msg.sender);
     }
 
-    function _setMediatorResponsePeriod(uint256 _mediatorResponsePeriod)
+    function _setMediatorResponsePeriod(uint32 _mediatorResponsePeriod)
         internal
     {
         require(_mediatorResponsePeriod != 0, "Mediator response period zero");
@@ -736,7 +736,7 @@ contract ClaimsManager is
         emit SetMediatorResponsePeriod(_mediatorResponsePeriod, msg.sender);
     }
 
-    function _setClaimantResponsePeriod(uint256 _claimantResponsePeriod)
+    function _setClaimantResponsePeriod(uint32 _claimantResponsePeriod)
         internal
     {
         require(_claimantResponsePeriod != 0, "Claimant response period zero");
@@ -744,7 +744,7 @@ contract ClaimsManager is
         emit SetClaimantResponsePeriod(_claimantResponsePeriod, msg.sender);
     }
 
-    function _setArbitratorResponsePeriod(uint256 _arbitratorResponsePeriod)
+    function _setArbitratorResponsePeriod(uint32 _arbitratorResponsePeriod)
         internal
     {
         require(
@@ -755,12 +755,12 @@ contract ClaimsManager is
         emit SetArbitratorResponsePeriod(_arbitratorResponsePeriod, msg.sender);
     }
 
-    function updateQuotaUsage(address account, uint256 amountInApi3) private {
+    function updateQuotaUsage(address account, uint224 amountInApi3) private {
         Checkpoint[]
             storage accumulatedQuotaUsageCheckpoints = accountToAccumulatedQuotaUsageCheckpoints[
                 account
             ];
-        uint256 accumulatedQuotaUsage = amountInApi3;
+        uint224 accumulatedQuotaUsage = amountInApi3;
         if (accumulatedQuotaUsageCheckpoints.length > 0) {
             accumulatedQuotaUsage += accumulatedQuotaUsageCheckpoints[
                 accumulatedQuotaUsageCheckpoints.length - 1
@@ -769,7 +769,7 @@ contract ClaimsManager is
         accumulatedQuotaUsageCheckpoints.push(
             Checkpoint({
                 fromTimestamp: uint32(block.timestamp),
-                value: uint224(accumulatedQuotaUsage)
+                value: accumulatedQuotaUsage
             })
         );
         require(
@@ -778,26 +778,25 @@ contract ClaimsManager is
         );
     }
 
-    function updatePolicyCoverage(bytes32 policyHash, uint256 payoutAmountInUsd)
+    function updatePolicyCoverage(bytes32 policyHash, uint224 payoutAmountInUsd)
         private
-        returns (uint256 clippedPayoutAmountInUsd)
+        returns (uint224 clippedPayoutAmountInUsd)
     {
-        uint256 remainingCoverageAmountInUsd = policyHashToState[policyHash]
+        uint224 remainingCoverageAmountInUsd = policyHashToState[policyHash]
             .coverageAmountInUsd;
         clippedPayoutAmountInUsd = payoutAmountInUsd >
             remainingCoverageAmountInUsd
             ? remainingCoverageAmountInUsd
             : payoutAmountInUsd;
-        policyHashToState[policyHash].coverageAmountInUsd -= uint224(
-            clippedPayoutAmountInUsd
-        );
+        policyHashToState[policyHash]
+            .coverageAmountInUsd -= clippedPayoutAmountInUsd;
     }
 
     // Assuming the API3/USD rate has 18 decimals
-    function convertUsdToApi3(uint256 amountInUsd)
+    function convertUsdToApi3(uint224 amountInUsd)
         private
         view
-        returns (uint256 amountInApi3)
+        returns (uint224 amountInApi3)
     {
         require(api3ToUsdReader != address(0), "Api3ToUsdReader not set");
         int224 signedApi3ToUsd = IApi3ToUsdReader(api3ToUsdReader).read();
@@ -805,10 +804,10 @@ contract ClaimsManager is
         amountInApi3 = (amountInUsd * uint224(signedApi3ToUsd)) / 10**18;
     }
 
-    function getValueAt(Checkpoint[] storage checkpoints, uint256 _timestamp)
+    function getValueAt(Checkpoint[] storage checkpoints, uint32 _timestamp)
         private
         view
-        returns (uint256)
+        returns (uint224)
     {
         if (checkpoints.length == 0) return 0;
 

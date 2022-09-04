@@ -27,17 +27,17 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     event SetApi3Pool(address api3Pool, address sender);
 
     event SetMediatorResponsePeriod(
-        uint256 mediatorResponsePeriod,
+        uint32 mediatorResponsePeriod,
         address sender
     );
 
     event SetClaimantResponsePeriod(
-        uint256 claimantResponsePeriod,
+        uint32 claimantResponsePeriod,
         address sender
     );
 
     event SetArbitratorResponsePeriod(
-        uint256 arbitratorResponsePeriod,
+        uint32 arbitratorResponsePeriod,
         address sender
     );
 
@@ -54,9 +54,9 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address beneficiary,
         address indexed claimant,
         bytes32 indexed policyHash,
-        uint256 coverageAmountInUsd,
-        uint256 claimsAllowedFrom,
-        uint256 claimsAllowedUntil,
+        uint224 coverageAmountInUsd,
+        uint32 claimsAllowedFrom,
+        uint32 claimsAllowedUntil,
         string policy,
         string metadata,
         address sender
@@ -66,9 +66,9 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address beneficiary,
         address indexed claimant,
         bytes32 indexed policyHash,
-        uint256 coverageAmountInUsd,
-        uint256 claimsAllowedFrom,
-        uint256 claimsAllowedUntil,
+        uint224 coverageAmountInUsd,
+        uint32 claimsAllowedFrom,
+        uint32 claimsAllowedUntil,
         string policy,
         string metadata,
         address sender
@@ -78,9 +78,9 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address beneficiary,
         address indexed claimant,
         bytes32 indexed policyHash,
-        uint256 coverageAmountInUsd,
-        uint256 claimsAllowedFrom,
-        uint256 claimsAllowedUntil,
+        uint224 coverageAmountInUsd,
+        uint32 claimsAllowedFrom,
+        uint32 claimsAllowedUntil,
         string policy,
         string metadata
     );
@@ -90,35 +90,35 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address indexed claimant,
         bytes32 indexed policyHash,
         address beneficiary,
-        uint256 claimsAllowedFrom,
+        uint32 claimsAllowedFrom,
         string policy,
         string metadata,
-        uint256 claimAmountInUsd,
+        uint224 claimAmountInUsd,
         string evidence,
-        uint256 claimCreationTime
+        uint32 claimCreationTime
     );
 
     event AcceptedClaim(
         bytes32 indexed claimHash,
         address indexed claimant,
         address beneficiary,
-        uint256 clippedPayoutAmountInUsd,
-        uint256 clippedPayoutAmountInApi3,
+        uint224 clippedPayoutAmountInUsd,
+        uint224 clippedPayoutAmountInApi3,
         address sender
     );
 
     event ProposedSettlement(
         bytes32 indexed claimHash,
         address indexed claimant,
-        uint256 settlementAmountInUsd,
+        uint224 settlementAmountInUsd,
         address sender
     );
 
     event AcceptedSettlement(
         bytes32 indexed claimHash,
         address indexed claimant,
-        uint256 clippedAmountInUsd,
-        uint256 clippedAmountInApi3
+        uint224 clippedAmountInUsd,
+        uint224 clippedAmountInApi3
     );
 
     event CreatedDispute(
@@ -137,8 +137,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         bytes32 indexed claimHash,
         address indexed claimant,
         address beneficiary,
-        uint256 clippedPayoutAmountInUsd,
-        uint256 clippedPayoutAmountInApi3,
+        uint224 clippedPayoutAmountInUsd,
+        uint224 clippedPayoutAmountInApi3,
         address arbitrator
     );
 
@@ -146,8 +146,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         bytes32 indexed claimHash,
         address indexed claimant,
         address beneficiary,
-        uint256 clippedPayoutAmountInUsd,
-        uint256 clippedPayoutAmountInApi3,
+        uint224 clippedPayoutAmountInUsd,
+        uint224 clippedPayoutAmountInApi3,
         address arbitrator
     );
 
@@ -155,13 +155,11 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     function setApi3Pool(address _api3Pool) external;
 
-    function setMediatorResponsePeriod(uint256 _mediatorResponsePeriod)
-        external;
+    function setMediatorResponsePeriod(uint32 _mediatorResponsePeriod) external;
 
-    function setClaimantResponsePeriod(uint256 _claimantResponsePeriod)
-        external;
+    function setClaimantResponsePeriod(uint32 _claimantResponsePeriod) external;
 
-    function setArbitratorResponsePeriod(uint256 _arbitratorResponsePeriod)
+    function setArbitratorResponsePeriod(uint32 _arbitratorResponsePeriod)
         external;
 
     function setQuota(
@@ -175,9 +173,9 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function createPolicy(
         address claimant,
         address beneficiary,
-        uint256 coverageAmountInUsd,
-        uint256 claimsAllowedFrom,
-        uint256 claimsAllowedUntil,
+        uint224 coverageAmountInUsd,
+        uint32 claimsAllowedFrom,
+        uint32 claimsAllowedUntil,
         string calldata policy,
         string calldata metadata
     ) external returns (bytes32 policyHash);
@@ -185,9 +183,9 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function upgradePolicy(
         address claimant,
         address beneficiary,
-        uint256 coverageAmountInUsd,
-        uint256 claimsAllowedFrom,
-        uint256 claimsAllowedUntil,
+        uint224 coverageAmountInUsd,
+        uint32 claimsAllowedFrom,
+        uint32 claimsAllowedUntil,
         string calldata policy,
         string calldata metadata
     ) external returns (bytes32 policyHash);
@@ -195,19 +193,19 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function downgradePolicy(
         address claimant,
         address beneficiary,
-        uint256 coverageAmountInUsd,
-        uint256 claimsAllowedFrom,
-        uint256 claimsAllowedUntil,
+        uint224 coverageAmountInUsd,
+        uint32 claimsAllowedFrom,
+        uint32 claimsAllowedUntil,
         string calldata policy,
         string calldata metadata
     ) external returns (bytes32 policyHash);
 
     function createClaim(
         address beneficiary,
-        uint256 claimsAllowedFrom,
+        uint32 claimsAllowedFrom,
         string calldata policy,
         string calldata metadata,
-        uint256 claimAmountInUsd,
+        uint224 claimAmountInUsd,
         string calldata evidence
     ) external returns (bytes32 claimHash);
 
@@ -215,7 +213,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         bytes32 policyHash,
         address claimant,
         address beneficiary,
-        uint256 claimAmountInUsd,
+        uint224 claimAmountInUsd,
         string calldata evidence
     ) external;
 
@@ -223,25 +221,25 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         bytes32 policyHash,
         address claimant,
         address beneficiary,
-        uint256 claimAmountInUsd,
+        uint224 claimAmountInUsd,
         string calldata evidence,
-        uint256 settlementAmountInUsd
+        uint224 settlementAmountInUsd
     ) external;
 
     function acceptSettlement(
         bytes32 policyHash,
         address claimant,
         address beneficiary,
-        uint256 claimAmountInUsd,
+        uint224 claimAmountInUsd,
         string calldata evidence,
-        uint256 minimumPayoutAmountInApi3
-    ) external returns (uint256 clippedPayoutAmountInApi3);
+        uint224 minimumPayoutAmountInApi3
+    ) external returns (uint224 clippedPayoutAmountInApi3);
 
     function createDispute(
         bytes32 policyHash,
         address claimant,
         address beneficiary,
-        uint256 claimAmountInUsd,
+        uint224 claimAmountInUsd,
         string calldata evidence
     ) external;
 
@@ -249,12 +247,12 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         bytes32 policyHash,
         address claimant,
         address beneficiary,
-        uint256 claimAmountInUsd,
+        uint224 claimAmountInUsd,
         string calldata evidence,
         ArbitratorDecision result
-    ) external returns (uint256 clippedAmountInApi3);
+    ) external returns (uint224 clippedAmountInApi3);
 
-    function getQuotaUsage(address account) external view returns (uint256);
+    function getQuotaUsage(address account) external view returns (uint224);
 
     function isManagerOrMediator(address account) external view returns (bool);
 
@@ -268,11 +266,11 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     function api3Pool() external view returns (address);
 
-    function mediatorResponsePeriod() external view returns (uint256);
+    function mediatorResponsePeriod() external view returns (uint32);
 
-    function claimantResponsePeriod() external view returns (uint256);
+    function claimantResponsePeriod() external view returns (uint32);
 
-    function arbitratorResponsePeriod() external view returns (uint256);
+    function arbitratorResponsePeriod() external view returns (uint32);
 
     function accountToAccumulatedQuotaUsageCheckpoints(
         address account,
@@ -301,5 +299,5 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function claimHashToProposedSettlementAmountInUsd(bytes32 claimHash)
         external
         view
-        returns (uint256);
+        returns (uint224);
 }
