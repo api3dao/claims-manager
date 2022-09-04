@@ -256,14 +256,15 @@ contract ClaimsManager is
             )
         );
         PolicyState storage policyState = policyHashToState[policyHash];
-        require(policyState.claimsAllowedUntil != 0, "Policy does not exist");
+        uint32 policyStateClaimsAllowedUntil = policyState.claimsAllowedUntil;
+        require(policyStateClaimsAllowedUntil != 0, "Policy does not exist");
         require(
             policyState.coverageAmountInUsd <= coverageAmountInUsd,
-            "Policy coverage amount larger"
+            "Reduces coverage amount"
         );
         require(
-            policyState.claimsAllowedUntil <= claimsAllowedUntil,
-            "Policy allows claims for longer"
+            policyStateClaimsAllowedUntil <= claimsAllowedUntil,
+            "Reduces claim period"
         );
         policyHashToState[policyHash] = PolicyState({
             claimsAllowedUntil: uint32(claimsAllowedUntil),
@@ -292,6 +293,10 @@ contract ClaimsManager is
         string calldata metadata
     ) external override returns (bytes32 policyHash) {
         require(claimant == msg.sender, "Sender not claimant");
+        require(
+            claimsAllowedUntil > claimsAllowedFrom,
+            "Start not earlier than end"
+        );
         policyHash = keccak256(
             abi.encodePacked(
                 claimant,
@@ -302,18 +307,15 @@ contract ClaimsManager is
             )
         );
         PolicyState storage policyState = policyHashToState[policyHash];
-        require(policyState.claimsAllowedUntil != 0, "Policy does not exist");
+        uint32 policyStateClaimsAllowedUntil = policyState.claimsAllowedUntil;
+        require(policyStateClaimsAllowedUntil != 0, "Policy does not exist");
         require(
             policyState.coverageAmountInUsd >= coverageAmountInUsd,
             "Increases coverage amount"
         );
         require(
-            claimsAllowedUntil > claimsAllowedFrom,
-            "Start not earlier than end"
-        );
-        require(
-            policyState.claimsAllowedUntil >= claimsAllowedUntil,
-            "Allows claims for longer"
+            policyStateClaimsAllowedUntil >= claimsAllowedUntil,
+            "Increases claim period"
         );
         policyHashToState[policyHash] = PolicyState({
             claimsAllowedUntil: uint32(claimsAllowedUntil),
@@ -339,6 +341,8 @@ contract ClaimsManager is
         string calldata evidence,
         string calldata metadata
     ) external override returns (bytes32 claimHash) {
+        require(claimAmountInUsd != 0, "Claim amount zero");
+        require(bytes(evidence).length != 0, "Evidence address empty");
         bytes32 policyHash = keccak256(
             abi.encodePacked(
                 msg.sender,
@@ -349,8 +353,6 @@ contract ClaimsManager is
             )
         );
         PolicyState storage policyState = policyHashToState[policyHash];
-        require(claimAmountInUsd != 0, "Claim amount zero");
-        require(bytes(evidence).length != 0, "Evidence address empty");
         require(
             claimAmountInUsd <= policyState.coverageAmountInUsd,
             "Claim larger than coverage"
@@ -493,6 +495,7 @@ contract ClaimsManager is
         string calldata evidence,
         uint256 minimumPayoutAmountInApi3
     ) external returns (uint256 clippedPayoutAmountInApi3) {
+        require(msg.sender == claimant, "Sender not claimant");
         bytes32 claimHash = keccak256(
             abi.encodePacked(
                 policyHash,
@@ -503,7 +506,6 @@ contract ClaimsManager is
             )
         );
         ClaimState storage claimState = claimHashToState[claimHash];
-        require(msg.sender == claimant, "Sender not claimant");
         require(
             claimState.status == ClaimStatus.SettlementProposed,
             "No settlement to accept"
