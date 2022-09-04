@@ -295,7 +295,11 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         returns (
             ClaimStatus status,
             uint32 updateTime,
-            address arbitrator,
-            uint256 proposedSettlementAmountInUsd
+            address arbitrator
         );
+
+    function claimHashToProposedSettlementAmountInUsd(bytes32 claimHash)
+        external
+        view
+        returns (uint256);
 }

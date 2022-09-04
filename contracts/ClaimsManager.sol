@@ -14,7 +14,6 @@ contract ClaimsManager is
         ClaimStatus status;
         uint32 updateTime;
         address arbitrator;
-        uint256 proposedSettlementAmountInUsd;
     }
 
     struct Checkpoint {
@@ -48,6 +47,9 @@ contract ClaimsManager is
 
     mapping(bytes32 => PolicyState) public override policyHashToState;
     mapping(bytes32 => ClaimState) public override claimHashToState;
+    mapping(bytes32 => uint256)
+        public
+        override claimHashToProposedSettlementAmountInUsd;
 
     modifier onlyManagerOrAdmin() {
         require(
@@ -378,8 +380,7 @@ contract ClaimsManager is
         claimHashToState[claimHash] = ClaimState({
             status: ClaimStatus.ClaimCreated,
             updateTime: uint32(block.timestamp),
-            arbitrator: address(0),
-            proposedSettlementAmountInUsd: 0
+            arbitrator: address(0)
         });
         emit CreatedClaim(
             claimHash,
@@ -471,13 +472,18 @@ contract ClaimsManager is
             settlementAmountInUsd < claimAmountInUsd,
             "Settlement amount not smaller"
         );
-        claimState.status = ClaimStatus.SettlementProposed;
-        claimState.updateTime = uint32(block.timestamp);
+        claimHashToState[claimHash] = ClaimState({
+            status: ClaimStatus.SettlementProposed,
+            updateTime: uint32(block.timestamp),
+            arbitrator: address(0)
+        });
         // The mediator quota in API3 has to be updated here
         // We're pessimistically using the unclipped amount
         // Current price has to be used as an approximation
         updateQuotaUsage(msg.sender, convertUsdToApi3(settlementAmountInUsd));
-        claimState.proposedSettlementAmountInUsd = settlementAmountInUsd;
+        claimHashToProposedSettlementAmountInUsd[
+            claimHash
+        ] = settlementAmountInUsd;
         emit ProposedSettlement(
             claimHash,
             claimant,
@@ -518,7 +524,7 @@ contract ClaimsManager is
         // If settlement amount in USD causes the policy coverage to be exceeded, clip the API3 amount being paid out
         uint256 clippedPayoutAmountInUsd = updatePolicyCoverage(
             policyHash,
-            claimState.proposedSettlementAmountInUsd
+            claimHashToProposedSettlementAmountInUsd[claimHash]
         );
         clippedPayoutAmountInApi3 = convertUsdToApi3(clippedPayoutAmountInUsd);
         require(
@@ -573,9 +579,11 @@ contract ClaimsManager is
         } else {
             revert("Claim is not disputable");
         }
-        claimState.status = ClaimStatus.DisputeCreated;
-        claimState.updateTime = uint32(block.timestamp);
-        claimState.arbitrator = msg.sender;
+        claimHashToState[claimHash] = ClaimState({
+            status: ClaimStatus.DisputeCreated,
+            updateTime: uint32(block.timestamp),
+            arbitrator: msg.sender
+        });
         emit CreatedDispute(claimHash, claimant, msg.sender);
     }
 
@@ -640,8 +648,9 @@ contract ClaimsManager is
                 clippedPayoutAmountInApi3
             );
         } else if (result == ArbitratorDecision.PaySettlement) {
-            uint256 settlementAmountInUsd = claimState
-                .proposedSettlementAmountInUsd;
+            uint256 settlementAmountInUsd = claimHashToProposedSettlementAmountInUsd[
+                    claimHash
+                ];
             if (settlementAmountInUsd == 0) {
                 claimState.status = ClaimStatus.DisputeResolvedWithoutPayout;
                 emit ResolvedDisputeByRejectingClaim(
