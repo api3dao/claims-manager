@@ -17,12 +17,12 @@ interface IKlerosLiquid {
         view
         returns (uint256 start, uint256 end);
 
-    function getSubCourt(uint96 subCourtId)
+    function getSubcourt(uint96 subcourtId)
         external
         view
         returns (uint256[] memory children, uint256[4] memory timesPerPeriod);
 
-    function courts(uint256 subCourtId)
+    function courts(uint256 subcourtId)
         external
         view
         returns (
@@ -38,7 +38,7 @@ interface IKlerosLiquid {
         external
         view
         returns (
-            uint96 subCourtId,
+            uint96 subcourtID,
             address arbitrated,
             uint256 numberOfChoices,
             uint8 period,

@@ -227,16 +227,16 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         );
     }
 
-    function getSubCourt(uint96 subCourtId)
+    function getSubcourt(uint96 subcourtId)
         external
         view
         override
         returns (uint256[] memory children, uint256[4] memory timesPerPeriod)
     {
-        return IKlerosLiquid(address(klerosArbitrator)).getSubCourt(subCourtId);
+        return IKlerosLiquid(address(klerosArbitrator)).getSubcourt(subcourtId);
     }
 
-    function courts(uint256 subCourtId)
+    function courts(uint256 subcourtId)
         external
         view
         override
@@ -249,7 +249,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
             uint256 jurorsForCourtJump
         )
     {
-        return IKlerosLiquid(address(klerosArbitrator)).courts(subCourtId);
+        return IKlerosLiquid(address(klerosArbitrator)).courts(subcourtId);
     }
 
     function disputes(uint256 disputeId)
@@ -257,7 +257,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         view
         override
         returns (
-            uint96 subCourtId,
+            uint96 subcourtId,
             address arbitrated,
             uint256 numberOfChoices,
             uint8 period,
