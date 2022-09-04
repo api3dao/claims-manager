@@ -37,9 +37,9 @@ contract ClaimsManager is
 
     address public override api3ToUsdReader;
     address public override api3Pool;
-    uint256 public override mediatorResponsePeriod;
-    uint256 public override claimantResponsePeriod;
-    uint256 public override arbitratorResponsePeriod;
+    uint32 public override mediatorResponsePeriod;
+    uint32 public override claimantResponsePeriod;
+    uint32 public override arbitratorResponsePeriod;
     mapping(address => Checkpoint[])
         public
         override accountToAccumulatedQuotaUsageCheckpoints;
@@ -97,9 +97,9 @@ contract ClaimsManager is
         string memory _adminRoleDescription,
         address _manager,
         address _api3Pool,
-        uint256 _mediatorResponsePeriod,
-        uint256 _claimantResponsePeriod,
-        uint256 _arbitratorResponsePeriod
+        uint32 _mediatorResponsePeriod,
+        uint32 _claimantResponsePeriod,
+        uint32 _arbitratorResponsePeriod
     )
         AccessControlRegistryAdminnedWithManager(
             _accessControlRegistry,
@@ -143,7 +143,7 @@ contract ClaimsManager is
         _setApi3Pool(_api3Pool);
     }
 
-    function setMediatorResponsePeriod(uint256 _mediatorResponsePeriod)
+    function setMediatorResponsePeriod(uint32 _mediatorResponsePeriod)
         external
         override
         onlyManagerOrAdmin
@@ -151,7 +151,7 @@ contract ClaimsManager is
         _setMediatorResponsePeriod(_mediatorResponsePeriod);
     }
 
-    function setClaimantResponsePeriod(uint256 _claimantResponsePeriod)
+    function setClaimantResponsePeriod(uint32 _claimantResponsePeriod)
         external
         override
         onlyManagerOrAdmin
@@ -159,7 +159,7 @@ contract ClaimsManager is
         _setClaimantResponsePeriod(_claimantResponsePeriod);
     }
 
-    function setArbitratorResponsePeriod(uint256 _arbitratorResponsePeriod)
+    function setArbitratorResponsePeriod(uint32 _arbitratorResponsePeriod)
         external
         override
         onlyManagerOrAdmin
@@ -194,8 +194,8 @@ contract ClaimsManager is
         address claimant,
         address beneficiary,
         uint256 coverageAmountInUsd,
-        uint256 claimsAllowedFrom,
-        uint256 claimsAllowedUntil,
+        uint32 claimsAllowedFrom,
+        uint32 claimsAllowedUntil,
         string calldata policy,
         string calldata metadata
     ) external override onlyManagerOrPolicyAgent returns (bytes32 policyHash) {
@@ -223,7 +223,7 @@ contract ClaimsManager is
             "Policy created before"
         );
         policyHashToState[policyHash] = PolicyState({
-            claimsAllowedUntil: uint32(claimsAllowedUntil),
+            claimsAllowedUntil: claimsAllowedUntil,
             coverageAmountInUsd: uint224(coverageAmountInUsd)
         });
         emit CreatedPolicy(
@@ -243,8 +243,8 @@ contract ClaimsManager is
         address claimant,
         address beneficiary,
         uint256 coverageAmountInUsd,
-        uint256 claimsAllowedFrom,
-        uint256 claimsAllowedUntil,
+        uint32 claimsAllowedFrom,
+        uint32 claimsAllowedUntil,
         string calldata policy,
         string calldata metadata
     ) external override onlyManagerOrPolicyAgent returns (bytes32 policyHash) {
@@ -269,7 +269,7 @@ contract ClaimsManager is
             "Reduces claim period"
         );
         policyHashToState[policyHash] = PolicyState({
-            claimsAllowedUntil: uint32(claimsAllowedUntil),
+            claimsAllowedUntil: claimsAllowedUntil,
             coverageAmountInUsd: uint224(coverageAmountInUsd)
         });
         emit UpgradedPolicy(
@@ -289,8 +289,8 @@ contract ClaimsManager is
         address claimant,
         address beneficiary,
         uint256 coverageAmountInUsd,
-        uint256 claimsAllowedFrom,
-        uint256 claimsAllowedUntil,
+        uint32 claimsAllowedFrom,
+        uint32 claimsAllowedUntil,
         string calldata policy,
         string calldata metadata
     ) external override returns (bytes32 policyHash) {
@@ -320,7 +320,7 @@ contract ClaimsManager is
             "Increases claim period"
         );
         policyHashToState[policyHash] = PolicyState({
-            claimsAllowedUntil: uint32(claimsAllowedUntil),
+            claimsAllowedUntil: claimsAllowedUntil,
             coverageAmountInUsd: uint224(coverageAmountInUsd)
         });
         emit DowngradedPolicy(
@@ -337,7 +337,7 @@ contract ClaimsManager is
 
     function createClaim(
         address beneficiary,
-        uint256 claimsAllowedFrom,
+        uint32 claimsAllowedFrom,
         string calldata policy,
         string calldata metadata,
         uint256 claimAmountInUsd,
@@ -392,7 +392,7 @@ contract ClaimsManager is
             metadata,
             claimAmountInUsd,
             evidence,
-            block.timestamp
+            uint32(block.timestamp)
         );
     }
 
@@ -728,7 +728,7 @@ contract ClaimsManager is
         emit SetApi3Pool(_api3Pool, msg.sender);
     }
 
-    function _setMediatorResponsePeriod(uint256 _mediatorResponsePeriod)
+    function _setMediatorResponsePeriod(uint32 _mediatorResponsePeriod)
         internal
     {
         require(_mediatorResponsePeriod != 0, "Mediator response period zero");
@@ -736,7 +736,7 @@ contract ClaimsManager is
         emit SetMediatorResponsePeriod(_mediatorResponsePeriod, msg.sender);
     }
 
-    function _setClaimantResponsePeriod(uint256 _claimantResponsePeriod)
+    function _setClaimantResponsePeriod(uint32 _claimantResponsePeriod)
         internal
     {
         require(_claimantResponsePeriod != 0, "Claimant response period zero");
@@ -744,7 +744,7 @@ contract ClaimsManager is
         emit SetClaimantResponsePeriod(_claimantResponsePeriod, msg.sender);
     }
 
-    function _setArbitratorResponsePeriod(uint256 _arbitratorResponsePeriod)
+    function _setArbitratorResponsePeriod(uint32 _arbitratorResponsePeriod)
         internal
     {
         require(
