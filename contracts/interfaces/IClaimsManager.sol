@@ -92,9 +92,9 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address beneficiary,
         uint256 claimsAllowedFrom,
         string policy,
+        string metadata,
         uint256 claimAmountInUsd,
         string evidence,
-        string metadata,
         uint256 claimCreationTime
     );
 
@@ -206,9 +206,9 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address beneficiary,
         uint256 claimsAllowedFrom,
         string calldata policy,
+        string calldata metadata,
         uint256 claimAmountInUsd,
-        string calldata evidence,
-        string calldata metadata
+        string calldata evidence
     ) external returns (bytes32 claimHash);
 
     function acceptClaim(

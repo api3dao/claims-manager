@@ -339,11 +339,12 @@ contract ClaimsManager is
         address beneficiary,
         uint256 claimsAllowedFrom,
         string calldata policy,
+        string calldata metadata,
         uint256 claimAmountInUsd,
-        string calldata evidence,
-        string calldata metadata
+        string calldata evidence
     ) external override returns (bytes32 claimHash) {
         require(claimAmountInUsd != 0, "Claim amount zero");
+        require(block.timestamp >= claimsAllowedFrom, "Claims not allowed yet");
         require(bytes(evidence).length != 0, "Evidence address empty");
         bytes32 policyHash = keccak256(
             abi.encodePacked(
@@ -359,7 +360,6 @@ contract ClaimsManager is
             claimAmountInUsd <= policyState.coverageAmountInUsd,
             "Claim larger than coverage"
         );
-        require(block.timestamp >= claimsAllowedFrom, "Claims not allowed yet");
         require(
             block.timestamp <= policyState.claimsAllowedUntil,
             "Claims not allowed anymore"
@@ -389,9 +389,9 @@ contract ClaimsManager is
             beneficiary,
             claimsAllowedFrom,
             policy,
+            metadata,
             claimAmountInUsd,
             evidence,
-            metadata,
             block.timestamp
         );
     }
