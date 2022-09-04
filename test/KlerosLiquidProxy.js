@@ -3,7 +3,7 @@ const hre = require('hardhat');
 describe('KlerosLiquidProxy', function () {
   let accessControlRegistry,
     mockApi3Pool,
-    mockKlerosArbitrator,
+    mockKlerosLiquid,
     claimsManager,
     klerosLiquidProxy,
     mockDapiServer,
@@ -20,8 +20,8 @@ describe('KlerosLiquidProxy', function () {
     accessControlRegistry = await accessControlRegistryFactory.deploy();
     const mockApi3PoolFactory = await hre.ethers.getContractFactory('MockApi3Pool', roles.deployer);
     mockApi3Pool = await mockApi3PoolFactory.deploy();
-    const mockKlerosArbitratorFactory = await hre.ethers.getContractFactory('MockKlerosArbitrator', roles.deployer);
-    mockKlerosArbitrator = await mockKlerosArbitratorFactory.deploy();
+    const mockKlerosLiquidFactory = await hre.ethers.getContractFactory('MockKlerosLiquid', roles.deployer);
+    mockKlerosLiquid = await mockKlerosLiquidFactory.deploy();
     const claimsManagerFactory = await hre.ethers.getContractFactory('ClaimsManager', roles.deployer);
     claimsManager = await claimsManagerFactory.deploy(
       accessControlRegistry.address,
@@ -35,7 +35,7 @@ describe('KlerosLiquidProxy', function () {
     const klerosLiquidProxyFactory = await hre.ethers.getContractFactory('KlerosLiquidProxy', roles.deployer);
     klerosLiquidProxy = await klerosLiquidProxyFactory.deploy(
       claimsManager.address,
-      mockKlerosArbitrator.address,
+      mockKlerosLiquid.address,
       '0x123456',
       '/ipfs/Qm...testhash/metaevidence.json'
     );
