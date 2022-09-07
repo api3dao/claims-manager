@@ -1518,4 +1518,592 @@ describe('ClaimsManager', function () {
       });
     });
   });
+
+  describe('downgradePolicy', function () {
+    context('Sender is manager', function () {
+      context('Claim period ends later than it starts', function () {
+        context('Policy exists', function () {
+          context('Downgrade does not increase coverage amount', function () {
+            context('Downgrade does not increase claim period', function () {
+              it('downgrades policy', async function () {
+                const claimant = roles.claimant.address;
+                const beneficiary = roles.beneficiary.address;
+                const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                // claimsAllowedFrom can be from the past
+                const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                const policy = '/ipfs/Qm...testhash';
+                const metadata = 'dAPI:ETH/USD...testmetadata';
+                const policyHash = hre.ethers.utils.solidityKeccak256(
+                  ['address', 'address', 'uint32', 'string', 'string'],
+                  [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                );
+                await claimsManager
+                  .connect(roles.manager)
+                  .createPolicy(
+                    claimant,
+                    beneficiary,
+                    coverageAmountInUsd,
+                    claimsAllowedFrom,
+                    claimsAllowedUntil,
+                    policy,
+                    metadata
+                  );
+                const newCoverageAmountInUsd = coverageAmountInUsd.sub(hre.ethers.utils.parseEther('10000'));
+                const newClaimsAllowedUntil = claimsAllowedUntil - 30 * 24 * 60 * 60;
+                await expect(
+                  claimsManager
+                    .connect(roles.manager)
+                    .downgradePolicy(
+                      claimant,
+                      beneficiary,
+                      newCoverageAmountInUsd,
+                      claimsAllowedFrom,
+                      newClaimsAllowedUntil,
+                      policy,
+                      metadata
+                    )
+                )
+                  .to.emit(claimsManager, 'DowngradedPolicy')
+                  .withArgs(
+                    beneficiary,
+                    claimant,
+                    policyHash,
+                    newCoverageAmountInUsd,
+                    claimsAllowedFrom,
+                    newClaimsAllowedUntil,
+                    policy,
+                    metadata,
+                    roles.manager.address
+                  );
+                const policyState = await claimsManager.policyHashToState(policyHash);
+                expect(policyState.claimsAllowedUntil).to.equal(newClaimsAllowedUntil);
+                expect(policyState.coverageAmountInUsd).to.equal(newCoverageAmountInUsd);
+              });
+            });
+            context('Downgrade increases claim period', function () {
+              it('reverts', async function () {
+                const claimant = roles.claimant.address;
+                const beneficiary = roles.beneficiary.address;
+                const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                const policy = '/ipfs/Qm...testhash';
+                const metadata = 'dAPI:ETH/USD...testmetadata';
+                await claimsManager
+                  .connect(roles.manager)
+                  .createPolicy(
+                    claimant,
+                    beneficiary,
+                    coverageAmountInUsd,
+                    claimsAllowedFrom,
+                    claimsAllowedUntil,
+                    policy,
+                    metadata
+                  );
+                const newCoverageAmountInUsd = coverageAmountInUsd.sub(hre.ethers.utils.parseEther('10000'));
+                const newClaimsAllowedUntil = claimsAllowedUntil + 1;
+                await expect(
+                  claimsManager
+                    .connect(roles.manager)
+                    .downgradePolicy(
+                      claimant,
+                      beneficiary,
+                      newCoverageAmountInUsd,
+                      claimsAllowedFrom,
+                      newClaimsAllowedUntil,
+                      policy,
+                      metadata
+                    )
+                ).to.be.revertedWith('Increases claim period');
+              });
+            });
+          });
+          context('Downgrade increases coverage amount', function () {
+            it('reverts', async function () {
+              const claimant = roles.claimant.address;
+              const beneficiary = roles.beneficiary.address;
+              const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+              const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+              const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+              const policy = '/ipfs/Qm...testhash';
+              const metadata = 'dAPI:ETH/USD...testmetadata';
+              await claimsManager
+                .connect(roles.manager)
+                .createPolicy(
+                  claimant,
+                  beneficiary,
+                  coverageAmountInUsd,
+                  claimsAllowedFrom,
+                  claimsAllowedUntil,
+                  policy,
+                  metadata
+                );
+              const newCoverageAmountInUsd = coverageAmountInUsd.add(1);
+              const newClaimsAllowedUntil = claimsAllowedUntil - 30 * 24 * 60 * 60;
+              await expect(
+                claimsManager
+                  .connect(roles.manager)
+                  .downgradePolicy(
+                    claimant,
+                    beneficiary,
+                    newCoverageAmountInUsd,
+                    claimsAllowedFrom,
+                    newClaimsAllowedUntil,
+                    policy,
+                    metadata
+                  )
+              ).to.be.revertedWith('Increases coverage amount');
+            });
+          });
+        });
+        context('Policy does not exist', function () {
+          it('reverts', async function () {
+            const claimant = roles.claimant.address;
+            const beneficiary = roles.beneficiary.address;
+            const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+            const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+            const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+            const policy = '/ipfs/Qm...testhash';
+            const metadata = 'dAPI:ETH/USD...testmetadata';
+            await expect(
+              claimsManager
+                .connect(roles.manager)
+                .downgradePolicy(
+                  claimant,
+                  beneficiary,
+                  coverageAmountInUsd,
+                  claimsAllowedFrom,
+                  claimsAllowedUntil,
+                  policy,
+                  metadata
+                )
+            ).to.be.revertedWith('Policy does not exist');
+          });
+        });
+      });
+      context('Claim period does not end later than it starts', function () {
+        it('reverts', async function () {
+          const claimant = roles.claimant.address;
+          const beneficiary = roles.beneficiary.address;
+          const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+          const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+          const claimsAllowedUntil = claimsAllowedFrom;
+          const policy = '/ipfs/Qm...testhash';
+          const metadata = 'dAPI:ETH/USD...testmetadata';
+          await expect(
+            claimsManager
+              .connect(roles.manager)
+              .downgradePolicy(
+                claimant,
+                beneficiary,
+                coverageAmountInUsd,
+                claimsAllowedFrom,
+                claimsAllowedUntil,
+                policy,
+                metadata
+              )
+          ).to.be.revertedWith('Start not earlier than end');
+        });
+      });
+    });
+    context('Sender is admin', function () {
+      context('Claim period ends later than it starts', function () {
+        context('Policy exists', function () {
+          context('Downgrade does not increase coverage amount', function () {
+            context('Downgrade does not increase claim period', function () {
+              it('downgrades policy', async function () {
+                const claimant = roles.claimant.address;
+                const beneficiary = roles.beneficiary.address;
+                const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                // claimsAllowedFrom can be from the past
+                const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                const policy = '/ipfs/Qm...testhash';
+                const metadata = 'dAPI:ETH/USD...testmetadata';
+                const policyHash = hre.ethers.utils.solidityKeccak256(
+                  ['address', 'address', 'uint32', 'string', 'string'],
+                  [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                );
+                await claimsManager
+                  .connect(roles.manager)
+                  .createPolicy(
+                    claimant,
+                    beneficiary,
+                    coverageAmountInUsd,
+                    claimsAllowedFrom,
+                    claimsAllowedUntil,
+                    policy,
+                    metadata
+                  );
+                const newCoverageAmountInUsd = coverageAmountInUsd.sub(hre.ethers.utils.parseEther('10000'));
+                const newClaimsAllowedUntil = claimsAllowedUntil - 30 * 24 * 60 * 60;
+                await expect(
+                  claimsManager
+                    .connect(roles.admin)
+                    .downgradePolicy(
+                      claimant,
+                      beneficiary,
+                      newCoverageAmountInUsd,
+                      claimsAllowedFrom,
+                      newClaimsAllowedUntil,
+                      policy,
+                      metadata
+                    )
+                )
+                  .to.emit(claimsManager, 'DowngradedPolicy')
+                  .withArgs(
+                    beneficiary,
+                    claimant,
+                    policyHash,
+                    newCoverageAmountInUsd,
+                    claimsAllowedFrom,
+                    newClaimsAllowedUntil,
+                    policy,
+                    metadata,
+                    roles.admin.address
+                  );
+                const policyState = await claimsManager.policyHashToState(policyHash);
+                expect(policyState.claimsAllowedUntil).to.equal(newClaimsAllowedUntil);
+                expect(policyState.coverageAmountInUsd).to.equal(newCoverageAmountInUsd);
+              });
+            });
+            context('Downgrade increases claim period', function () {
+              it('reverts', async function () {
+                const claimant = roles.claimant.address;
+                const beneficiary = roles.beneficiary.address;
+                const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                const policy = '/ipfs/Qm...testhash';
+                const metadata = 'dAPI:ETH/USD...testmetadata';
+                await claimsManager
+                  .connect(roles.manager)
+                  .createPolicy(
+                    claimant,
+                    beneficiary,
+                    coverageAmountInUsd,
+                    claimsAllowedFrom,
+                    claimsAllowedUntil,
+                    policy,
+                    metadata
+                  );
+                const newCoverageAmountInUsd = coverageAmountInUsd.sub(hre.ethers.utils.parseEther('10000'));
+                const newClaimsAllowedUntil = claimsAllowedUntil + 1;
+                await expect(
+                  claimsManager
+                    .connect(roles.admin)
+                    .downgradePolicy(
+                      claimant,
+                      beneficiary,
+                      newCoverageAmountInUsd,
+                      claimsAllowedFrom,
+                      newClaimsAllowedUntil,
+                      policy,
+                      metadata
+                    )
+                ).to.be.revertedWith('Increases claim period');
+              });
+            });
+          });
+          context('Downgrade increases coverage amount', function () {
+            it('reverts', async function () {
+              const claimant = roles.claimant.address;
+              const beneficiary = roles.beneficiary.address;
+              const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+              const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+              const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+              const policy = '/ipfs/Qm...testhash';
+              const metadata = 'dAPI:ETH/USD...testmetadata';
+              await claimsManager
+                .connect(roles.manager)
+                .createPolicy(
+                  claimant,
+                  beneficiary,
+                  coverageAmountInUsd,
+                  claimsAllowedFrom,
+                  claimsAllowedUntil,
+                  policy,
+                  metadata
+                );
+              const newCoverageAmountInUsd = coverageAmountInUsd.add(1);
+              const newClaimsAllowedUntil = claimsAllowedUntil - 30 * 24 * 60 * 60;
+              await expect(
+                claimsManager
+                  .connect(roles.admin)
+                  .downgradePolicy(
+                    claimant,
+                    beneficiary,
+                    newCoverageAmountInUsd,
+                    claimsAllowedFrom,
+                    newClaimsAllowedUntil,
+                    policy,
+                    metadata
+                  )
+              ).to.be.revertedWith('Increases coverage amount');
+            });
+          });
+        });
+        context('Policy does not exist', function () {
+          it('reverts', async function () {
+            const claimant = roles.claimant.address;
+            const beneficiary = roles.beneficiary.address;
+            const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+            const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+            const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+            const policy = '/ipfs/Qm...testhash';
+            const metadata = 'dAPI:ETH/USD...testmetadata';
+            await expect(
+              claimsManager
+                .connect(roles.admin)
+                .downgradePolicy(
+                  claimant,
+                  beneficiary,
+                  coverageAmountInUsd,
+                  claimsAllowedFrom,
+                  claimsAllowedUntil,
+                  policy,
+                  metadata
+                )
+            ).to.be.revertedWith('Policy does not exist');
+          });
+        });
+      });
+      context('Claim period does not end later than it starts', function () {
+        it('reverts', async function () {
+          const claimant = roles.claimant.address;
+          const beneficiary = roles.beneficiary.address;
+          const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+          const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+          const claimsAllowedUntil = claimsAllowedFrom;
+          const policy = '/ipfs/Qm...testhash';
+          const metadata = 'dAPI:ETH/USD...testmetadata';
+          await expect(
+            claimsManager
+              .connect(roles.admin)
+              .downgradePolicy(
+                claimant,
+                beneficiary,
+                coverageAmountInUsd,
+                claimsAllowedFrom,
+                claimsAllowedUntil,
+                policy,
+                metadata
+              )
+          ).to.be.revertedWith('Start not earlier than end');
+        });
+      });
+    });
+    context('Sender is claimant', function () {
+      context('Claim period ends later than it starts', function () {
+        context('Policy exists', function () {
+          context('Downgrade does not increase coverage amount', function () {
+            context('Downgrade does not increase claim period', function () {
+              it('downgrades policy', async function () {
+                const claimant = roles.claimant.address;
+                const beneficiary = roles.beneficiary.address;
+                const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                // claimsAllowedFrom can be from the past
+                const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                const policy = '/ipfs/Qm...testhash';
+                const metadata = 'dAPI:ETH/USD...testmetadata';
+                const policyHash = hre.ethers.utils.solidityKeccak256(
+                  ['address', 'address', 'uint32', 'string', 'string'],
+                  [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                );
+                await claimsManager
+                  .connect(roles.manager)
+                  .createPolicy(
+                    claimant,
+                    beneficiary,
+                    coverageAmountInUsd,
+                    claimsAllowedFrom,
+                    claimsAllowedUntil,
+                    policy,
+                    metadata
+                  );
+                const newCoverageAmountInUsd = coverageAmountInUsd.sub(hre.ethers.utils.parseEther('10000'));
+                const newClaimsAllowedUntil = claimsAllowedUntil - 30 * 24 * 60 * 60;
+                await expect(
+                  claimsManager
+                    .connect(roles.claimant)
+                    .downgradePolicy(
+                      claimant,
+                      beneficiary,
+                      newCoverageAmountInUsd,
+                      claimsAllowedFrom,
+                      newClaimsAllowedUntil,
+                      policy,
+                      metadata
+                    )
+                )
+                  .to.emit(claimsManager, 'DowngradedPolicy')
+                  .withArgs(
+                    beneficiary,
+                    claimant,
+                    policyHash,
+                    newCoverageAmountInUsd,
+                    claimsAllowedFrom,
+                    newClaimsAllowedUntil,
+                    policy,
+                    metadata,
+                    roles.claimant.address
+                  );
+                const policyState = await claimsManager.policyHashToState(policyHash);
+                expect(policyState.claimsAllowedUntil).to.equal(newClaimsAllowedUntil);
+                expect(policyState.coverageAmountInUsd).to.equal(newCoverageAmountInUsd);
+              });
+            });
+            context('Downgrade increases claim period', function () {
+              it('reverts', async function () {
+                const claimant = roles.claimant.address;
+                const beneficiary = roles.beneficiary.address;
+                const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                const policy = '/ipfs/Qm...testhash';
+                const metadata = 'dAPI:ETH/USD...testmetadata';
+                await claimsManager
+                  .connect(roles.manager)
+                  .createPolicy(
+                    claimant,
+                    beneficiary,
+                    coverageAmountInUsd,
+                    claimsAllowedFrom,
+                    claimsAllowedUntil,
+                    policy,
+                    metadata
+                  );
+                const newCoverageAmountInUsd = coverageAmountInUsd.sub(hre.ethers.utils.parseEther('10000'));
+                const newClaimsAllowedUntil = claimsAllowedUntil + 1;
+                await expect(
+                  claimsManager
+                    .connect(roles.claimant)
+                    .downgradePolicy(
+                      claimant,
+                      beneficiary,
+                      newCoverageAmountInUsd,
+                      claimsAllowedFrom,
+                      newClaimsAllowedUntil,
+                      policy,
+                      metadata
+                    )
+                ).to.be.revertedWith('Increases claim period');
+              });
+            });
+          });
+          context('Downgrade increases coverage amount', function () {
+            it('reverts', async function () {
+              const claimant = roles.claimant.address;
+              const beneficiary = roles.beneficiary.address;
+              const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+              const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+              const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+              const policy = '/ipfs/Qm...testhash';
+              const metadata = 'dAPI:ETH/USD...testmetadata';
+              await claimsManager
+                .connect(roles.manager)
+                .createPolicy(
+                  claimant,
+                  beneficiary,
+                  coverageAmountInUsd,
+                  claimsAllowedFrom,
+                  claimsAllowedUntil,
+                  policy,
+                  metadata
+                );
+              const newCoverageAmountInUsd = coverageAmountInUsd.add(1);
+              const newClaimsAllowedUntil = claimsAllowedUntil - 30 * 24 * 60 * 60;
+              await expect(
+                claimsManager
+                  .connect(roles.claimant)
+                  .downgradePolicy(
+                    claimant,
+                    beneficiary,
+                    newCoverageAmountInUsd,
+                    claimsAllowedFrom,
+                    newClaimsAllowedUntil,
+                    policy,
+                    metadata
+                  )
+              ).to.be.revertedWith('Increases coverage amount');
+            });
+          });
+        });
+        context('Policy does not exist', function () {
+          it('reverts', async function () {
+            const claimant = roles.claimant.address;
+            const beneficiary = roles.beneficiary.address;
+            const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+            const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+            const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+            const policy = '/ipfs/Qm...testhash';
+            const metadata = 'dAPI:ETH/USD...testmetadata';
+            await expect(
+              claimsManager
+                .connect(roles.claimant)
+                .downgradePolicy(
+                  claimant,
+                  beneficiary,
+                  coverageAmountInUsd,
+                  claimsAllowedFrom,
+                  claimsAllowedUntil,
+                  policy,
+                  metadata
+                )
+            ).to.be.revertedWith('Policy does not exist');
+          });
+        });
+      });
+      context('Claim period does not end later than it starts', function () {
+        it('reverts', async function () {
+          const claimant = roles.claimant.address;
+          const beneficiary = roles.beneficiary.address;
+          const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+          const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+          const claimsAllowedUntil = claimsAllowedFrom;
+          const policy = '/ipfs/Qm...testhash';
+          const metadata = 'dAPI:ETH/USD...testmetadata';
+          await expect(
+            claimsManager
+              .connect(roles.claimant)
+              .downgradePolicy(
+                claimant,
+                beneficiary,
+                coverageAmountInUsd,
+                claimsAllowedFrom,
+                claimsAllowedUntil,
+                policy,
+                metadata
+              )
+          ).to.be.revertedWith('Start not earlier than end');
+        });
+      });
+    });
+    context('Sender is not manager, admin or claimant', function () {
+      it('reverts', async function () {
+        const claimant = roles.claimant.address;
+        const beneficiary = roles.beneficiary.address;
+        const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+        const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+        const claimsAllowedUntil = claimsAllowedFrom;
+        const policy = '/ipfs/Qm...testhash';
+        const metadata = 'dAPI:ETH/USD...testmetadata';
+        await expect(
+          claimsManager
+            .connect(roles.randomPerson)
+            .downgradePolicy(
+              claimant,
+              beneficiary,
+              coverageAmountInUsd,
+              claimsAllowedFrom,
+              claimsAllowedUntil,
+              policy,
+              metadata
+            )
+        ).to.be.revertedWith('Sender cannot downgrade policies');
+      });
+    });
+  });
 });
