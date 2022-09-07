@@ -190,6 +190,7 @@ contract ClaimsManager is
         emit ResetQuota(account, msg.sender);
     }
 
+    // block.timestamp is irrelevant, we don't validate against that on purpose
     function createPolicy(
         address claimant,
         address beneficiary,
