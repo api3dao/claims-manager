@@ -612,8 +612,8 @@ describe('ClaimsManager', function () {
       context('Claimant address is not zero', function () {
         context('Beneficiary address is not zero', function () {
           context('Coverage amount is not zero', function () {
-            context('Claims are not allowed from timestamp-zero', function () {
-              context('Claims are allowed until later than when they are allowed from', function () {
+            context('Claim period does not start from timestamp-zero', function () {
+              context('Claim period ends later than it starts', function () {
                 context('Policy address is not empty', function () {
                   context('Policy has not been created before', function () {
                     context('Metadata argument is not empty', function () {
@@ -768,7 +768,7 @@ describe('ClaimsManager', function () {
                   });
                 });
               });
-              context('Claims are not allowed until later than when they are allowed from', function () {
+              context('Claim period does not end later than it starts', function () {
                 it('reverts', async function () {
                   const claimant = roles.claimant.address;
                   const beneficiary = roles.beneficiary.address;
@@ -794,7 +794,7 @@ describe('ClaimsManager', function () {
                 });
               });
             });
-            context('Claims are allowed from timestamp-zero', function () {
+            context('Claim period starts from timestamp-zero', function () {
               it('reverts', async function () {
                 const claimant = roles.claimant.address;
                 const beneficiary = roles.beneficiary.address;
@@ -902,8 +902,8 @@ describe('ClaimsManager', function () {
       context('Claimant address is not zero', function () {
         context('Beneficiary address is not zero', function () {
           context('Coverage amount is not zero', function () {
-            context('Claims are not allowed from timestamp-zero', function () {
-              context('Claims are allowed until later than when they are allowed from', function () {
+            context('Claim period does not start from timestamp-zero', function () {
+              context('Claim period ends later than it starts', function () {
                 context('Policy address is not empty', function () {
                   context('Policy has not been created before', function () {
                     context('Metadata argument is not empty', function () {
@@ -1058,7 +1058,7 @@ describe('ClaimsManager', function () {
                   });
                 });
               });
-              context('Claims are not allowed until later than when they are allowed from', function () {
+              context('Claim period does not end later than it starts', function () {
                 it('reverts', async function () {
                   const claimant = roles.claimant.address;
                   const beneficiary = roles.beneficiary.address;
@@ -1084,7 +1084,7 @@ describe('ClaimsManager', function () {
                 });
               });
             });
-            context('Claims are allowed from timestamp-zero', function () {
+            context('Claim period starts from timestamp-zero', function () {
               it('reverts', async function () {
                 const claimant = roles.claimant.address;
                 const beneficiary = roles.beneficiary.address;
