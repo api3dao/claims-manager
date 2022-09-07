@@ -240,6 +240,7 @@ contract ClaimsManager is
         );
     }
 
+    // Allowed to keep the values same
     function upgradePolicy(
         address claimant,
         address beneficiary,
