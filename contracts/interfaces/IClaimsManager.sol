@@ -82,7 +82,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint32 claimsAllowedFrom,
         uint32 claimsAllowedUntil,
         string policy,
-        string metadata
+        string metadata,
+        address sender
     );
 
     event CreatedClaim(

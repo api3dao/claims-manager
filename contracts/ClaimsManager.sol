@@ -341,7 +341,8 @@ contract ClaimsManager is
             claimsAllowedFrom,
             claimsAllowedUntil,
             policy,
-            metadata
+            metadata,
+            msg.sender
         );
     }
 
