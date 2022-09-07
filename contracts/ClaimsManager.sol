@@ -296,7 +296,15 @@ contract ClaimsManager is
         string calldata policy,
         string calldata metadata
     ) external override returns (bytes32 policyHash) {
-        require(claimant == msg.sender, "Sender not claimant");
+        require(
+            claimant == msg.sender ||
+                manager == msg.sender ||
+                IAccessControlRegistry(accessControlRegistry).hasRole(
+                    adminRole,
+                    msg.sender
+                ),
+            "Sender cannot downgrade policies"
+        );
         require(
             claimsAllowedUntil > claimsAllowedFrom,
             "Start not earlier than end"
