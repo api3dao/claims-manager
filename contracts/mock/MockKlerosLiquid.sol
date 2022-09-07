@@ -113,7 +113,7 @@ contract MockKlerosLiquid {
         );
     }
 
-    function changeSubcourtTimesPerPeriod(
+    function __setSubcourtTimesPerPeriod(
         uint96 _subcourtID,
         uint256[4] calldata _timesPerPeriod
     ) external {
