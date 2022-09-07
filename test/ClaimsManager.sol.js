@@ -280,10 +280,11 @@ describe('ClaimsManager', function () {
     context('Sender is manager', function () {
       context('Mediator response period is not zero', function () {
         it('sets mediator response period', async function () {
-          await expect(claimsManager.connect(roles.manager).setMediatorResponsePeriod(123))
+          const mediatorResponsePeriod = 1 * 24 * 60 * 60;
+          await expect(claimsManager.connect(roles.manager).setMediatorResponsePeriod(mediatorResponsePeriod))
             .to.emit(claimsManager, 'SetMediatorResponsePeriod')
-            .withArgs(123, roles.manager.address);
-          expect(await claimsManager.mediatorResponsePeriod()).to.equal(123);
+            .withArgs(mediatorResponsePeriod, roles.manager.address);
+          expect(await claimsManager.mediatorResponsePeriod()).to.equal(mediatorResponsePeriod);
         });
       });
       context('Mediator response period is zero', function () {
@@ -297,10 +298,11 @@ describe('ClaimsManager', function () {
     context('Sender is admin', function () {
       context('Mediator response period is not zero', function () {
         it('sets mediator response period', async function () {
-          await expect(claimsManager.connect(roles.admin).setMediatorResponsePeriod(123))
+          const mediatorResponsePeriod = 1 * 24 * 60 * 60;
+          await expect(claimsManager.connect(roles.admin).setMediatorResponsePeriod(mediatorResponsePeriod))
             .to.emit(claimsManager, 'SetMediatorResponsePeriod')
-            .withArgs(123, roles.admin.address);
-          expect(await claimsManager.mediatorResponsePeriod()).to.equal(123);
+            .withArgs(mediatorResponsePeriod, roles.admin.address);
+          expect(await claimsManager.mediatorResponsePeriod()).to.equal(mediatorResponsePeriod);
         });
       });
       context('Mediator response period is zero', function () {
@@ -313,7 +315,7 @@ describe('ClaimsManager', function () {
     });
     context('Sender is not manager or admin', function () {
       it('reverts', async function () {
-        await expect(claimsManager.connect(roles.randomPerson).setMediatorResponsePeriod(123)).to.be.revertedWith(
+        await expect(claimsManager.connect(roles.randomPerson).setMediatorResponsePeriod(0)).to.be.revertedWith(
           'Sender cannot administrate'
         );
       });
@@ -324,10 +326,11 @@ describe('ClaimsManager', function () {
     context('Sender is manager', function () {
       context('Claimant response period is not zero', function () {
         it('sets claimant response period', async function () {
-          await expect(claimsManager.connect(roles.manager).setClaimantResponsePeriod(123))
+          const claimantResponsePeriod = 1 * 24 * 60 * 60;
+          await expect(claimsManager.connect(roles.manager).setClaimantResponsePeriod(claimantResponsePeriod))
             .to.emit(claimsManager, 'SetClaimantResponsePeriod')
-            .withArgs(123, roles.manager.address);
-          expect(await claimsManager.claimantResponsePeriod()).to.equal(123);
+            .withArgs(claimantResponsePeriod, roles.manager.address);
+          expect(await claimsManager.claimantResponsePeriod()).to.equal(claimantResponsePeriod);
         });
       });
       context('Claimant response period is zero', function () {
@@ -341,10 +344,11 @@ describe('ClaimsManager', function () {
     context('Sender is admin', function () {
       context('Claimant response period is not zero', function () {
         it('sets claimant response period', async function () {
-          await expect(claimsManager.connect(roles.admin).setClaimantResponsePeriod(123))
+          const claimantResponsePeriod = 1 * 24 * 60 * 60;
+          await expect(claimsManager.connect(roles.admin).setClaimantResponsePeriod(claimantResponsePeriod))
             .to.emit(claimsManager, 'SetClaimantResponsePeriod')
-            .withArgs(123, roles.admin.address);
-          expect(await claimsManager.claimantResponsePeriod()).to.equal(123);
+            .withArgs(claimantResponsePeriod, roles.admin.address);
+          expect(await claimsManager.claimantResponsePeriod()).to.equal(claimantResponsePeriod);
         });
       });
       context('Claimant response period is zero', function () {
@@ -357,7 +361,7 @@ describe('ClaimsManager', function () {
     });
     context('Sender is not manager or admin', function () {
       it('reverts', async function () {
-        await expect(claimsManager.connect(roles.randomPerson).setClaimantResponsePeriod(123)).to.be.revertedWith(
+        await expect(claimsManager.connect(roles.randomPerson).setClaimantResponsePeriod(0)).to.be.revertedWith(
           'Sender cannot administrate'
         );
       });
@@ -368,10 +372,11 @@ describe('ClaimsManager', function () {
     context('Sender is manager', function () {
       context('Arbitrator response period is not zero', function () {
         it('sets arbitrator response period', async function () {
-          await expect(claimsManager.connect(roles.manager).setArbitratorResponsePeriod(123))
+          const arbitratorResponsePeriod = 1 * 24 * 60 * 60;
+          await expect(claimsManager.connect(roles.manager).setArbitratorResponsePeriod(arbitratorResponsePeriod))
             .to.emit(claimsManager, 'SetArbitratorResponsePeriod')
-            .withArgs(123, roles.manager.address);
-          expect(await claimsManager.arbitratorResponsePeriod()).to.equal(123);
+            .withArgs(arbitratorResponsePeriod, roles.manager.address);
+          expect(await claimsManager.arbitratorResponsePeriod()).to.equal(arbitratorResponsePeriod);
         });
       });
       context('Arbitrator response period is zero', function () {
@@ -385,10 +390,11 @@ describe('ClaimsManager', function () {
     context('Sender is admin', function () {
       context('Arbitrator response period is not zero', function () {
         it('sets arbitrator response period', async function () {
-          await expect(claimsManager.connect(roles.admin).setArbitratorResponsePeriod(123))
+          const arbitratorResponsePeriod = 1 * 24 * 60 * 60;
+          await expect(claimsManager.connect(roles.admin).setArbitratorResponsePeriod(arbitratorResponsePeriod))
             .to.emit(claimsManager, 'SetArbitratorResponsePeriod')
-            .withArgs(123, roles.admin.address);
-          expect(await claimsManager.arbitratorResponsePeriod()).to.equal(123);
+            .withArgs(arbitratorResponsePeriod, roles.admin.address);
+          expect(await claimsManager.arbitratorResponsePeriod()).to.equal(arbitratorResponsePeriod);
         });
       });
       context('Arbitrator response period is zero', function () {
@@ -401,7 +407,7 @@ describe('ClaimsManager', function () {
     });
     context('Sender is not manager or admin', function () {
       it('reverts', async function () {
-        await expect(claimsManager.connect(roles.randomPerson).setArbitratorResponsePeriod(123)).to.be.revertedWith(
+        await expect(claimsManager.connect(roles.randomPerson).setArbitratorResponsePeriod(0)).to.be.revertedWith(
           'Sender cannot administrate'
         );
       });
