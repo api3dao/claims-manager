@@ -255,7 +255,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     function getQuotaUsage(address account) external view returns (uint224);
 
-    function isManagerOrMediator(address account) external view returns (bool);
+    function isMediatorOrAdmin(address account) external view returns (bool);
 
     function policyAgentRole() external view returns (bytes32);
 

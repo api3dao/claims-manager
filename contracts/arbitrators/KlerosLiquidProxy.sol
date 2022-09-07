@@ -100,7 +100,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
     ) external override {
         require(bytes(evidence).length != 0, "Evidence empty");
         require(
-            claimsManager.isManagerOrMediator(msg.sender),
+            claimsManager.isMediatorOrAdmin(msg.sender),
             "Sender cannot mediate"
         );
         (, address arbitrated, , uint8 period, , , , ) = IKlerosLiquid(
@@ -150,7 +150,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
                 klerosArbitrator.currentRuling(disputeId) != 1,
                 "Ruling agrees with claimant"
             );
-        } else if (claimsManager.isManagerOrMediator(msg.sender)) {
+        } else if (claimsManager.isMediatorOrAdmin(msg.sender)) {
             require(
                 klerosArbitrator.currentRuling(disputeId) != 2,
                 "Ruling agrees with mediator"

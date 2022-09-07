@@ -51,42 +51,33 @@ contract ClaimsManager is
         public
         override claimHashToProposedSettlementAmountInUsd;
 
-    modifier onlyManagerOrAdmin() {
-        require(
-            manager == msg.sender ||
-                IAccessControlRegistry(accessControlRegistry).hasRole(
-                    adminRole,
-                    msg.sender
-                ),
-            "Sender cannot administrate"
-        );
+    modifier onlyAdmin() {
+        require(isAdmin(msg.sender), "Sender cannot administrate");
         _;
     }
 
-    modifier onlyManagerOrPolicyAgent() {
+    modifier onlyPolicyAgentOrAdmin() {
         require(
-            manager == msg.sender ||
-                IAccessControlRegistry(accessControlRegistry).hasRole(
-                    policyAgentRole,
-                    msg.sender
-                ),
+            IAccessControlRegistry(accessControlRegistry).hasRole(
+                policyAgentRole,
+                msg.sender
+            ) || isAdmin(msg.sender),
             "Sender cannot manage policy"
         );
         _;
     }
 
-    modifier onlyManagerOrMediator() {
-        require(isManagerOrMediator(msg.sender), "Sender cannot mediate");
+    modifier onlyMediatorOrAdmin() {
+        require(isMediatorOrAdmin(msg.sender), "Sender cannot mediate");
         _;
     }
 
-    modifier onlyManagerOrArbitrator() {
+    modifier onlyArbitratorOrAdmin() {
         require(
-            manager == msg.sender ||
-                IAccessControlRegistry(accessControlRegistry).hasRole(
-                    arbitratorRole,
-                    msg.sender
-                ),
+            IAccessControlRegistry(accessControlRegistry).hasRole(
+                arbitratorRole,
+                msg.sender
+            ) || isAdmin(msg.sender),
             "Sender cannot arbitrate"
         );
         _;
@@ -128,25 +119,21 @@ contract ClaimsManager is
     function setApi3ToUsdReader(address _api3ToUsdReader)
         external
         override
-        onlyManagerOrAdmin
+        onlyAdmin
     {
         require(_api3ToUsdReader != address(0), "Api3ToUsdReader address zero");
         api3ToUsdReader = _api3ToUsdReader;
         emit SetApi3ToUsdReader(_api3ToUsdReader, msg.sender);
     }
 
-    function setApi3Pool(address _api3Pool)
-        external
-        override
-        onlyManagerOrAdmin
-    {
+    function setApi3Pool(address _api3Pool) external override onlyAdmin {
         _setApi3Pool(_api3Pool);
     }
 
     function setMediatorResponsePeriod(uint32 _mediatorResponsePeriod)
         external
         override
-        onlyManagerOrAdmin
+        onlyAdmin
     {
         _setMediatorResponsePeriod(_mediatorResponsePeriod);
     }
@@ -154,7 +141,7 @@ contract ClaimsManager is
     function setClaimantResponsePeriod(uint32 _claimantResponsePeriod)
         external
         override
-        onlyManagerOrAdmin
+        onlyAdmin
     {
         _setClaimantResponsePeriod(_claimantResponsePeriod);
     }
@@ -162,7 +149,7 @@ contract ClaimsManager is
     function setArbitratorResponsePeriod(uint32 _arbitratorResponsePeriod)
         external
         override
-        onlyManagerOrAdmin
+        onlyAdmin
     {
         _setArbitratorResponsePeriod(_arbitratorResponsePeriod);
     }
@@ -172,7 +159,7 @@ contract ClaimsManager is
         address account,
         uint32 period,
         uint224 amountInApi3
-    ) external override onlyManagerOrAdmin {
+    ) external override onlyAdmin {
         require(account != address(0), "Account address zero");
         require(period != 0, "Quota period zero");
         require(amountInApi3 != 0, "Quota amount zero");
@@ -184,7 +171,7 @@ contract ClaimsManager is
     }
 
     // Means the account will not be limited
-    function resetQuota(address account) external override onlyManagerOrAdmin {
+    function resetQuota(address account) external override onlyAdmin {
         require(account != address(0), "Account address zero");
         accountToQuota[account] = Quota({period: 0, amountInApi3: 0});
         emit ResetQuota(account, msg.sender);
@@ -199,7 +186,7 @@ contract ClaimsManager is
         uint32 claimsAllowedUntil,
         string calldata policy,
         string calldata metadata
-    ) external override onlyManagerOrPolicyAgent returns (bytes32 policyHash) {
+    ) external override onlyPolicyAgentOrAdmin returns (bytes32 policyHash) {
         require(claimant != address(0), "Claimant address zero");
         require(beneficiary != address(0), "Beneficiary address zero");
         require(coverageAmountInUsd != 0, "Coverage amount zero");
@@ -249,7 +236,7 @@ contract ClaimsManager is
         uint32 claimsAllowedUntil,
         string calldata policy,
         string calldata metadata
-    ) external override onlyManagerOrPolicyAgent returns (bytes32 policyHash) {
+    ) external override onlyPolicyAgentOrAdmin returns (bytes32 policyHash) {
         policyHash = keccak256(
             abi.encodePacked(
                 claimant,
@@ -413,7 +400,7 @@ contract ClaimsManager is
         address beneficiary,
         uint224 claimAmountInUsd,
         string calldata evidence
-    ) external onlyManagerOrMediator {
+    ) external onlyMediatorOrAdmin {
         bytes32 claimHash = keccak256(
             abi.encodePacked(
                 policyHash,
@@ -459,7 +446,7 @@ contract ClaimsManager is
         uint224 claimAmountInUsd,
         string calldata evidence,
         uint224 settlementAmountInUsd
-    ) external onlyManagerOrMediator {
+    ) external onlyMediatorOrAdmin {
         require(settlementAmountInUsd != 0, "Settlement amount zero");
         bytes32 claimHash = keccak256(
             abi.encodePacked(
@@ -557,7 +544,7 @@ contract ClaimsManager is
         address beneficiary,
         uint224 claimAmountInUsd,
         string calldata evidence
-    ) public override onlyManagerOrArbitrator {
+    ) public override onlyArbitratorOrAdmin {
         bytes32 claimHash = keccak256(
             abi.encodePacked(
                 policyHash,
@@ -605,11 +592,7 @@ contract ClaimsManager is
         uint224 claimAmountInUsd,
         string calldata evidence,
         ArbitratorDecision result
-    )
-        public
-        onlyManagerOrArbitrator
-        returns (uint224 clippedPayoutAmountInApi3)
-    {
+    ) public onlyArbitratorOrAdmin returns (uint224 clippedPayoutAmountInApi3) {
         bytes32 claimHash = keccak256(
             abi.encodePacked(
                 policyHash,
@@ -719,16 +702,24 @@ contract ClaimsManager is
         return accumulatedQuotaUsage - accumulatedQuotaUsageThen;
     }
 
-    function isManagerOrMediator(address account)
+    function isMediatorOrAdmin(address account)
         public
         view
         override
         returns (bool)
     {
         return
-            manager == account ||
             IAccessControlRegistry(accessControlRegistry).hasRole(
                 mediatorRole,
+                account
+            ) || isAdmin(account);
+    }
+
+    function isAdmin(address account) private view returns (bool) {
+        return
+            manager == account ||
+            IAccessControlRegistry(accessControlRegistry).hasRole(
+                adminRole,
                 account
             );
     }
