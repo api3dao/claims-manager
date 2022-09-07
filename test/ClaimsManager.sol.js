@@ -710,7 +710,6 @@ describe('ClaimsManager', function () {
                       const claimant = roles.claimant.address;
                       const beneficiary = roles.beneficiary.address;
                       const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
-                      // claimsAllowedFrom can be from the past
                       const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
                       const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
                       const policy = '/ipfs/Qm...testhash';
@@ -747,7 +746,6 @@ describe('ClaimsManager', function () {
                     const claimant = roles.claimant.address;
                     const beneficiary = roles.beneficiary.address;
                     const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
-                    // claimsAllowedFrom can be from the past
                     const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
                     const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
                     const policy = '';
@@ -773,7 +771,6 @@ describe('ClaimsManager', function () {
                   const claimant = roles.claimant.address;
                   const beneficiary = roles.beneficiary.address;
                   const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
-                  // claimsAllowedFrom can be from the past
                   const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
                   const claimsAllowedUntil = claimsAllowedFrom;
                   const policy = '/ipfs/Qm...testhash';
@@ -799,7 +796,6 @@ describe('ClaimsManager', function () {
                 const claimant = roles.claimant.address;
                 const beneficiary = roles.beneficiary.address;
                 const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
-                // claimsAllowedFrom can be from the past
                 const claimsAllowedFrom = 0;
                 const claimsAllowedUntil = (await hre.ethers.provider.getBlock()).timestamp + 365 * 24 * 60 * 60;
                 const policy = '/ipfs/Qm...testhash';
@@ -825,7 +821,6 @@ describe('ClaimsManager', function () {
               const claimant = roles.claimant.address;
               const beneficiary = roles.beneficiary.address;
               const coverageAmountInUsd = 0;
-              // claimsAllowedFrom can be from the past
               const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
               const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
               const policy = '/ipfs/Qm...testhash';
@@ -851,7 +846,6 @@ describe('ClaimsManager', function () {
             const claimant = roles.claimant.address;
             const beneficiary = hre.ethers.constants.AddressZero;
             const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
-            // claimsAllowedFrom can be from the past
             const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
             const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
             const policy = '/ipfs/Qm...testhash';
@@ -877,7 +871,6 @@ describe('ClaimsManager', function () {
           const claimant = hre.ethers.constants.AddressZero;
           const beneficiary = roles.beneficiary.address;
           const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
-          // claimsAllowedFrom can be from the past
           const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
           const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
           const policy = '/ipfs/Qm...testhash';
@@ -1000,7 +993,6 @@ describe('ClaimsManager', function () {
                       const claimant = roles.claimant.address;
                       const beneficiary = roles.beneficiary.address;
                       const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
-                      // claimsAllowedFrom can be from the past
                       const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
                       const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
                       const policy = '/ipfs/Qm...testhash';
@@ -1037,7 +1029,6 @@ describe('ClaimsManager', function () {
                     const claimant = roles.claimant.address;
                     const beneficiary = roles.beneficiary.address;
                     const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
-                    // claimsAllowedFrom can be from the past
                     const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
                     const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
                     const policy = '';
@@ -1063,7 +1054,6 @@ describe('ClaimsManager', function () {
                   const claimant = roles.claimant.address;
                   const beneficiary = roles.beneficiary.address;
                   const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
-                  // claimsAllowedFrom can be from the past
                   const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
                   const claimsAllowedUntil = claimsAllowedFrom;
                   const policy = '/ipfs/Qm...testhash';
@@ -1089,7 +1079,6 @@ describe('ClaimsManager', function () {
                 const claimant = roles.claimant.address;
                 const beneficiary = roles.beneficiary.address;
                 const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
-                // claimsAllowedFrom can be from the past
                 const claimsAllowedFrom = 0;
                 const claimsAllowedUntil = (await hre.ethers.provider.getBlock()).timestamp + 365 * 24 * 60 * 60;
                 const policy = '/ipfs/Qm...testhash';
@@ -1115,7 +1104,6 @@ describe('ClaimsManager', function () {
               const claimant = roles.claimant.address;
               const beneficiary = roles.beneficiary.address;
               const coverageAmountInUsd = 0;
-              // claimsAllowedFrom can be from the past
               const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
               const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
               const policy = '/ipfs/Qm...testhash';
@@ -1141,7 +1129,6 @@ describe('ClaimsManager', function () {
             const claimant = roles.claimant.address;
             const beneficiary = hre.ethers.constants.AddressZero;
             const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
-            // claimsAllowedFrom can be from the past
             const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
             const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
             const policy = '/ipfs/Qm...testhash';
@@ -1167,7 +1154,6 @@ describe('ClaimsManager', function () {
           const claimant = hre.ethers.constants.AddressZero;
           const beneficiary = roles.beneficiary.address;
           const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
-          // claimsAllowedFrom can be from the past
           const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
           const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
           const policy = '/ipfs/Qm...testhash';
@@ -1265,7 +1251,6 @@ describe('ClaimsManager', function () {
               const claimant = roles.claimant.address;
               const beneficiary = roles.beneficiary.address;
               const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
-              // claimsAllowedFrom can be from the past
               const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
               const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
               const policy = '/ipfs/Qm...testhash';
@@ -1304,7 +1289,6 @@ describe('ClaimsManager', function () {
             const claimant = roles.claimant.address;
             const beneficiary = roles.beneficiary.address;
             const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
-            // claimsAllowedFrom can be from the past
             const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
             const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
             const policy = '/ipfs/Qm...testhash';
@@ -1343,7 +1327,6 @@ describe('ClaimsManager', function () {
           const claimant = roles.claimant.address;
           const beneficiary = roles.beneficiary.address;
           const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
-          // claimsAllowedFrom can be from the past
           const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
           const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
           const policy = '/ipfs/Qm...testhash';
@@ -1429,7 +1412,6 @@ describe('ClaimsManager', function () {
               const claimant = roles.claimant.address;
               const beneficiary = roles.beneficiary.address;
               const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
-              // claimsAllowedFrom can be from the past
               const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
               const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
               const policy = '/ipfs/Qm...testhash';
@@ -1468,7 +1450,6 @@ describe('ClaimsManager', function () {
             const claimant = roles.claimant.address;
             const beneficiary = roles.beneficiary.address;
             const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
-            // claimsAllowedFrom can be from the past
             const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
             const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
             const policy = '/ipfs/Qm...testhash';
@@ -1507,7 +1488,6 @@ describe('ClaimsManager', function () {
           const claimant = roles.claimant.address;
           const beneficiary = roles.beneficiary.address;
           const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
-          // claimsAllowedFrom can be from the past
           const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
           const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
           const policy = '/ipfs/Qm...testhash';
