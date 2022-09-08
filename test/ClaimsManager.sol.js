@@ -14,7 +14,7 @@ const ClaimStatus = Object.freeze({
 });
 
 describe('ClaimsManager', function () {
-  let accessControlRegistry, api3Pool, claimsManager, dapiServer, api3ToUsdReader;
+  let accessControlRegistry, api3Token, api3Pool, claimsManager, dapiServer, api3ToUsdReader;
   let roles;
   let mediatorResponsePeriod = 3 * 24 * 60 * 60,
     claimantResponsePeriod = 3 * 24 * 60 * 60,
@@ -35,8 +35,10 @@ describe('ClaimsManager', function () {
     };
     const accessControlRegistryFactory = await hre.ethers.getContractFactory('AccessControlRegistry', roles.deployer);
     accessControlRegistry = await accessControlRegistryFactory.deploy();
+    const api3TokenFactory = await hre.ethers.getContractFactory('MockApi3Token', roles.deployer);
+    api3Token = await api3TokenFactory.deploy();
     const api3PoolFactory = await hre.ethers.getContractFactory('MockApi3Pool', roles.deployer);
-    api3Pool = await api3PoolFactory.deploy();
+    api3Pool = await api3PoolFactory.deploy(api3Token.address);
     const claimsManagerFactory = await hre.ethers.getContractFactory('ClaimsManager', roles.deployer);
     claimsManager = await claimsManagerFactory.deploy(
       accessControlRegistry.address,
@@ -74,8 +76,15 @@ describe('ClaimsManager', function () {
       .grantRole(await claimsManager.arbitratorRole(), roles.arbitrator.address);
     const dapiServerFactory = await hre.ethers.getContractFactory('MockDapiServer', roles.deployer);
     dapiServer = await dapiServerFactory.deploy();
+    const dataFeedId = hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(32));
+    const dataFeedValue = hre.ethers.utils.parseEther('2'); // say API3 price is $2
+    const dataFeedTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
+    await dapiServer.mockDataFeed(dataFeedId, dataFeedValue, dataFeedTimestamp);
+    const dapiName = hre.ethers.utils.formatBytes32String('API3/USD');
+    await dapiServer.mockDapiName(dapiName, dataFeedId);
     const api3ToUsdReaderFactory = await hre.ethers.getContractFactory('Api3ToUsdReader', roles.deployer);
     api3ToUsdReader = await api3ToUsdReaderFactory.deploy(dapiServer.address, claimsManager.address);
+    await claimsManager.connect(roles.manager).setApi3ToUsdReader(api3ToUsdReader.address);
   });
 
   describe('constructor', function () {
