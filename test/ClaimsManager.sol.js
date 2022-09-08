@@ -1499,7 +1499,7 @@ describe('ClaimsManager', function () {
                 [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
               );
               await claimsManager
-                .connect(roles.manager)
+                .connect(roles.policyAgent)
                 .createPolicy(
                   claimant,
                   beneficiary,
@@ -1551,7 +1551,7 @@ describe('ClaimsManager', function () {
               const policy = '/ipfs/Qm...testaddress';
               const metadata = 'dAPI:ETH/USD...testmetadata';
               await claimsManager
-                .connect(roles.manager)
+                .connect(roles.policyAgent)
                 .createPolicy(
                   claimant,
                   beneficiary,
@@ -1589,7 +1589,7 @@ describe('ClaimsManager', function () {
             const policy = '/ipfs/Qm...testaddress';
             const metadata = 'dAPI:ETH/USD...testmetadata';
             await claimsManager
-              .connect(roles.manager)
+              .connect(roles.policyAgent)
               .createPolicy(
                 claimant,
                 beneficiary,
@@ -1660,7 +1660,7 @@ describe('ClaimsManager', function () {
                 [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
               );
               await claimsManager
-                .connect(roles.admin)
+                .connect(roles.policyAgent)
                 .createPolicy(
                   claimant,
                   beneficiary,
@@ -1712,7 +1712,7 @@ describe('ClaimsManager', function () {
               const policy = '/ipfs/Qm...testaddress';
               const metadata = 'dAPI:ETH/USD...testmetadata';
               await claimsManager
-                .connect(roles.admin)
+                .connect(roles.policyAgent)
                 .createPolicy(
                   claimant,
                   beneficiary,
@@ -1750,7 +1750,7 @@ describe('ClaimsManager', function () {
             const policy = '/ipfs/Qm...testaddress';
             const metadata = 'dAPI:ETH/USD...testmetadata';
             await claimsManager
-              .connect(roles.admin)
+              .connect(roles.policyAgent)
               .createPolicy(
                 claimant,
                 beneficiary,
@@ -1995,7 +1995,7 @@ describe('ClaimsManager', function () {
                   [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
                 );
                 await claimsManager
-                  .connect(roles.manager)
+                  .connect(roles.policyAgent)
                   .createPolicy(
                     claimant,
                     beneficiary,
@@ -2047,7 +2047,7 @@ describe('ClaimsManager', function () {
                 const policy = '/ipfs/Qm...testaddress';
                 const metadata = 'dAPI:ETH/USD...testmetadata';
                 await claimsManager
-                  .connect(roles.manager)
+                  .connect(roles.policyAgent)
                   .createPolicy(
                     claimant,
                     beneficiary,
@@ -2085,7 +2085,7 @@ describe('ClaimsManager', function () {
               const policy = '/ipfs/Qm...testaddress';
               const metadata = 'dAPI:ETH/USD...testmetadata';
               await claimsManager
-                .connect(roles.manager)
+                .connect(roles.policyAgent)
                 .createPolicy(
                   claimant,
                   beneficiary,
@@ -2182,7 +2182,7 @@ describe('ClaimsManager', function () {
                   [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
                 );
                 await claimsManager
-                  .connect(roles.admin)
+                  .connect(roles.policyAgent)
                   .createPolicy(
                     claimant,
                     beneficiary,
@@ -2234,7 +2234,7 @@ describe('ClaimsManager', function () {
                 const policy = '/ipfs/Qm...testaddress';
                 const metadata = 'dAPI:ETH/USD...testmetadata';
                 await claimsManager
-                  .connect(roles.admin)
+                  .connect(roles.policyAgent)
                   .createPolicy(
                     claimant,
                     beneficiary,
@@ -2272,7 +2272,7 @@ describe('ClaimsManager', function () {
               const policy = '/ipfs/Qm...testaddress';
               const metadata = 'dAPI:ETH/USD...testmetadata';
               await claimsManager
-                .connect(roles.admin)
+                .connect(roles.policyAgent)
                 .createPolicy(
                   claimant,
                   beneficiary,
@@ -2369,7 +2369,7 @@ describe('ClaimsManager', function () {
                   [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
                 );
                 await claimsManager
-                  .connect(roles.manager)
+                  .connect(roles.policyAgent)
                   .createPolicy(
                     claimant,
                     beneficiary,
@@ -2421,7 +2421,7 @@ describe('ClaimsManager', function () {
                 const policy = '/ipfs/Qm...testaddress';
                 const metadata = 'dAPI:ETH/USD...testmetadata';
                 await claimsManager
-                  .connect(roles.manager)
+                  .connect(roles.policyAgent)
                   .createPolicy(
                     claimant,
                     beneficiary,
@@ -2459,7 +2459,7 @@ describe('ClaimsManager', function () {
               const policy = '/ipfs/Qm...testaddress';
               const metadata = 'dAPI:ETH/USD...testmetadata';
               await claimsManager
-                .connect(roles.manager)
+                .connect(roles.policyAgent)
                 .createPolicy(
                   claimant,
                   beneficiary,
@@ -2585,7 +2585,7 @@ describe('ClaimsManager', function () {
                       [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
                     );
                     await claimsManager
-                      .connect(roles.admin)
+                      .connect(roles.policyAgent)
                       .createPolicy(
                         claimant,
                         beneficiary,
@@ -2638,7 +2638,7 @@ describe('ClaimsManager', function () {
                     const policy = '/ipfs/Qm...testaddress';
                     const metadata = 'dAPI:ETH/USD...testmetadata';
                     await claimsManager
-                      .connect(roles.admin)
+                      .connect(roles.policyAgent)
                       .createPolicy(
                         claimant,
                         beneficiary,
@@ -2671,7 +2671,7 @@ describe('ClaimsManager', function () {
                   const policy = '/ipfs/Qm...testaddress';
                   const metadata = 'dAPI:ETH/USD...testmetadata';
                   await claimsManager
-                    .connect(roles.admin)
+                    .connect(roles.policyAgent)
                     .createPolicy(
                       claimant,
                       beneficiary,
@@ -2703,7 +2703,7 @@ describe('ClaimsManager', function () {
                 const policy = '/ipfs/Qm...testaddress';
                 const metadata = 'dAPI:ETH/USD...testmetadata';
                 await claimsManager
-                  .connect(roles.admin)
+                  .connect(roles.policyAgent)
                   .createPolicy(
                     claimant,
                     beneficiary,
@@ -2749,7 +2749,7 @@ describe('ClaimsManager', function () {
             const policy = '/ipfs/Qm...testaddress';
             const metadata = 'dAPI:ETH/USD...testmetadata';
             await claimsManager
-              .connect(roles.admin)
+              .connect(roles.policyAgent)
               .createPolicy(
                 claimant,
                 beneficiary,
@@ -2779,7 +2779,7 @@ describe('ClaimsManager', function () {
           const policy = '/ipfs/Qm...testaddress';
           const metadata = 'dAPI:ETH/USD...testmetadata';
           await claimsManager
-            .connect(roles.admin)
+            .connect(roles.policyAgent)
             .createPolicy(
               claimant,
               beneficiary,
@@ -2809,7 +2809,7 @@ describe('ClaimsManager', function () {
         const policy = '/ipfs/Qm...testaddress';
         const metadata = 'dAPI:ETH/USD...testmetadata';
         await claimsManager
-          .connect(roles.admin)
+          .connect(roles.policyAgent)
           .createPolicy(
             claimant,
             beneficiary,
