@@ -89,7 +89,7 @@ describe('ClaimsManager', function () {
     await dapiServer.mockDapiName(dapiName, dataFeedId);
     const api3ToUsdReaderFactory = await hre.ethers.getContractFactory('Api3ToUsdReader', roles.deployer);
     api3ToUsdReader = await api3ToUsdReaderFactory.deploy(dapiServer.address, claimsManager.address);
-    await claimsManager.connect(roles.manager).setApi3ToUsdReader(api3ToUsdReader.address);
+    await claimsManager.connect(roles.admin).setApi3ToUsdReader(api3ToUsdReader.address);
   });
 
   describe('constructor', function () {
@@ -2861,7 +2861,7 @@ describe('ClaimsManager', function () {
                               const quotaPeriod = 7 * 24 * 60 * 60;
                               const quotaAmount = hre.ethers.utils.parseEther('1000000');
                               await claimsManager
-                                .connect(roles.manager)
+                                .connect(roles.admin)
                                 .setQuota(roles.manager.address, quotaPeriod, quotaAmount);
                               const claimant = roles.claimant.address;
                               const beneficiary = roles.beneficiary.address;
