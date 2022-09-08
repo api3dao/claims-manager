@@ -803,7 +803,7 @@ contract ClaimsManager is
         require(api3ToUsdReader != address(0), "Api3ToUsdReader not set");
         int224 signedApi3ToUsd = IApi3ToUsdReader(api3ToUsdReader).read();
         require(signedApi3ToUsd > 0, "Invalid API3 to USD");
-        amountInApi3 = (amountInUsd * uint224(signedApi3ToUsd)) / 10**18;
+        amountInApi3 = (amountInUsd * 10**18) / uint224(signedApi3ToUsd);
     }
 
     function getValueAt(Checkpoint[] storage checkpoints, uint32 _timestamp)
