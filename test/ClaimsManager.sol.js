@@ -2986,56 +2986,2198 @@ describe('ClaimsManager', function () {
                         });
                         context('Coverage does not cover the entire claim', function () {
                           context('Pool has enough funds', function () {
-                            it('accepts and pays out the remaining coverage, updates coverage and quota', async function () {});
+                            it('accepts and pays out the remaining coverage, updates coverage and quota', async function () {
+                              const quotaPeriod = 7 * 24 * 60 * 60;
+                              const quotaAmount = hre.ethers.utils.parseEther('1000000');
+                              await claimsManager
+                                .connect(roles.admin)
+                                .setQuota(roles.manager.address, quotaPeriod, quotaAmount);
+                              const claimant = roles.claimant.address;
+                              const beneficiary = roles.beneficiary.address;
+                              const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                              const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                              const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                              const policy = '/ipfs/Qm...testaddress';
+                              const metadata = 'dAPI:ETH/USD...testmetadata';
+                              const policyHash = hre.ethers.utils.solidityKeccak256(
+                                ['address', 'address', 'uint32', 'string', 'string'],
+                                [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                              );
+                              await claimsManager
+                                .connect(roles.policyAgent)
+                                .createPolicy(
+                                  claimant,
+                                  beneficiary,
+                                  coverageAmountInUsd,
+                                  claimsAllowedFrom,
+                                  claimsAllowedUntil,
+                                  policy,
+                                  metadata
+                                );
+                              const evidence = '/ipfs/Qm...testaddress';
+                              const claimAmountInUsd1 = hre.ethers.utils.parseEther('40000');
+                              await claimsManager
+                                .connect(roles.claimant)
+                                .createClaim(
+                                  beneficiary,
+                                  claimsAllowedFrom,
+                                  policy,
+                                  metadata,
+                                  claimAmountInUsd1,
+                                  evidence
+                                );
+                              const claimAmountInUsd2 = hre.ethers.utils.parseEther('25000');
+                              await claimsManager
+                                .connect(roles.claimant)
+                                .createClaim(
+                                  beneficiary,
+                                  claimsAllowedFrom,
+                                  policy,
+                                  metadata,
+                                  claimAmountInUsd2,
+                                  evidence
+                                );
+                              const claimHash2 = hre.ethers.utils.solidityKeccak256(
+                                ['bytes32', 'address', 'address', 'uint224', 'string'],
+                                [policyHash, claimant, beneficiary, claimAmountInUsd2, evidence]
+                              );
+                              await claimsManager
+                                .connect(roles.mediator)
+                                .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd1, evidence);
+                              const payoutAmountInUsd = coverageAmountInUsd.sub(claimAmountInUsd1).lt(claimAmountInUsd2)
+                                ? coverageAmountInUsd.sub(claimAmountInUsd1)
+                                : claimAmountInUsd2;
+                              const payoutAmountInApi3 = payoutAmountInUsd
+                                .mul(hre.ethers.utils.parseEther('1'))
+                                .div(api3UsdPriceWith18Decimals);
+                              const beneficiaryBalance = await api3Token.balanceOf(beneficiary);
+                              const coverageAmount = (await claimsManager.policyHashToState(policyHash))
+                                .coverageAmountInUsd;
+                              const quotaUsage = await claimsManager.getQuotaUsage(roles.manager.address);
+                              await expect(
+                                claimsManager
+                                  .connect(roles.manager)
+                                  .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd2, evidence)
+                              )
+                                .to.emit(claimsManager, 'AcceptedClaim')
+                                .withArgs(
+                                  claimHash2,
+                                  claimant,
+                                  beneficiary,
+                                  payoutAmountInUsd,
+                                  payoutAmountInApi3,
+                                  roles.manager.address
+                                );
+                              expect((await api3Token.balanceOf(beneficiary)).sub(beneficiaryBalance)).to.equal(
+                                payoutAmountInApi3
+                              );
+                              expect(
+                                coverageAmount.sub(
+                                  (await claimsManager.policyHashToState(policyHash)).coverageAmountInUsd
+                                )
+                              ).to.equal(payoutAmountInUsd);
+                              expect(
+                                (await claimsManager.getQuotaUsage(roles.manager.address)).sub(quotaUsage)
+                              ).to.equal(payoutAmountInApi3);
+                            });
                           });
                           context('Pool does not have enough funds', function () {
-                            it('reverts', async function () {});
+                            it('reverts', async function () {
+                              const usdAmountThatExceedsTotalStake = api3UsdPriceWith18Decimals.gt(
+                                hre.ethers.utils.parseEther('1')
+                              )
+                                ? totalStake
+                                    .mul(api3UsdPriceWith18Decimals)
+                                    .div(hre.ethers.utils.parseEther('1'))
+                                    .add(api3UsdPriceWith18Decimals.div(hre.ethers.utils.parseEther('1')))
+                                : totalStake
+                                    .mul(api3UsdPriceWith18Decimals)
+                                    .div(hre.ethers.utils.parseEther('1'))
+                                    .add(1);
+                              const claimant = roles.claimant.address;
+                              const beneficiary = roles.beneficiary.address;
+                              const coverageAmountInUsd = usdAmountThatExceedsTotalStake.mul(2);
+                              const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                              const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                              const policy = '/ipfs/Qm...testaddress';
+                              const metadata = 'dAPI:ETH/USD...testmetadata';
+                              const policyHash = hre.ethers.utils.solidityKeccak256(
+                                ['address', 'address', 'uint32', 'string', 'string'],
+                                [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                              );
+                              await claimsManager
+                                .connect(roles.policyAgent)
+                                .createPolicy(
+                                  claimant,
+                                  beneficiary,
+                                  coverageAmountInUsd,
+                                  claimsAllowedFrom,
+                                  claimsAllowedUntil,
+                                  policy,
+                                  metadata
+                                );
+                              const evidence = '/ipfs/Qm...testaddress';
+                              const claimAmountInUsd1 = 1;
+                              await claimsManager
+                                .connect(roles.claimant)
+                                .createClaim(
+                                  beneficiary,
+                                  claimsAllowedFrom,
+                                  policy,
+                                  metadata,
+                                  claimAmountInUsd1,
+                                  evidence
+                                );
+                              const claimAmountInUsd2 = coverageAmountInUsd;
+                              await claimsManager
+                                .connect(roles.claimant)
+                                .createClaim(
+                                  beneficiary,
+                                  claimsAllowedFrom,
+                                  policy,
+                                  metadata,
+                                  claimAmountInUsd2,
+                                  evidence
+                                );
+                              await claimsManager
+                                .connect(roles.mediator)
+                                .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd1, evidence);
+                              await expect(
+                                claimsManager
+                                  .connect(roles.manager)
+                                  .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd2, evidence)
+                              ).to.be.revertedWith('Pool: Amount exceeds total stake');
+                            });
                           });
                         });
                       });
                       context('Accepting causes the sender quota to be exceeded', function () {
-                        it('reverts', async function () {});
+                        it('reverts', async function () {
+                          const quotaPeriod = 7 * 24 * 60 * 60;
+                          const quotaAmount = hre.ethers.utils.parseEther('10000');
+                          await claimsManager
+                            .connect(roles.admin)
+                            .setQuota(roles.manager.address, quotaPeriod, quotaAmount);
+                          const claimant = roles.claimant.address;
+                          const beneficiary = roles.beneficiary.address;
+                          const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                          const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                          const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                          const policy = '/ipfs/Qm...testaddress';
+                          const metadata = 'dAPI:ETH/USD...testmetadata';
+                          const policyHash = hre.ethers.utils.solidityKeccak256(
+                            ['address', 'address', 'uint32', 'string', 'string'],
+                            [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                          );
+                          await claimsManager
+                            .connect(roles.policyAgent)
+                            .createPolicy(
+                              claimant,
+                              beneficiary,
+                              coverageAmountInUsd,
+                              claimsAllowedFrom,
+                              claimsAllowedUntil,
+                              policy,
+                              metadata
+                            );
+                          const evidence = '/ipfs/Qm...testaddress';
+                          const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+                          await claimsManager
+                            .connect(roles.claimant)
+                            .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+                          await expect(
+                            claimsManager
+                              .connect(roles.manager)
+                              .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                          ).to.be.revertedWith('Quota exceeded');
+                        });
                       });
                     });
                     context('dAPI name is set to a data feed that has a negative value', function () {
-                      it('reverts', async function () {});
+                      it('reverts', async function () {
+                        const dapiServerFactory = await hre.ethers.getContractFactory('MockDapiServer', roles.deployer);
+                        dapiServer = await dapiServerFactory.deploy();
+                        const dataFeedId = hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(32));
+                        const dataFeedValue = -1;
+                        const dataFeedTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
+                        await dapiServer.mockDataFeed(dataFeedId, dataFeedValue, dataFeedTimestamp);
+                        const dapiName = hre.ethers.utils.formatBytes32String('API3/USD');
+                        await dapiServer.mockDapiName(dapiName, dataFeedId);
+                        const api3ToUsdReaderFactory = await hre.ethers.getContractFactory(
+                          'Api3ToUsdReader',
+                          roles.deployer
+                        );
+                        api3ToUsdReader = await api3ToUsdReaderFactory.deploy(
+                          dapiServer.address,
+                          claimsManager.address
+                        );
+                        await claimsManager.connect(roles.manager).setApi3ToUsdReader(api3ToUsdReader.address);
+                        const claimant = roles.claimant.address;
+                        const beneficiary = roles.beneficiary.address;
+                        const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                        const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                        const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                        const policy = '/ipfs/Qm...testaddress';
+                        const metadata = 'dAPI:ETH/USD...testmetadata';
+                        const policyHash = hre.ethers.utils.solidityKeccak256(
+                          ['address', 'address', 'uint32', 'string', 'string'],
+                          [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                        );
+                        await claimsManager
+                          .connect(roles.policyAgent)
+                          .createPolicy(
+                            claimant,
+                            beneficiary,
+                            coverageAmountInUsd,
+                            claimsAllowedFrom,
+                            claimsAllowedUntil,
+                            policy,
+                            metadata
+                          );
+                        const evidence = '/ipfs/Qm...testaddress';
+                        const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+                        await claimsManager
+                          .connect(roles.claimant)
+                          .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+                        await expect(
+                          claimsManager
+                            .connect(roles.manager)
+                            .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                        ).to.be.revertedWith('API3 price not positive');
+                      });
                     });
                   });
                   context('Data feed value is small enough to cause overflow', function () {
-                    it('reverts', async function () {});
+                    it('reverts', async function () {
+                      const dapiServerFactory = await hre.ethers.getContractFactory('MockDapiServer', roles.deployer);
+                      dapiServer = await dapiServerFactory.deploy();
+                      const dataFeedId = hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(32));
+                      const dataFeedValue = 1;
+                      const dataFeedTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
+                      await dapiServer.mockDataFeed(dataFeedId, dataFeedValue, dataFeedTimestamp);
+                      const dapiName = hre.ethers.utils.formatBytes32String('API3/USD');
+                      await dapiServer.mockDapiName(dapiName, dataFeedId);
+                      const api3ToUsdReaderFactory = await hre.ethers.getContractFactory(
+                        'Api3ToUsdReader',
+                        roles.deployer
+                      );
+                      api3ToUsdReader = await api3ToUsdReaderFactory.deploy(dapiServer.address, claimsManager.address);
+                      await claimsManager.connect(roles.manager).setApi3ToUsdReader(api3ToUsdReader.address);
+                      const claimant = roles.claimant.address;
+                      const beneficiary = roles.beneficiary.address;
+                      const coverageAmountInUsd = hre.ethers.BigNumber.from(
+                        '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+                      ); // max uint224
+                      hre.ethers.constants.MaxUint256;
+                      const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                      const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                      const policy = '/ipfs/Qm...testaddress';
+                      const metadata = 'dAPI:ETH/USD...testmetadata';
+                      const policyHash = hre.ethers.utils.solidityKeccak256(
+                        ['address', 'address', 'uint32', 'string', 'string'],
+                        [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                      );
+                      await claimsManager
+                        .connect(roles.policyAgent)
+                        .createPolicy(
+                          claimant,
+                          beneficiary,
+                          coverageAmountInUsd,
+                          claimsAllowedFrom,
+                          claimsAllowedUntil,
+                          policy,
+                          metadata
+                        );
+                      const evidence = '/ipfs/Qm...testaddress';
+                      const claimAmountInUsd = hre.ethers.BigNumber.from(
+                        '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+                      ); // max uint224
+                      await claimsManager
+                        .connect(roles.claimant)
+                        .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+                      await expect(
+                        claimsManager
+                          .connect(roles.manager)
+                          .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                      ).to.be.reverted;
+                    });
                   });
                   context('Data feed value is not initialized', function () {
-                    it('reverts', async function () {});
+                    it('reverts', async function () {
+                      const dapiServerFactory = await hre.ethers.getContractFactory('MockDapiServer', roles.deployer);
+                      dapiServer = await dapiServerFactory.deploy();
+                      const dataFeedId = hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(32));
+                      const dapiName = hre.ethers.utils.formatBytes32String('API3/USD');
+                      await dapiServer.mockDapiName(dapiName, dataFeedId);
+                      const api3ToUsdReaderFactory = await hre.ethers.getContractFactory(
+                        'Api3ToUsdReader',
+                        roles.deployer
+                      );
+                      api3ToUsdReader = await api3ToUsdReaderFactory.deploy(dapiServer.address, claimsManager.address);
+                      await claimsManager.connect(roles.manager).setApi3ToUsdReader(api3ToUsdReader.address);
+                      const claimant = roles.claimant.address;
+                      const beneficiary = roles.beneficiary.address;
+                      const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                      const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                      const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                      const policy = '/ipfs/Qm...testaddress';
+                      const metadata = 'dAPI:ETH/USD...testmetadata';
+                      const policyHash = hre.ethers.utils.solidityKeccak256(
+                        ['address', 'address', 'uint32', 'string', 'string'],
+                        [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                      );
+                      await claimsManager
+                        .connect(roles.policyAgent)
+                        .createPolicy(
+                          claimant,
+                          beneficiary,
+                          coverageAmountInUsd,
+                          claimsAllowedFrom,
+                          claimsAllowedUntil,
+                          policy,
+                          metadata
+                        );
+                      const evidence = '/ipfs/Qm...testaddress';
+                      const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+                      await claimsManager
+                        .connect(roles.claimant)
+                        .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+                      await expect(
+                        claimsManager
+                          .connect(roles.manager)
+                          .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                      ).to.be.revertedWith('Data feed does not exist');
+                    });
                   });
                 });
                 context('dAPI name is not set', function () {
-                  it('reverts', async function () {});
+                  it('reverts', async function () {
+                    const dapiServerFactory = await hre.ethers.getContractFactory('MockDapiServer', roles.deployer);
+                    dapiServer = await dapiServerFactory.deploy();
+                    const api3ToUsdReaderFactory = await hre.ethers.getContractFactory(
+                      'Api3ToUsdReader',
+                      roles.deployer
+                    );
+                    api3ToUsdReader = await api3ToUsdReaderFactory.deploy(dapiServer.address, claimsManager.address);
+                    await claimsManager.connect(roles.manager).setApi3ToUsdReader(api3ToUsdReader.address);
+                    const claimant = roles.claimant.address;
+                    const beneficiary = roles.beneficiary.address;
+                    const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                    const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                    const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                    const policy = '/ipfs/Qm...testaddress';
+                    const metadata = 'dAPI:ETH/USD...testmetadata';
+                    const policyHash = hre.ethers.utils.solidityKeccak256(
+                      ['address', 'address', 'uint32', 'string', 'string'],
+                      [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                    );
+                    await claimsManager
+                      .connect(roles.policyAgent)
+                      .createPolicy(
+                        claimant,
+                        beneficiary,
+                        coverageAmountInUsd,
+                        claimsAllowedFrom,
+                        claimsAllowedUntil,
+                        policy,
+                        metadata
+                      );
+                    const evidence = '/ipfs/Qm...testaddress';
+                    const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+                    await claimsManager
+                      .connect(roles.claimant)
+                      .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+                    await expect(
+                      claimsManager
+                        .connect(roles.manager)
+                        .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                    ).to.be.revertedWith('Data feed does not exist');
+                  });
                 });
               });
               context('ClaimsManager is not whitelisted to read the dAPI', function () {
-                it('reverts', async function () {});
+                it('reverts', async function () {
+                  await dapiServer.mockIfAllowedToRead(false);
+                  const claimant = roles.claimant.address;
+                  const beneficiary = roles.beneficiary.address;
+                  const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                  const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                  const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                  const policy = '/ipfs/Qm...testaddress';
+                  const metadata = 'dAPI:ETH/USD...testmetadata';
+                  const policyHash = hre.ethers.utils.solidityKeccak256(
+                    ['address', 'address', 'uint32', 'string', 'string'],
+                    [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                  );
+                  await claimsManager
+                    .connect(roles.policyAgent)
+                    .createPolicy(
+                      claimant,
+                      beneficiary,
+                      coverageAmountInUsd,
+                      claimsAllowedFrom,
+                      claimsAllowedUntil,
+                      policy,
+                      metadata
+                    );
+                  const evidence = '/ipfs/Qm...testaddress';
+                  const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+                  await claimsManager
+                    .connect(roles.claimant)
+                    .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+                  await expect(
+                    claimsManager
+                      .connect(roles.manager)
+                      .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                  ).to.be.revertedWith('Sender cannot read');
+                });
               });
             });
             context('Api3ToUsdReader is not set', function () {
-              it('reverts', async function () {});
+              it('reverts', async function () {
+                const claimsManagerFactory = await hre.ethers.getContractFactory('ClaimsManager', roles.deployer);
+                claimsManager = await claimsManagerFactory.deploy(
+                  accessControlRegistry.address,
+                  'ClaimsManager admin',
+                  roles.manager.address,
+                  api3Pool.address,
+                  mediatorResponsePeriod,
+                  claimantResponsePeriod,
+                  arbitratorResponsePeriod
+                );
+                await accessControlRegistry
+                  .connect(roles.manager)
+                  .initializeRoleAndGrantToSender(
+                    await accessControlRegistry.deriveRootRole(roles.manager.address),
+                    'ClaimsManager admin'
+                  );
+                await accessControlRegistry
+                  .connect(roles.manager)
+                  .initializeRoleAndGrantToSender(await claimsManager.adminRole(), 'Policy agent');
+                await accessControlRegistry
+                  .connect(roles.manager)
+                  .grantRole(await claimsManager.policyAgentRole(), roles.policyAgent.address);
+                await accessControlRegistry;
+                const claimant = roles.claimant.address;
+                const beneficiary = roles.beneficiary.address;
+                const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                const policy = '/ipfs/Qm...testaddress';
+                const metadata = 'dAPI:ETH/USD...testmetadata';
+                const policyHash = hre.ethers.utils.solidityKeccak256(
+                  ['address', 'address', 'uint32', 'string', 'string'],
+                  [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                );
+                await claimsManager
+                  .connect(roles.policyAgent)
+                  .createPolicy(
+                    claimant,
+                    beneficiary,
+                    coverageAmountInUsd,
+                    claimsAllowedFrom,
+                    claimsAllowedUntil,
+                    policy,
+                    metadata
+                  );
+                const evidence = '/ipfs/Qm...testaddress';
+                const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+                await claimsManager
+                  .connect(roles.claimant)
+                  .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+                await expect(
+                  claimsManager
+                    .connect(roles.manager)
+                    .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                ).to.be.revertedWith('Api3ToUsdReader not set');
+              });
             });
           });
           context('It is too late to accept the claim', function () {
-            it('reverts', async function () {});
+            it('reverts', async function () {
+              const claimant = roles.claimant.address;
+              const beneficiary = roles.beneficiary.address;
+              const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+              const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+              const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+              const policy = '/ipfs/Qm...testaddress';
+              const metadata = 'dAPI:ETH/USD...testmetadata';
+              const policyHash = hre.ethers.utils.solidityKeccak256(
+                ['address', 'address', 'uint32', 'string', 'string'],
+                [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+              );
+              await claimsManager
+                .connect(roles.policyAgent)
+                .createPolicy(
+                  claimant,
+                  beneficiary,
+                  coverageAmountInUsd,
+                  claimsAllowedFrom,
+                  claimsAllowedUntil,
+                  policy,
+                  metadata
+                );
+              const evidence = '/ipfs/Qm...testaddress';
+              const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+              const currentBlockTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
+              const claimCreationBlockTimestamp = currentBlockTimestamp + 1;
+              await hre.ethers.provider.send('evm_setNextBlockTimestamp', [claimCreationBlockTimestamp]);
+              await claimsManager
+                .connect(roles.claimant)
+                .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+              await hre.ethers.provider.send('evm_setNextBlockTimestamp', [
+                claimCreationBlockTimestamp + mediatorResponsePeriod,
+              ]);
+              await expect(
+                claimsManager
+                  .connect(roles.manager)
+                  .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+              ).to.be.revertedWith('Too late to accept claim');
+            });
           });
         });
         context('Claim is not acceptable', function () {
-          it('reverts', async function () {});
+          it('reverts', async function () {
+            const claimant = roles.claimant.address;
+            const beneficiary = roles.beneficiary.address;
+            const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+            const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+            const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+            const policy = '/ipfs/Qm...testaddress';
+            const metadata = 'dAPI:ETH/USD...testmetadata';
+            const policyHash = hre.ethers.utils.solidityKeccak256(
+              ['address', 'address', 'uint32', 'string', 'string'],
+              [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+            );
+            await claimsManager
+              .connect(roles.policyAgent)
+              .createPolicy(
+                claimant,
+                beneficiary,
+                coverageAmountInUsd,
+                claimsAllowedFrom,
+                claimsAllowedUntil,
+                policy,
+                metadata
+              );
+            const evidence = '/ipfs/Qm...testaddress';
+            const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+            await claimsManager
+              .connect(roles.claimant)
+              .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+            await claimsManager
+              .connect(roles.mediator)
+              .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence);
+            await expect(
+              claimsManager
+                .connect(roles.manager)
+                .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+            ).to.be.revertedWith('Claim not acceptable');
+          });
         });
       });
       context('Claim does not exist', function () {
-        it('reverts', async function () {});
+        it('reverts', async function () {
+          const claimant = roles.claimant.address;
+          const beneficiary = roles.beneficiary.address;
+          const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+          const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+          const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+          const policy = '/ipfs/Qm...testaddress';
+          const metadata = 'dAPI:ETH/USD...testmetadata';
+          const policyHash = hre.ethers.utils.solidityKeccak256(
+            ['address', 'address', 'uint32', 'string', 'string'],
+            [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+          );
+          await claimsManager
+            .connect(roles.policyAgent)
+            .createPolicy(
+              claimant,
+              beneficiary,
+              coverageAmountInUsd,
+              claimsAllowedFrom,
+              claimsAllowedUntil,
+              policy,
+              metadata
+            );
+          const evidence = '/ipfs/Qm...testaddress';
+          const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+          await expect(
+            claimsManager
+              .connect(roles.manager)
+              .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+          ).to.be.revertedWith('Claim not acceptable');
+        });
       });
     });
-    context('Sender is admin', function () {});
-    context('Sender is mediator', function () {});
+    context('Sender is admin', function () {
+      context('Claim exists', function () {
+        context('Claim is acceptable', function () {
+          context('It is not too late to accept the claim', function () {
+            context('Api3ToUsdReader is set', function () {
+              context('ClaimsManager is whitelisted to read the dAPI', function () {
+                context('dAPI name is set', function () {
+                  context('Data feed value is not small enough to cause overflow', function () {
+                    context('dAPI name is set to a data feed that has a non-negative value', function () {
+                      context('Accepting does not cause the sender quota to be exceeded', function () {
+                        context('Coverage covers the entire claim', function () {
+                          context('Pool has enough funds', function () {
+                            it('accepts and pays out the claim fully, updates coverage and quota', async function () {
+                              const quotaPeriod = 7 * 24 * 60 * 60;
+                              const quotaAmount = hre.ethers.utils.parseEther('1000000');
+                              await claimsManager
+                                .connect(roles.admin)
+                                .setQuota(roles.admin.address, quotaPeriod, quotaAmount);
+                              const claimant = roles.claimant.address;
+                              const beneficiary = roles.beneficiary.address;
+                              const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                              const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                              const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                              const policy = '/ipfs/Qm...testaddress';
+                              const metadata = 'dAPI:ETH/USD...testmetadata';
+                              const policyHash = hre.ethers.utils.solidityKeccak256(
+                                ['address', 'address', 'uint32', 'string', 'string'],
+                                [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                              );
+                              await claimsManager
+                                .connect(roles.policyAgent)
+                                .createPolicy(
+                                  claimant,
+                                  beneficiary,
+                                  coverageAmountInUsd,
+                                  claimsAllowedFrom,
+                                  claimsAllowedUntil,
+                                  policy,
+                                  metadata
+                                );
+                              const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+                              const evidence = '/ipfs/Qm...testaddress';
+                              await claimsManager
+                                .connect(roles.claimant)
+                                .createClaim(
+                                  beneficiary,
+                                  claimsAllowedFrom,
+                                  policy,
+                                  metadata,
+                                  claimAmountInUsd,
+                                  evidence
+                                );
+                              const claimHash = hre.ethers.utils.solidityKeccak256(
+                                ['bytes32', 'address', 'address', 'uint224', 'string'],
+                                [policyHash, claimant, beneficiary, claimAmountInUsd, evidence]
+                              );
+                              const payoutAmountInUsd = claimAmountInUsd;
+                              const payoutAmountInApi3 = claimAmountInUsd
+                                .mul(hre.ethers.utils.parseEther('1'))
+                                .div(api3UsdPriceWith18Decimals);
+                              await expect(
+                                claimsManager
+                                  .connect(roles.admin)
+                                  .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                              )
+                                .to.emit(claimsManager, 'AcceptedClaim')
+                                .withArgs(
+                                  claimHash,
+                                  claimant,
+                                  beneficiary,
+                                  payoutAmountInUsd,
+                                  payoutAmountInApi3,
+                                  roles.admin.address
+                                );
+                              expect(await api3Token.balanceOf(beneficiary)).to.equal(payoutAmountInApi3);
+                              const policyState = await claimsManager.policyHashToState(policyHash);
+                              expect(policyState.coverageAmountInUsd).to.equal(
+                                coverageAmountInUsd.sub(payoutAmountInUsd)
+                              );
+                              expect(await claimsManager.getQuotaUsage(roles.admin.address)).to.equal(
+                                payoutAmountInApi3
+                              );
+                            });
+                          });
+                          context('Pool does not have enough funds', function () {
+                            it('reverts', async function () {
+                              const usdAmountThatExceedsTotalStake = api3UsdPriceWith18Decimals.gt(
+                                hre.ethers.utils.parseEther('1')
+                              )
+                                ? totalStake
+                                    .mul(api3UsdPriceWith18Decimals)
+                                    .div(hre.ethers.utils.parseEther('1'))
+                                    .add(api3UsdPriceWith18Decimals.div(hre.ethers.utils.parseEther('1')))
+                                : totalStake
+                                    .mul(api3UsdPriceWith18Decimals)
+                                    .div(hre.ethers.utils.parseEther('1'))
+                                    .add(1);
+                              const claimant = roles.claimant.address;
+                              const beneficiary = roles.beneficiary.address;
+                              const coverageAmountInUsd = usdAmountThatExceedsTotalStake;
+                              const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                              const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                              const policy = '/ipfs/Qm...testaddress';
+                              const metadata = 'dAPI:ETH/USD...testmetadata';
+                              const policyHash = hre.ethers.utils.solidityKeccak256(
+                                ['address', 'address', 'uint32', 'string', 'string'],
+                                [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                              );
+                              await claimsManager
+                                .connect(roles.policyAgent)
+                                .createPolicy(
+                                  claimant,
+                                  beneficiary,
+                                  coverageAmountInUsd,
+                                  claimsAllowedFrom,
+                                  claimsAllowedUntil,
+                                  policy,
+                                  metadata
+                                );
+                              const claimAmountInUsd = usdAmountThatExceedsTotalStake;
+                              const evidence = '/ipfs/Qm...testaddress';
+                              await claimsManager
+                                .connect(roles.claimant)
+                                .createClaim(
+                                  beneficiary,
+                                  claimsAllowedFrom,
+                                  policy,
+                                  metadata,
+                                  claimAmountInUsd,
+                                  evidence
+                                );
+                              await expect(
+                                claimsManager
+                                  .connect(roles.admin)
+                                  .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                              ).to.be.revertedWith('Pool: Amount exceeds total stake');
+                            });
+                          });
+                        });
+                        context('Coverage does not cover the entire claim', function () {
+                          context('Pool has enough funds', function () {
+                            it('accepts and pays out the remaining coverage, updates coverage and quota', async function () {
+                              const quotaPeriod = 7 * 24 * 60 * 60;
+                              const quotaAmount = hre.ethers.utils.parseEther('1000000');
+                              await claimsManager
+                                .connect(roles.admin)
+                                .setQuota(roles.admin.address, quotaPeriod, quotaAmount);
+                              const claimant = roles.claimant.address;
+                              const beneficiary = roles.beneficiary.address;
+                              const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                              const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                              const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                              const policy = '/ipfs/Qm...testaddress';
+                              const metadata = 'dAPI:ETH/USD...testmetadata';
+                              const policyHash = hre.ethers.utils.solidityKeccak256(
+                                ['address', 'address', 'uint32', 'string', 'string'],
+                                [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                              );
+                              await claimsManager
+                                .connect(roles.policyAgent)
+                                .createPolicy(
+                                  claimant,
+                                  beneficiary,
+                                  coverageAmountInUsd,
+                                  claimsAllowedFrom,
+                                  claimsAllowedUntil,
+                                  policy,
+                                  metadata
+                                );
+                              const evidence = '/ipfs/Qm...testaddress';
+                              const claimAmountInUsd1 = hre.ethers.utils.parseEther('40000');
+                              await claimsManager
+                                .connect(roles.claimant)
+                                .createClaim(
+                                  beneficiary,
+                                  claimsAllowedFrom,
+                                  policy,
+                                  metadata,
+                                  claimAmountInUsd1,
+                                  evidence
+                                );
+                              const claimAmountInUsd2 = hre.ethers.utils.parseEther('25000');
+                              await claimsManager
+                                .connect(roles.claimant)
+                                .createClaim(
+                                  beneficiary,
+                                  claimsAllowedFrom,
+                                  policy,
+                                  metadata,
+                                  claimAmountInUsd2,
+                                  evidence
+                                );
+                              const claimHash2 = hre.ethers.utils.solidityKeccak256(
+                                ['bytes32', 'address', 'address', 'uint224', 'string'],
+                                [policyHash, claimant, beneficiary, claimAmountInUsd2, evidence]
+                              );
+                              await claimsManager
+                                .connect(roles.mediator)
+                                .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd1, evidence);
+                              const payoutAmountInUsd = coverageAmountInUsd.sub(claimAmountInUsd1).lt(claimAmountInUsd2)
+                                ? coverageAmountInUsd.sub(claimAmountInUsd1)
+                                : claimAmountInUsd2;
+                              const payoutAmountInApi3 = payoutAmountInUsd
+                                .mul(hre.ethers.utils.parseEther('1'))
+                                .div(api3UsdPriceWith18Decimals);
+                              const beneficiaryBalance = await api3Token.balanceOf(beneficiary);
+                              const coverageAmount = (await claimsManager.policyHashToState(policyHash))
+                                .coverageAmountInUsd;
+                              const quotaUsage = await claimsManager.getQuotaUsage(roles.admin.address);
+                              await expect(
+                                claimsManager
+                                  .connect(roles.admin)
+                                  .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd2, evidence)
+                              )
+                                .to.emit(claimsManager, 'AcceptedClaim')
+                                .withArgs(
+                                  claimHash2,
+                                  claimant,
+                                  beneficiary,
+                                  payoutAmountInUsd,
+                                  payoutAmountInApi3,
+                                  roles.admin.address
+                                );
+                              expect((await api3Token.balanceOf(beneficiary)).sub(beneficiaryBalance)).to.equal(
+                                payoutAmountInApi3
+                              );
+                              expect(
+                                coverageAmount.sub(
+                                  (await claimsManager.policyHashToState(policyHash)).coverageAmountInUsd
+                                )
+                              ).to.equal(payoutAmountInUsd);
+                              expect((await claimsManager.getQuotaUsage(roles.admin.address)).sub(quotaUsage)).to.equal(
+                                payoutAmountInApi3
+                              );
+                            });
+                          });
+                          context('Pool does not have enough funds', function () {
+                            it('reverts', async function () {
+                              const usdAmountThatExceedsTotalStake = api3UsdPriceWith18Decimals.gt(
+                                hre.ethers.utils.parseEther('1')
+                              )
+                                ? totalStake
+                                    .mul(api3UsdPriceWith18Decimals)
+                                    .div(hre.ethers.utils.parseEther('1'))
+                                    .add(api3UsdPriceWith18Decimals.div(hre.ethers.utils.parseEther('1')))
+                                : totalStake
+                                    .mul(api3UsdPriceWith18Decimals)
+                                    .div(hre.ethers.utils.parseEther('1'))
+                                    .add(1);
+                              const claimant = roles.claimant.address;
+                              const beneficiary = roles.beneficiary.address;
+                              const coverageAmountInUsd = usdAmountThatExceedsTotalStake.mul(2);
+                              const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                              const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                              const policy = '/ipfs/Qm...testaddress';
+                              const metadata = 'dAPI:ETH/USD...testmetadata';
+                              const policyHash = hre.ethers.utils.solidityKeccak256(
+                                ['address', 'address', 'uint32', 'string', 'string'],
+                                [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                              );
+                              await claimsManager
+                                .connect(roles.policyAgent)
+                                .createPolicy(
+                                  claimant,
+                                  beneficiary,
+                                  coverageAmountInUsd,
+                                  claimsAllowedFrom,
+                                  claimsAllowedUntil,
+                                  policy,
+                                  metadata
+                                );
+                              const evidence = '/ipfs/Qm...testaddress';
+                              const claimAmountInUsd1 = 1;
+                              await claimsManager
+                                .connect(roles.claimant)
+                                .createClaim(
+                                  beneficiary,
+                                  claimsAllowedFrom,
+                                  policy,
+                                  metadata,
+                                  claimAmountInUsd1,
+                                  evidence
+                                );
+                              const claimAmountInUsd2 = coverageAmountInUsd;
+                              await claimsManager
+                                .connect(roles.claimant)
+                                .createClaim(
+                                  beneficiary,
+                                  claimsAllowedFrom,
+                                  policy,
+                                  metadata,
+                                  claimAmountInUsd2,
+                                  evidence
+                                );
+                              await claimsManager
+                                .connect(roles.mediator)
+                                .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd1, evidence);
+                              await expect(
+                                claimsManager
+                                  .connect(roles.admin)
+                                  .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd2, evidence)
+                              ).to.be.revertedWith('Pool: Amount exceeds total stake');
+                            });
+                          });
+                        });
+                      });
+                      context('Accepting causes the sender quota to be exceeded', function () {
+                        it('reverts', async function () {
+                          const quotaPeriod = 7 * 24 * 60 * 60;
+                          const quotaAmount = hre.ethers.utils.parseEther('10000');
+                          await claimsManager
+                            .connect(roles.admin)
+                            .setQuota(roles.admin.address, quotaPeriod, quotaAmount);
+                          const claimant = roles.claimant.address;
+                          const beneficiary = roles.beneficiary.address;
+                          const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                          const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                          const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                          const policy = '/ipfs/Qm...testaddress';
+                          const metadata = 'dAPI:ETH/USD...testmetadata';
+                          const policyHash = hre.ethers.utils.solidityKeccak256(
+                            ['address', 'address', 'uint32', 'string', 'string'],
+                            [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                          );
+                          await claimsManager
+                            .connect(roles.policyAgent)
+                            .createPolicy(
+                              claimant,
+                              beneficiary,
+                              coverageAmountInUsd,
+                              claimsAllowedFrom,
+                              claimsAllowedUntil,
+                              policy,
+                              metadata
+                            );
+                          const evidence = '/ipfs/Qm...testaddress';
+                          const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+                          await claimsManager
+                            .connect(roles.claimant)
+                            .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+                          await expect(
+                            claimsManager
+                              .connect(roles.admin)
+                              .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                          ).to.be.revertedWith('Quota exceeded');
+                        });
+                      });
+                    });
+                    context('dAPI name is set to a data feed that has a negative value', function () {
+                      it('reverts', async function () {
+                        const dapiServerFactory = await hre.ethers.getContractFactory('MockDapiServer', roles.deployer);
+                        dapiServer = await dapiServerFactory.deploy();
+                        const dataFeedId = hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(32));
+                        const dataFeedValue = -1;
+                        const dataFeedTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
+                        await dapiServer.mockDataFeed(dataFeedId, dataFeedValue, dataFeedTimestamp);
+                        const dapiName = hre.ethers.utils.formatBytes32String('API3/USD');
+                        await dapiServer.mockDapiName(dapiName, dataFeedId);
+                        const api3ToUsdReaderFactory = await hre.ethers.getContractFactory(
+                          'Api3ToUsdReader',
+                          roles.deployer
+                        );
+                        api3ToUsdReader = await api3ToUsdReaderFactory.deploy(
+                          dapiServer.address,
+                          claimsManager.address
+                        );
+                        await claimsManager.connect(roles.admin).setApi3ToUsdReader(api3ToUsdReader.address);
+                        const claimant = roles.claimant.address;
+                        const beneficiary = roles.beneficiary.address;
+                        const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                        const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                        const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                        const policy = '/ipfs/Qm...testaddress';
+                        const metadata = 'dAPI:ETH/USD...testmetadata';
+                        const policyHash = hre.ethers.utils.solidityKeccak256(
+                          ['address', 'address', 'uint32', 'string', 'string'],
+                          [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                        );
+                        await claimsManager
+                          .connect(roles.policyAgent)
+                          .createPolicy(
+                            claimant,
+                            beneficiary,
+                            coverageAmountInUsd,
+                            claimsAllowedFrom,
+                            claimsAllowedUntil,
+                            policy,
+                            metadata
+                          );
+                        const evidence = '/ipfs/Qm...testaddress';
+                        const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+                        await claimsManager
+                          .connect(roles.claimant)
+                          .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+                        await expect(
+                          claimsManager
+                            .connect(roles.admin)
+                            .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                        ).to.be.revertedWith('API3 price not positive');
+                      });
+                    });
+                  });
+                  context('Data feed value is small enough to cause overflow', function () {
+                    it('reverts', async function () {
+                      const dapiServerFactory = await hre.ethers.getContractFactory('MockDapiServer', roles.deployer);
+                      dapiServer = await dapiServerFactory.deploy();
+                      const dataFeedId = hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(32));
+                      const dataFeedValue = 1;
+                      const dataFeedTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
+                      await dapiServer.mockDataFeed(dataFeedId, dataFeedValue, dataFeedTimestamp);
+                      const dapiName = hre.ethers.utils.formatBytes32String('API3/USD');
+                      await dapiServer.mockDapiName(dapiName, dataFeedId);
+                      const api3ToUsdReaderFactory = await hre.ethers.getContractFactory(
+                        'Api3ToUsdReader',
+                        roles.deployer
+                      );
+                      api3ToUsdReader = await api3ToUsdReaderFactory.deploy(dapiServer.address, claimsManager.address);
+                      await claimsManager.connect(roles.admin).setApi3ToUsdReader(api3ToUsdReader.address);
+                      const claimant = roles.claimant.address;
+                      const beneficiary = roles.beneficiary.address;
+                      const coverageAmountInUsd = hre.ethers.BigNumber.from(
+                        '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+                      ); // max uint224
+                      hre.ethers.constants.MaxUint256;
+                      const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                      const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                      const policy = '/ipfs/Qm...testaddress';
+                      const metadata = 'dAPI:ETH/USD...testmetadata';
+                      const policyHash = hre.ethers.utils.solidityKeccak256(
+                        ['address', 'address', 'uint32', 'string', 'string'],
+                        [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                      );
+                      await claimsManager
+                        .connect(roles.policyAgent)
+                        .createPolicy(
+                          claimant,
+                          beneficiary,
+                          coverageAmountInUsd,
+                          claimsAllowedFrom,
+                          claimsAllowedUntil,
+                          policy,
+                          metadata
+                        );
+                      const evidence = '/ipfs/Qm...testaddress';
+                      const claimAmountInUsd = hre.ethers.BigNumber.from(
+                        '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+                      ); // max uint224
+                      await claimsManager
+                        .connect(roles.claimant)
+                        .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+                      await expect(
+                        claimsManager
+                          .connect(roles.admin)
+                          .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                      ).to.be.reverted;
+                    });
+                  });
+                  context('Data feed value is not initialized', function () {
+                    it('reverts', async function () {
+                      const dapiServerFactory = await hre.ethers.getContractFactory('MockDapiServer', roles.deployer);
+                      dapiServer = await dapiServerFactory.deploy();
+                      const dataFeedId = hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(32));
+                      const dapiName = hre.ethers.utils.formatBytes32String('API3/USD');
+                      await dapiServer.mockDapiName(dapiName, dataFeedId);
+                      const api3ToUsdReaderFactory = await hre.ethers.getContractFactory(
+                        'Api3ToUsdReader',
+                        roles.deployer
+                      );
+                      api3ToUsdReader = await api3ToUsdReaderFactory.deploy(dapiServer.address, claimsManager.address);
+                      await claimsManager.connect(roles.admin).setApi3ToUsdReader(api3ToUsdReader.address);
+                      const claimant = roles.claimant.address;
+                      const beneficiary = roles.beneficiary.address;
+                      const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                      const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                      const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                      const policy = '/ipfs/Qm...testaddress';
+                      const metadata = 'dAPI:ETH/USD...testmetadata';
+                      const policyHash = hre.ethers.utils.solidityKeccak256(
+                        ['address', 'address', 'uint32', 'string', 'string'],
+                        [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                      );
+                      await claimsManager
+                        .connect(roles.policyAgent)
+                        .createPolicy(
+                          claimant,
+                          beneficiary,
+                          coverageAmountInUsd,
+                          claimsAllowedFrom,
+                          claimsAllowedUntil,
+                          policy,
+                          metadata
+                        );
+                      const evidence = '/ipfs/Qm...testaddress';
+                      const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+                      await claimsManager
+                        .connect(roles.claimant)
+                        .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+                      await expect(
+                        claimsManager
+                          .connect(roles.admin)
+                          .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                      ).to.be.revertedWith('Data feed does not exist');
+                    });
+                  });
+                });
+                context('dAPI name is not set', function () {
+                  it('reverts', async function () {
+                    const dapiServerFactory = await hre.ethers.getContractFactory('MockDapiServer', roles.deployer);
+                    dapiServer = await dapiServerFactory.deploy();
+                    const api3ToUsdReaderFactory = await hre.ethers.getContractFactory(
+                      'Api3ToUsdReader',
+                      roles.deployer
+                    );
+                    api3ToUsdReader = await api3ToUsdReaderFactory.deploy(dapiServer.address, claimsManager.address);
+                    await claimsManager.connect(roles.admin).setApi3ToUsdReader(api3ToUsdReader.address);
+                    const claimant = roles.claimant.address;
+                    const beneficiary = roles.beneficiary.address;
+                    const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                    const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                    const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                    const policy = '/ipfs/Qm...testaddress';
+                    const metadata = 'dAPI:ETH/USD...testmetadata';
+                    const policyHash = hre.ethers.utils.solidityKeccak256(
+                      ['address', 'address', 'uint32', 'string', 'string'],
+                      [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                    );
+                    await claimsManager
+                      .connect(roles.policyAgent)
+                      .createPolicy(
+                        claimant,
+                        beneficiary,
+                        coverageAmountInUsd,
+                        claimsAllowedFrom,
+                        claimsAllowedUntil,
+                        policy,
+                        metadata
+                      );
+                    const evidence = '/ipfs/Qm...testaddress';
+                    const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+                    await claimsManager
+                      .connect(roles.claimant)
+                      .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+                    await expect(
+                      claimsManager
+                        .connect(roles.admin)
+                        .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                    ).to.be.revertedWith('Data feed does not exist');
+                  });
+                });
+              });
+              context('ClaimsManager is not whitelisted to read the dAPI', function () {
+                it('reverts', async function () {
+                  await dapiServer.mockIfAllowedToRead(false);
+                  const claimant = roles.claimant.address;
+                  const beneficiary = roles.beneficiary.address;
+                  const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                  const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                  const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                  const policy = '/ipfs/Qm...testaddress';
+                  const metadata = 'dAPI:ETH/USD...testmetadata';
+                  const policyHash = hre.ethers.utils.solidityKeccak256(
+                    ['address', 'address', 'uint32', 'string', 'string'],
+                    [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                  );
+                  await claimsManager
+                    .connect(roles.policyAgent)
+                    .createPolicy(
+                      claimant,
+                      beneficiary,
+                      coverageAmountInUsd,
+                      claimsAllowedFrom,
+                      claimsAllowedUntil,
+                      policy,
+                      metadata
+                    );
+                  const evidence = '/ipfs/Qm...testaddress';
+                  const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+                  await claimsManager
+                    .connect(roles.claimant)
+                    .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+                  await expect(
+                    claimsManager
+                      .connect(roles.admin)
+                      .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                  ).to.be.revertedWith('Sender cannot read');
+                });
+              });
+            });
+            context('Api3ToUsdReader is not set', function () {
+              it('reverts', async function () {
+                const claimsManagerFactory = await hre.ethers.getContractFactory('ClaimsManager', roles.deployer);
+                claimsManager = await claimsManagerFactory.deploy(
+                  accessControlRegistry.address,
+                  'ClaimsManager admin',
+                  roles.manager.address,
+                  api3Pool.address,
+                  mediatorResponsePeriod,
+                  claimantResponsePeriod,
+                  arbitratorResponsePeriod
+                );
+                await accessControlRegistry
+                  .connect(roles.manager)
+                  .initializeRoleAndGrantToSender(
+                    await accessControlRegistry.deriveRootRole(roles.manager.address),
+                    'ClaimsManager admin'
+                  );
+                await accessControlRegistry
+                  .connect(roles.manager)
+                  .grantRole(await claimsManager.adminRole(), roles.admin.address);
+                await accessControlRegistry
+                  .connect(roles.manager)
+                  .initializeRoleAndGrantToSender(await claimsManager.adminRole(), 'Policy agent');
+                await accessControlRegistry
+                  .connect(roles.manager)
+                  .grantRole(await claimsManager.policyAgentRole(), roles.policyAgent.address);
+                await accessControlRegistry;
+                const claimant = roles.claimant.address;
+                const beneficiary = roles.beneficiary.address;
+                const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                const policy = '/ipfs/Qm...testaddress';
+                const metadata = 'dAPI:ETH/USD...testmetadata';
+                const policyHash = hre.ethers.utils.solidityKeccak256(
+                  ['address', 'address', 'uint32', 'string', 'string'],
+                  [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                );
+                await claimsManager
+                  .connect(roles.policyAgent)
+                  .createPolicy(
+                    claimant,
+                    beneficiary,
+                    coverageAmountInUsd,
+                    claimsAllowedFrom,
+                    claimsAllowedUntil,
+                    policy,
+                    metadata
+                  );
+                const evidence = '/ipfs/Qm...testaddress';
+                const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+                await claimsManager
+                  .connect(roles.claimant)
+                  .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+                await expect(
+                  claimsManager
+                    .connect(roles.admin)
+                    .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                ).to.be.revertedWith('Api3ToUsdReader not set');
+              });
+            });
+          });
+          context('It is too late to accept the claim', function () {
+            it('reverts', async function () {
+              const claimant = roles.claimant.address;
+              const beneficiary = roles.beneficiary.address;
+              const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+              const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+              const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+              const policy = '/ipfs/Qm...testaddress';
+              const metadata = 'dAPI:ETH/USD...testmetadata';
+              const policyHash = hre.ethers.utils.solidityKeccak256(
+                ['address', 'address', 'uint32', 'string', 'string'],
+                [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+              );
+              await claimsManager
+                .connect(roles.policyAgent)
+                .createPolicy(
+                  claimant,
+                  beneficiary,
+                  coverageAmountInUsd,
+                  claimsAllowedFrom,
+                  claimsAllowedUntil,
+                  policy,
+                  metadata
+                );
+              const evidence = '/ipfs/Qm...testaddress';
+              const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+              const currentBlockTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
+              const claimCreationBlockTimestamp = currentBlockTimestamp + 1;
+              await hre.ethers.provider.send('evm_setNextBlockTimestamp', [claimCreationBlockTimestamp]);
+              await claimsManager
+                .connect(roles.claimant)
+                .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+              await hre.ethers.provider.send('evm_setNextBlockTimestamp', [
+                claimCreationBlockTimestamp + mediatorResponsePeriod,
+              ]);
+              await expect(
+                claimsManager
+                  .connect(roles.admin)
+                  .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+              ).to.be.revertedWith('Too late to accept claim');
+            });
+          });
+        });
+        context('Claim is not acceptable', function () {
+          it('reverts', async function () {
+            const claimant = roles.claimant.address;
+            const beneficiary = roles.beneficiary.address;
+            const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+            const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+            const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+            const policy = '/ipfs/Qm...testaddress';
+            const metadata = 'dAPI:ETH/USD...testmetadata';
+            const policyHash = hre.ethers.utils.solidityKeccak256(
+              ['address', 'address', 'uint32', 'string', 'string'],
+              [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+            );
+            await claimsManager
+              .connect(roles.policyAgent)
+              .createPolicy(
+                claimant,
+                beneficiary,
+                coverageAmountInUsd,
+                claimsAllowedFrom,
+                claimsAllowedUntil,
+                policy,
+                metadata
+              );
+            const evidence = '/ipfs/Qm...testaddress';
+            const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+            await claimsManager
+              .connect(roles.claimant)
+              .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+            await claimsManager
+              .connect(roles.mediator)
+              .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence);
+            await expect(
+              claimsManager
+                .connect(roles.admin)
+                .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+            ).to.be.revertedWith('Claim not acceptable');
+          });
+        });
+      });
+      context('Claim does not exist', function () {
+        it('reverts', async function () {
+          const claimant = roles.claimant.address;
+          const beneficiary = roles.beneficiary.address;
+          const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+          const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+          const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+          const policy = '/ipfs/Qm...testaddress';
+          const metadata = 'dAPI:ETH/USD...testmetadata';
+          const policyHash = hre.ethers.utils.solidityKeccak256(
+            ['address', 'address', 'uint32', 'string', 'string'],
+            [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+          );
+          await claimsManager
+            .connect(roles.policyAgent)
+            .createPolicy(
+              claimant,
+              beneficiary,
+              coverageAmountInUsd,
+              claimsAllowedFrom,
+              claimsAllowedUntil,
+              policy,
+              metadata
+            );
+          const evidence = '/ipfs/Qm...testaddress';
+          const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+          await expect(
+            claimsManager
+              .connect(roles.admin)
+              .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+          ).to.be.revertedWith('Claim not acceptable');
+        });
+      });
+    });
+    context('Sender is mediator', function () {
+      context('Claim exists', function () {
+        context('Claim is acceptable', function () {
+          context('It is not too late to accept the claim', function () {
+            context('Api3ToUsdReader is set', function () {
+              context('ClaimsManager is whitelisted to read the dAPI', function () {
+                context('dAPI name is set', function () {
+                  context('Data feed value is not small enough to cause overflow', function () {
+                    context('dAPI name is set to a data feed that has a non-negative value', function () {
+                      context('Accepting does not cause the sender quota to be exceeded', function () {
+                        context('Coverage covers the entire claim', function () {
+                          context('Pool has enough funds', function () {
+                            it('accepts and pays out the claim fully, updates coverage and quota', async function () {
+                              const quotaPeriod = 7 * 24 * 60 * 60;
+                              const quotaAmount = hre.ethers.utils.parseEther('1000000');
+                              await claimsManager
+                                .connect(roles.admin)
+                                .setQuota(roles.mediator.address, quotaPeriod, quotaAmount);
+                              const claimant = roles.claimant.address;
+                              const beneficiary = roles.beneficiary.address;
+                              const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                              const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                              const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                              const policy = '/ipfs/Qm...testaddress';
+                              const metadata = 'dAPI:ETH/USD...testmetadata';
+                              const policyHash = hre.ethers.utils.solidityKeccak256(
+                                ['address', 'address', 'uint32', 'string', 'string'],
+                                [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                              );
+                              await claimsManager
+                                .connect(roles.policyAgent)
+                                .createPolicy(
+                                  claimant,
+                                  beneficiary,
+                                  coverageAmountInUsd,
+                                  claimsAllowedFrom,
+                                  claimsAllowedUntil,
+                                  policy,
+                                  metadata
+                                );
+                              const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+                              const evidence = '/ipfs/Qm...testaddress';
+                              await claimsManager
+                                .connect(roles.claimant)
+                                .createClaim(
+                                  beneficiary,
+                                  claimsAllowedFrom,
+                                  policy,
+                                  metadata,
+                                  claimAmountInUsd,
+                                  evidence
+                                );
+                              const claimHash = hre.ethers.utils.solidityKeccak256(
+                                ['bytes32', 'address', 'address', 'uint224', 'string'],
+                                [policyHash, claimant, beneficiary, claimAmountInUsd, evidence]
+                              );
+                              const payoutAmountInUsd = claimAmountInUsd;
+                              const payoutAmountInApi3 = claimAmountInUsd
+                                .mul(hre.ethers.utils.parseEther('1'))
+                                .div(api3UsdPriceWith18Decimals);
+                              await expect(
+                                claimsManager
+                                  .connect(roles.mediator)
+                                  .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                              )
+                                .to.emit(claimsManager, 'AcceptedClaim')
+                                .withArgs(
+                                  claimHash,
+                                  claimant,
+                                  beneficiary,
+                                  payoutAmountInUsd,
+                                  payoutAmountInApi3,
+                                  roles.mediator.address
+                                );
+                              expect(await api3Token.balanceOf(beneficiary)).to.equal(payoutAmountInApi3);
+                              const policyState = await claimsManager.policyHashToState(policyHash);
+                              expect(policyState.coverageAmountInUsd).to.equal(
+                                coverageAmountInUsd.sub(payoutAmountInUsd)
+                              );
+                              expect(await claimsManager.getQuotaUsage(roles.mediator.address)).to.equal(
+                                payoutAmountInApi3
+                              );
+                            });
+                          });
+                          context('Pool does not have enough funds', function () {
+                            it('reverts', async function () {
+                              const usdAmountThatExceedsTotalStake = api3UsdPriceWith18Decimals.gt(
+                                hre.ethers.utils.parseEther('1')
+                              )
+                                ? totalStake
+                                    .mul(api3UsdPriceWith18Decimals)
+                                    .div(hre.ethers.utils.parseEther('1'))
+                                    .add(api3UsdPriceWith18Decimals.div(hre.ethers.utils.parseEther('1')))
+                                : totalStake
+                                    .mul(api3UsdPriceWith18Decimals)
+                                    .div(hre.ethers.utils.parseEther('1'))
+                                    .add(1);
+                              const claimant = roles.claimant.address;
+                              const beneficiary = roles.beneficiary.address;
+                              const coverageAmountInUsd = usdAmountThatExceedsTotalStake;
+                              const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                              const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                              const policy = '/ipfs/Qm...testaddress';
+                              const metadata = 'dAPI:ETH/USD...testmetadata';
+                              const policyHash = hre.ethers.utils.solidityKeccak256(
+                                ['address', 'address', 'uint32', 'string', 'string'],
+                                [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                              );
+                              await claimsManager
+                                .connect(roles.policyAgent)
+                                .createPolicy(
+                                  claimant,
+                                  beneficiary,
+                                  coverageAmountInUsd,
+                                  claimsAllowedFrom,
+                                  claimsAllowedUntil,
+                                  policy,
+                                  metadata
+                                );
+                              const claimAmountInUsd = usdAmountThatExceedsTotalStake;
+                              const evidence = '/ipfs/Qm...testaddress';
+                              await claimsManager
+                                .connect(roles.claimant)
+                                .createClaim(
+                                  beneficiary,
+                                  claimsAllowedFrom,
+                                  policy,
+                                  metadata,
+                                  claimAmountInUsd,
+                                  evidence
+                                );
+                              await expect(
+                                claimsManager
+                                  .connect(roles.mediator)
+                                  .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                              ).to.be.revertedWith('Pool: Amount exceeds total stake');
+                            });
+                          });
+                        });
+                        context('Coverage does not cover the entire claim', function () {
+                          context('Pool has enough funds', function () {
+                            it('accepts and pays out the remaining coverage, updates coverage and quota', async function () {
+                              const quotaPeriod = 7 * 24 * 60 * 60;
+                              const quotaAmount = hre.ethers.utils.parseEther('1000000');
+                              await claimsManager
+                                .connect(roles.admin)
+                                .setQuota(roles.mediator.address, quotaPeriod, quotaAmount);
+                              const claimant = roles.claimant.address;
+                              const beneficiary = roles.beneficiary.address;
+                              const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                              const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                              const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                              const policy = '/ipfs/Qm...testaddress';
+                              const metadata = 'dAPI:ETH/USD...testmetadata';
+                              const policyHash = hre.ethers.utils.solidityKeccak256(
+                                ['address', 'address', 'uint32', 'string', 'string'],
+                                [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                              );
+                              await claimsManager
+                                .connect(roles.policyAgent)
+                                .createPolicy(
+                                  claimant,
+                                  beneficiary,
+                                  coverageAmountInUsd,
+                                  claimsAllowedFrom,
+                                  claimsAllowedUntil,
+                                  policy,
+                                  metadata
+                                );
+                              const evidence = '/ipfs/Qm...testaddress';
+                              const claimAmountInUsd1 = hre.ethers.utils.parseEther('40000');
+                              await claimsManager
+                                .connect(roles.claimant)
+                                .createClaim(
+                                  beneficiary,
+                                  claimsAllowedFrom,
+                                  policy,
+                                  metadata,
+                                  claimAmountInUsd1,
+                                  evidence
+                                );
+                              const claimAmountInUsd2 = hre.ethers.utils.parseEther('25000');
+                              await claimsManager
+                                .connect(roles.claimant)
+                                .createClaim(
+                                  beneficiary,
+                                  claimsAllowedFrom,
+                                  policy,
+                                  metadata,
+                                  claimAmountInUsd2,
+                                  evidence
+                                );
+                              const claimHash2 = hre.ethers.utils.solidityKeccak256(
+                                ['bytes32', 'address', 'address', 'uint224', 'string'],
+                                [policyHash, claimant, beneficiary, claimAmountInUsd2, evidence]
+                              );
+                              await claimsManager
+                                .connect(roles.mediator)
+                                .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd1, evidence);
+                              const payoutAmountInUsd = coverageAmountInUsd.sub(claimAmountInUsd1).lt(claimAmountInUsd2)
+                                ? coverageAmountInUsd.sub(claimAmountInUsd1)
+                                : claimAmountInUsd2;
+                              const payoutAmountInApi3 = payoutAmountInUsd
+                                .mul(hre.ethers.utils.parseEther('1'))
+                                .div(api3UsdPriceWith18Decimals);
+                              const beneficiaryBalance = await api3Token.balanceOf(beneficiary);
+                              const coverageAmount = (await claimsManager.policyHashToState(policyHash))
+                                .coverageAmountInUsd;
+                              const quotaUsage = await claimsManager.getQuotaUsage(roles.mediator.address);
+                              await expect(
+                                claimsManager
+                                  .connect(roles.mediator)
+                                  .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd2, evidence)
+                              )
+                                .to.emit(claimsManager, 'AcceptedClaim')
+                                .withArgs(
+                                  claimHash2,
+                                  claimant,
+                                  beneficiary,
+                                  payoutAmountInUsd,
+                                  payoutAmountInApi3,
+                                  roles.mediator.address
+                                );
+                              expect((await api3Token.balanceOf(beneficiary)).sub(beneficiaryBalance)).to.equal(
+                                payoutAmountInApi3
+                              );
+                              expect(
+                                coverageAmount.sub(
+                                  (await claimsManager.policyHashToState(policyHash)).coverageAmountInUsd
+                                )
+                              ).to.equal(payoutAmountInUsd);
+                              expect(
+                                (await claimsManager.getQuotaUsage(roles.mediator.address)).sub(quotaUsage)
+                              ).to.equal(payoutAmountInApi3);
+                            });
+                          });
+                          context('Pool does not have enough funds', function () {
+                            it('reverts', async function () {
+                              const usdAmountThatExceedsTotalStake = api3UsdPriceWith18Decimals.gt(
+                                hre.ethers.utils.parseEther('1')
+                              )
+                                ? totalStake
+                                    .mul(api3UsdPriceWith18Decimals)
+                                    .div(hre.ethers.utils.parseEther('1'))
+                                    .add(api3UsdPriceWith18Decimals.div(hre.ethers.utils.parseEther('1')))
+                                : totalStake
+                                    .mul(api3UsdPriceWith18Decimals)
+                                    .div(hre.ethers.utils.parseEther('1'))
+                                    .add(1);
+                              const claimant = roles.claimant.address;
+                              const beneficiary = roles.beneficiary.address;
+                              const coverageAmountInUsd = usdAmountThatExceedsTotalStake.mul(2);
+                              const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                              const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                              const policy = '/ipfs/Qm...testaddress';
+                              const metadata = 'dAPI:ETH/USD...testmetadata';
+                              const policyHash = hre.ethers.utils.solidityKeccak256(
+                                ['address', 'address', 'uint32', 'string', 'string'],
+                                [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                              );
+                              await claimsManager
+                                .connect(roles.policyAgent)
+                                .createPolicy(
+                                  claimant,
+                                  beneficiary,
+                                  coverageAmountInUsd,
+                                  claimsAllowedFrom,
+                                  claimsAllowedUntil,
+                                  policy,
+                                  metadata
+                                );
+                              const evidence = '/ipfs/Qm...testaddress';
+                              const claimAmountInUsd1 = 1;
+                              await claimsManager
+                                .connect(roles.claimant)
+                                .createClaim(
+                                  beneficiary,
+                                  claimsAllowedFrom,
+                                  policy,
+                                  metadata,
+                                  claimAmountInUsd1,
+                                  evidence
+                                );
+                              const claimAmountInUsd2 = coverageAmountInUsd;
+                              await claimsManager
+                                .connect(roles.claimant)
+                                .createClaim(
+                                  beneficiary,
+                                  claimsAllowedFrom,
+                                  policy,
+                                  metadata,
+                                  claimAmountInUsd2,
+                                  evidence
+                                );
+                              await claimsManager
+                                .connect(roles.mediator)
+                                .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd1, evidence);
+                              await expect(
+                                claimsManager
+                                  .connect(roles.mediator)
+                                  .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd2, evidence)
+                              ).to.be.revertedWith('Pool: Amount exceeds total stake');
+                            });
+                          });
+                        });
+                      });
+                      context('Accepting causes the sender quota to be exceeded', function () {
+                        it('reverts', async function () {
+                          const quotaPeriod = 7 * 24 * 60 * 60;
+                          const quotaAmount = hre.ethers.utils.parseEther('10000');
+                          await claimsManager
+                            .connect(roles.admin)
+                            .setQuota(roles.mediator.address, quotaPeriod, quotaAmount);
+                          const claimant = roles.claimant.address;
+                          const beneficiary = roles.beneficiary.address;
+                          const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                          const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                          const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                          const policy = '/ipfs/Qm...testaddress';
+                          const metadata = 'dAPI:ETH/USD...testmetadata';
+                          const policyHash = hre.ethers.utils.solidityKeccak256(
+                            ['address', 'address', 'uint32', 'string', 'string'],
+                            [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                          );
+                          await claimsManager
+                            .connect(roles.policyAgent)
+                            .createPolicy(
+                              claimant,
+                              beneficiary,
+                              coverageAmountInUsd,
+                              claimsAllowedFrom,
+                              claimsAllowedUntil,
+                              policy,
+                              metadata
+                            );
+                          const evidence = '/ipfs/Qm...testaddress';
+                          const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+                          await claimsManager
+                            .connect(roles.claimant)
+                            .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+                          await expect(
+                            claimsManager
+                              .connect(roles.mediator)
+                              .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                          ).to.be.revertedWith('Quota exceeded');
+                        });
+                      });
+                    });
+                    context('dAPI name is set to a data feed that has a negative value', function () {
+                      it('reverts', async function () {
+                        const dapiServerFactory = await hre.ethers.getContractFactory('MockDapiServer', roles.deployer);
+                        dapiServer = await dapiServerFactory.deploy();
+                        const dataFeedId = hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(32));
+                        const dataFeedValue = -1;
+                        const dataFeedTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
+                        await dapiServer.mockDataFeed(dataFeedId, dataFeedValue, dataFeedTimestamp);
+                        const dapiName = hre.ethers.utils.formatBytes32String('API3/USD');
+                        await dapiServer.mockDapiName(dapiName, dataFeedId);
+                        const api3ToUsdReaderFactory = await hre.ethers.getContractFactory(
+                          'Api3ToUsdReader',
+                          roles.deployer
+                        );
+                        api3ToUsdReader = await api3ToUsdReaderFactory.deploy(
+                          dapiServer.address,
+                          claimsManager.address
+                        );
+                        await claimsManager.connect(roles.admin).setApi3ToUsdReader(api3ToUsdReader.address);
+                        const claimant = roles.claimant.address;
+                        const beneficiary = roles.beneficiary.address;
+                        const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                        const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                        const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                        const policy = '/ipfs/Qm...testaddress';
+                        const metadata = 'dAPI:ETH/USD...testmetadata';
+                        const policyHash = hre.ethers.utils.solidityKeccak256(
+                          ['address', 'address', 'uint32', 'string', 'string'],
+                          [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                        );
+                        await claimsManager
+                          .connect(roles.policyAgent)
+                          .createPolicy(
+                            claimant,
+                            beneficiary,
+                            coverageAmountInUsd,
+                            claimsAllowedFrom,
+                            claimsAllowedUntil,
+                            policy,
+                            metadata
+                          );
+                        const evidence = '/ipfs/Qm...testaddress';
+                        const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+                        await claimsManager
+                          .connect(roles.claimant)
+                          .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+                        await expect(
+                          claimsManager
+                            .connect(roles.mediator)
+                            .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                        ).to.be.revertedWith('API3 price not positive');
+                      });
+                    });
+                  });
+                  context('Data feed value is small enough to cause overflow', function () {
+                    it('reverts', async function () {
+                      const dapiServerFactory = await hre.ethers.getContractFactory('MockDapiServer', roles.deployer);
+                      dapiServer = await dapiServerFactory.deploy();
+                      const dataFeedId = hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(32));
+                      const dataFeedValue = 1;
+                      const dataFeedTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
+                      await dapiServer.mockDataFeed(dataFeedId, dataFeedValue, dataFeedTimestamp);
+                      const dapiName = hre.ethers.utils.formatBytes32String('API3/USD');
+                      await dapiServer.mockDapiName(dapiName, dataFeedId);
+                      const api3ToUsdReaderFactory = await hre.ethers.getContractFactory(
+                        'Api3ToUsdReader',
+                        roles.deployer
+                      );
+                      api3ToUsdReader = await api3ToUsdReaderFactory.deploy(dapiServer.address, claimsManager.address);
+                      await claimsManager.connect(roles.admin).setApi3ToUsdReader(api3ToUsdReader.address);
+                      const claimant = roles.claimant.address;
+                      const beneficiary = roles.beneficiary.address;
+                      const coverageAmountInUsd = hre.ethers.BigNumber.from(
+                        '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+                      ); // max uint224
+                      hre.ethers.constants.MaxUint256;
+                      const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                      const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                      const policy = '/ipfs/Qm...testaddress';
+                      const metadata = 'dAPI:ETH/USD...testmetadata';
+                      const policyHash = hre.ethers.utils.solidityKeccak256(
+                        ['address', 'address', 'uint32', 'string', 'string'],
+                        [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                      );
+                      await claimsManager
+                        .connect(roles.policyAgent)
+                        .createPolicy(
+                          claimant,
+                          beneficiary,
+                          coverageAmountInUsd,
+                          claimsAllowedFrom,
+                          claimsAllowedUntil,
+                          policy,
+                          metadata
+                        );
+                      const evidence = '/ipfs/Qm...testaddress';
+                      const claimAmountInUsd = hre.ethers.BigNumber.from(
+                        '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+                      ); // max uint224
+                      await claimsManager
+                        .connect(roles.claimant)
+                        .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+                      await expect(
+                        claimsManager
+                          .connect(roles.mediator)
+                          .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                      ).to.be.reverted;
+                    });
+                  });
+                  context('Data feed value is not initialized', function () {
+                    it('reverts', async function () {
+                      const dapiServerFactory = await hre.ethers.getContractFactory('MockDapiServer', roles.deployer);
+                      dapiServer = await dapiServerFactory.deploy();
+                      const dataFeedId = hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(32));
+                      const dapiName = hre.ethers.utils.formatBytes32String('API3/USD');
+                      await dapiServer.mockDapiName(dapiName, dataFeedId);
+                      const api3ToUsdReaderFactory = await hre.ethers.getContractFactory(
+                        'Api3ToUsdReader',
+                        roles.deployer
+                      );
+                      api3ToUsdReader = await api3ToUsdReaderFactory.deploy(dapiServer.address, claimsManager.address);
+                      await claimsManager.connect(roles.admin).setApi3ToUsdReader(api3ToUsdReader.address);
+                      const claimant = roles.claimant.address;
+                      const beneficiary = roles.beneficiary.address;
+                      const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                      const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                      const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                      const policy = '/ipfs/Qm...testaddress';
+                      const metadata = 'dAPI:ETH/USD...testmetadata';
+                      const policyHash = hre.ethers.utils.solidityKeccak256(
+                        ['address', 'address', 'uint32', 'string', 'string'],
+                        [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                      );
+                      await claimsManager
+                        .connect(roles.policyAgent)
+                        .createPolicy(
+                          claimant,
+                          beneficiary,
+                          coverageAmountInUsd,
+                          claimsAllowedFrom,
+                          claimsAllowedUntil,
+                          policy,
+                          metadata
+                        );
+                      const evidence = '/ipfs/Qm...testaddress';
+                      const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+                      await claimsManager
+                        .connect(roles.claimant)
+                        .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+                      await expect(
+                        claimsManager
+                          .connect(roles.mediator)
+                          .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                      ).to.be.revertedWith('Data feed does not exist');
+                    });
+                  });
+                });
+                context('dAPI name is not set', function () {
+                  it('reverts', async function () {
+                    const dapiServerFactory = await hre.ethers.getContractFactory('MockDapiServer', roles.deployer);
+                    dapiServer = await dapiServerFactory.deploy();
+                    const api3ToUsdReaderFactory = await hre.ethers.getContractFactory(
+                      'Api3ToUsdReader',
+                      roles.deployer
+                    );
+                    api3ToUsdReader = await api3ToUsdReaderFactory.deploy(dapiServer.address, claimsManager.address);
+                    await claimsManager.connect(roles.admin).setApi3ToUsdReader(api3ToUsdReader.address);
+                    const claimant = roles.claimant.address;
+                    const beneficiary = roles.beneficiary.address;
+                    const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                    const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                    const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                    const policy = '/ipfs/Qm...testaddress';
+                    const metadata = 'dAPI:ETH/USD...testmetadata';
+                    const policyHash = hre.ethers.utils.solidityKeccak256(
+                      ['address', 'address', 'uint32', 'string', 'string'],
+                      [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                    );
+                    await claimsManager
+                      .connect(roles.policyAgent)
+                      .createPolicy(
+                        claimant,
+                        beneficiary,
+                        coverageAmountInUsd,
+                        claimsAllowedFrom,
+                        claimsAllowedUntil,
+                        policy,
+                        metadata
+                      );
+                    const evidence = '/ipfs/Qm...testaddress';
+                    const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+                    await claimsManager
+                      .connect(roles.claimant)
+                      .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+                    await expect(
+                      claimsManager
+                        .connect(roles.mediator)
+                        .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                    ).to.be.revertedWith('Data feed does not exist');
+                  });
+                });
+              });
+              context('ClaimsManager is not whitelisted to read the dAPI', function () {
+                it('reverts', async function () {
+                  await dapiServer.mockIfAllowedToRead(false);
+                  const claimant = roles.claimant.address;
+                  const beneficiary = roles.beneficiary.address;
+                  const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                  const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                  const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                  const policy = '/ipfs/Qm...testaddress';
+                  const metadata = 'dAPI:ETH/USD...testmetadata';
+                  const policyHash = hre.ethers.utils.solidityKeccak256(
+                    ['address', 'address', 'uint32', 'string', 'string'],
+                    [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                  );
+                  await claimsManager
+                    .connect(roles.policyAgent)
+                    .createPolicy(
+                      claimant,
+                      beneficiary,
+                      coverageAmountInUsd,
+                      claimsAllowedFrom,
+                      claimsAllowedUntil,
+                      policy,
+                      metadata
+                    );
+                  const evidence = '/ipfs/Qm...testaddress';
+                  const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+                  await claimsManager
+                    .connect(roles.claimant)
+                    .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+                  await expect(
+                    claimsManager
+                      .connect(roles.mediator)
+                      .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                  ).to.be.revertedWith('Sender cannot read');
+                });
+              });
+            });
+            context('Api3ToUsdReader is not set', function () {
+              it('reverts', async function () {
+                const claimsManagerFactory = await hre.ethers.getContractFactory('ClaimsManager', roles.deployer);
+                claimsManager = await claimsManagerFactory.deploy(
+                  accessControlRegistry.address,
+                  'ClaimsManager admin',
+                  roles.manager.address,
+                  api3Pool.address,
+                  mediatorResponsePeriod,
+                  claimantResponsePeriod,
+                  arbitratorResponsePeriod
+                );
+                await accessControlRegistry
+                  .connect(roles.manager)
+                  .initializeRoleAndGrantToSender(
+                    await accessControlRegistry.deriveRootRole(roles.manager.address),
+                    'ClaimsManager admin'
+                  );
+                await accessControlRegistry
+                  .connect(roles.manager)
+                  .initializeRoleAndGrantToSender(await claimsManager.adminRole(), 'Policy agent');
+                await accessControlRegistry
+                  .connect(roles.manager)
+                  .grantRole(await claimsManager.policyAgentRole(), roles.policyAgent.address);
+                await accessControlRegistry;
+                const claimant = roles.claimant.address;
+                const beneficiary = roles.beneficiary.address;
+                const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+                const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+                const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+                const policy = '/ipfs/Qm...testaddress';
+                const metadata = 'dAPI:ETH/USD...testmetadata';
+                const policyHash = hre.ethers.utils.solidityKeccak256(
+                  ['address', 'address', 'uint32', 'string', 'string'],
+                  [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+                );
+                await claimsManager
+                  .connect(roles.policyAgent)
+                  .createPolicy(
+                    claimant,
+                    beneficiary,
+                    coverageAmountInUsd,
+                    claimsAllowedFrom,
+                    claimsAllowedUntil,
+                    policy,
+                    metadata
+                  );
+                const evidence = '/ipfs/Qm...testaddress';
+                const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+                await claimsManager
+                  .connect(roles.claimant)
+                  .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+                await expect(
+                  claimsManager
+                    .connect(roles.mediator)
+                    .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                ).to.be.revertedWith('Api3ToUsdReader not set');
+              });
+            });
+          });
+          context('It is too late to accept the claim', function () {
+            it('reverts', async function () {
+              const claimant = roles.claimant.address;
+              const beneficiary = roles.beneficiary.address;
+              const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+              const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+              const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+              const policy = '/ipfs/Qm...testaddress';
+              const metadata = 'dAPI:ETH/USD...testmetadata';
+              const policyHash = hre.ethers.utils.solidityKeccak256(
+                ['address', 'address', 'uint32', 'string', 'string'],
+                [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+              );
+              await claimsManager
+                .connect(roles.policyAgent)
+                .createPolicy(
+                  claimant,
+                  beneficiary,
+                  coverageAmountInUsd,
+                  claimsAllowedFrom,
+                  claimsAllowedUntil,
+                  policy,
+                  metadata
+                );
+              const evidence = '/ipfs/Qm...testaddress';
+              const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+              const currentBlockTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
+              const claimCreationBlockTimestamp = currentBlockTimestamp + 1;
+              await hre.ethers.provider.send('evm_setNextBlockTimestamp', [claimCreationBlockTimestamp]);
+              await claimsManager
+                .connect(roles.claimant)
+                .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+              await hre.ethers.provider.send('evm_setNextBlockTimestamp', [
+                claimCreationBlockTimestamp + mediatorResponsePeriod,
+              ]);
+              await expect(
+                claimsManager
+                  .connect(roles.mediator)
+                  .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+              ).to.be.revertedWith('Too late to accept claim');
+            });
+          });
+        });
+        context('Claim is not acceptable', function () {
+          it('reverts', async function () {
+            const claimant = roles.claimant.address;
+            const beneficiary = roles.beneficiary.address;
+            const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+            const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+            const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+            const policy = '/ipfs/Qm...testaddress';
+            const metadata = 'dAPI:ETH/USD...testmetadata';
+            const policyHash = hre.ethers.utils.solidityKeccak256(
+              ['address', 'address', 'uint32', 'string', 'string'],
+              [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+            );
+            await claimsManager
+              .connect(roles.policyAgent)
+              .createPolicy(
+                claimant,
+                beneficiary,
+                coverageAmountInUsd,
+                claimsAllowedFrom,
+                claimsAllowedUntil,
+                policy,
+                metadata
+              );
+            const evidence = '/ipfs/Qm...testaddress';
+            const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+            await claimsManager
+              .connect(roles.claimant)
+              .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+            await claimsManager
+              .connect(roles.mediator)
+              .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence);
+            await expect(
+              claimsManager
+                .connect(roles.mediator)
+                .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+            ).to.be.revertedWith('Claim not acceptable');
+          });
+        });
+      });
+      context('Claim does not exist', function () {
+        it('reverts', async function () {
+          const claimant = roles.claimant.address;
+          const beneficiary = roles.beneficiary.address;
+          const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+          const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+          const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+          const policy = '/ipfs/Qm...testaddress';
+          const metadata = 'dAPI:ETH/USD...testmetadata';
+          const policyHash = hre.ethers.utils.solidityKeccak256(
+            ['address', 'address', 'uint32', 'string', 'string'],
+            [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+          );
+          await claimsManager
+            .connect(roles.policyAgent)
+            .createPolicy(
+              claimant,
+              beneficiary,
+              coverageAmountInUsd,
+              claimsAllowedFrom,
+              claimsAllowedUntil,
+              policy,
+              metadata
+            );
+          const evidence = '/ipfs/Qm...testaddress';
+          const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+          await expect(
+            claimsManager
+              .connect(roles.mediator)
+              .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+          ).to.be.revertedWith('Claim not acceptable');
+        });
+      });
+    });
     context('Sender is not manager, admin or mediator', function () {
-      it('reverts', async function () {});
+      it('reverts', async function () {
+        const claimant = roles.claimant.address;
+        const beneficiary = roles.beneficiary.address;
+        const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
+        const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
+        const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
+        const policy = '/ipfs/Qm...testaddress';
+        const metadata = 'dAPI:ETH/USD...testmetadata';
+        const policyHash = hre.ethers.utils.solidityKeccak256(
+          ['address', 'address', 'uint32', 'string', 'string'],
+          [claimant, beneficiary, claimsAllowedFrom, policy, metadata]
+        );
+        await claimsManager
+          .connect(roles.policyAgent)
+          .createPolicy(
+            claimant,
+            beneficiary,
+            coverageAmountInUsd,
+            claimsAllowedFrom,
+            claimsAllowedUntil,
+            policy,
+            metadata
+          );
+        const evidence = '/ipfs/Qm...testaddress';
+        const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
+        await claimsManager
+          .connect(roles.claimant)
+          .createClaim(beneficiary, claimsAllowedFrom, policy, metadata, claimAmountInUsd, evidence);
+        await expect(
+          claimsManager
+            .connect(roles.randomPerson)
+            .acceptClaim(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+        ).to.be.revertedWith('Sender cannot mediate');
+      });
     });
   });
 });
