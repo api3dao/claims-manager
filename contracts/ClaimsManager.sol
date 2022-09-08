@@ -413,7 +413,7 @@ contract ClaimsManager is
         ClaimState storage claimState = claimHashToState[claimHash];
         require(
             claimState.status == ClaimStatus.ClaimCreated,
-            "Claim is not acceptable"
+            "Claim not acceptable"
         );
         require(
             claimState.updateTime + mediatorResponsePeriod > block.timestamp,
@@ -802,7 +802,7 @@ contract ClaimsManager is
     {
         require(api3ToUsdReader != address(0), "Api3ToUsdReader not set");
         int224 signedApi3ToUsd = IApi3ToUsdReader(api3ToUsdReader).read();
-        require(signedApi3ToUsd > 0, "Invalid API3 to USD");
+        require(signedApi3ToUsd > 0, "API3 price not positive");
         amountInApi3 = (amountInUsd * 10**18) / uint224(signedApi3ToUsd);
     }
 
