@@ -25,9 +25,9 @@ describe('KlerosLiquidProxy', function () {
       policyAgent: accounts[3],
       mediator: accounts[4],
       arbitrator: accounts[5],
-      claimant: accounts[6],
-      beneficiary: accounts[7],
-      randomPerson: accounts[9],
+      // claimant: accounts[6],
+      // beneficiary: accounts[7],
+      // randomPerson: accounts[9],
     };
     const accessControlRegistryFactory = await hre.ethers.getContractFactory('AccessControlRegistry', roles.deployer);
     accessControlRegistry = await accessControlRegistryFactory.deploy();
