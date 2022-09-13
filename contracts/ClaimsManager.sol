@@ -284,12 +284,7 @@ contract ClaimsManager is
         string calldata metadata
     ) external override returns (bytes32 policyHash) {
         require(
-            claimant == msg.sender ||
-                manager == msg.sender ||
-                IAccessControlRegistry(accessControlRegistry).hasRole(
-                    adminRole,
-                    msg.sender
-                ),
+            claimant == msg.sender || isAdmin(msg.sender),
             "Sender cannot downgrade policies"
         );
         require(
