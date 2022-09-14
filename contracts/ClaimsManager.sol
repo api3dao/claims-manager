@@ -218,28 +218,6 @@ contract ClaimsManager is
         );
     }
 
-    function announcePolicyMetadata(
-        address claimant,
-        address beneficiary,
-        uint32 claimsAllowedFrom,
-        string calldata policy,
-        string calldata metadata
-    ) external override onlyPolicyAgentOrAdmin returns (bytes32 policyHash) {
-        policyHash = keccak256(
-            abi.encodePacked(claimant, beneficiary, claimsAllowedFrom, policy)
-        );
-        require(
-            policyHashToState[policyHash].claimsAllowedUntil != 0,
-            "Policy does not exist"
-        );
-        emit AnnouncedPolicyMetadata(
-            metadata,
-            claimant,
-            policyHash,
-            msg.sender
-        );
-    }
-
     // Allowed to keep the values same
     function upgradePolicy(
         address claimant,
@@ -321,6 +299,28 @@ contract ClaimsManager is
             claimsAllowedFrom,
             claimsAllowedUntil,
             policy,
+            msg.sender
+        );
+    }
+
+    function announcePolicyMetadata(
+        address claimant,
+        address beneficiary,
+        uint32 claimsAllowedFrom,
+        string calldata policy,
+        string calldata metadata
+    ) external override onlyPolicyAgentOrAdmin returns (bytes32 policyHash) {
+        policyHash = keccak256(
+            abi.encodePacked(claimant, beneficiary, claimsAllowedFrom, policy)
+        );
+        require(
+            policyHashToState[policyHash].claimsAllowedUntil != 0,
+            "Policy does not exist"
+        );
+        emit AnnouncedPolicyMetadata(
+            metadata,
+            claimant,
+            policyHash,
             msg.sender
         );
     }
