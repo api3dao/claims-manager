@@ -58,7 +58,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint32 claimsAllowedFrom,
         uint32 claimsAllowedUntil,
         string policy,
-        string metadata,
         address sender
     );
 
@@ -70,7 +69,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint32 claimsAllowedFrom,
         uint32 claimsAllowedUntil,
         string policy,
-        string metadata,
         address sender
     );
 
@@ -82,7 +80,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint32 claimsAllowedFrom,
         uint32 claimsAllowedUntil,
         string policy,
-        string metadata,
         address sender
     );
 
@@ -93,7 +90,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address beneficiary,
         uint32 claimsAllowedFrom,
         string policy,
-        string metadata,
         uint224 claimAmountInUsd,
         string evidence,
         uint32 claimCreationTime
@@ -177,8 +173,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint224 coverageAmountInUsd,
         uint32 claimsAllowedFrom,
         uint32 claimsAllowedUntil,
-        string calldata policy,
-        string calldata metadata
+        string calldata policy
     ) external returns (bytes32 policyHash);
 
     function upgradePolicy(
@@ -187,8 +182,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint224 coverageAmountInUsd,
         uint32 claimsAllowedFrom,
         uint32 claimsAllowedUntil,
-        string calldata policy,
-        string calldata metadata
+        string calldata policy
     ) external returns (bytes32 policyHash);
 
     function downgradePolicy(
@@ -197,15 +191,13 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint224 coverageAmountInUsd,
         uint32 claimsAllowedFrom,
         uint32 claimsAllowedUntil,
-        string calldata policy,
-        string calldata metadata
+        string calldata policy
     ) external returns (bytes32 policyHash);
 
     function createClaim(
         address beneficiary,
         uint32 claimsAllowedFrom,
         string calldata policy,
-        string calldata metadata,
         uint224 claimAmountInUsd,
         string calldata evidence
     ) external returns (bytes32 claimHash);
