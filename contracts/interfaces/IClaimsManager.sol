@@ -83,6 +83,13 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address sender
     );
 
+    event AnnouncedPolicyMetadata(
+        string metadata,
+        address indexed claimant,
+        bytes32 indexed policyHash,
+        address sender
+    );
+
     event CreatedClaim(
         bytes32 indexed claimHash,
         address indexed claimant,
@@ -192,6 +199,14 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         uint32 claimsAllowedFrom,
         uint32 claimsAllowedUntil,
         string calldata policy
+    ) external returns (bytes32 policyHash);
+
+    function announcePolicyMetadata(
+        address claimant,
+        address beneficiary,
+        uint32 claimsAllowedFrom,
+        string calldata policy,
+        string calldata metadata
     ) external returns (bytes32 policyHash);
 
     function createClaim(
