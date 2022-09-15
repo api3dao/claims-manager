@@ -184,8 +184,7 @@ contract ClaimsManager is
         uint224 coverageAmountInUsd,
         uint32 claimsAllowedFrom,
         uint32 claimsAllowedUntil,
-        string calldata policy,
-        string calldata metadata
+        string calldata policy
     ) external override onlyPolicyAgentOrAdmin returns (bytes32 policyHash) {
         require(claimant != address(0), "Claimant address zero");
         require(beneficiary != address(0), "Beneficiary address zero");
@@ -196,15 +195,8 @@ contract ClaimsManager is
             "Start not earlier than end"
         );
         require(bytes(policy).length != 0, "Policy address empty");
-        // metadata is allowed to be empty
         policyHash = keccak256(
-            abi.encodePacked(
-                claimant,
-                beneficiary,
-                claimsAllowedFrom,
-                policy,
-                metadata
-            )
+            abi.encodePacked(claimant, beneficiary, claimsAllowedFrom, policy)
         );
         require(
             policyHashToState[policyHash].claimsAllowedUntil == 0,
@@ -222,7 +214,6 @@ contract ClaimsManager is
             claimsAllowedFrom,
             claimsAllowedUntil,
             policy,
-            metadata,
             msg.sender
         );
     }
@@ -234,17 +225,10 @@ contract ClaimsManager is
         uint224 coverageAmountInUsd,
         uint32 claimsAllowedFrom,
         uint32 claimsAllowedUntil,
-        string calldata policy,
-        string calldata metadata
+        string calldata policy
     ) external override onlyPolicyAgentOrAdmin returns (bytes32 policyHash) {
         policyHash = keccak256(
-            abi.encodePacked(
-                claimant,
-                beneficiary,
-                claimsAllowedFrom,
-                policy,
-                metadata
-            )
+            abi.encodePacked(claimant, beneficiary, claimsAllowedFrom, policy)
         );
         PolicyState storage policyState = policyHashToState[policyHash];
         uint32 policyStateClaimsAllowedUntil = policyState.claimsAllowedUntil;
@@ -269,7 +253,6 @@ contract ClaimsManager is
             claimsAllowedFrom,
             claimsAllowedUntil,
             policy,
-            metadata,
             msg.sender
         );
     }
@@ -280,8 +263,7 @@ contract ClaimsManager is
         uint224 coverageAmountInUsd,
         uint32 claimsAllowedFrom,
         uint32 claimsAllowedUntil,
-        string calldata policy,
-        string calldata metadata
+        string calldata policy
     ) external override returns (bytes32 policyHash) {
         require(
             claimant == msg.sender || isAdmin(msg.sender),
@@ -292,13 +274,7 @@ contract ClaimsManager is
             "Start not earlier than end"
         );
         policyHash = keccak256(
-            abi.encodePacked(
-                claimant,
-                beneficiary,
-                claimsAllowedFrom,
-                policy,
-                metadata
-            )
+            abi.encodePacked(claimant, beneficiary, claimsAllowedFrom, policy)
         );
         PolicyState storage policyState = policyHashToState[policyHash];
         uint32 policyStateClaimsAllowedUntil = policyState.claimsAllowedUntil;
@@ -323,7 +299,28 @@ contract ClaimsManager is
             claimsAllowedFrom,
             claimsAllowedUntil,
             policy,
+            msg.sender
+        );
+    }
+
+    function announcePolicyMetadata(
+        address claimant,
+        address beneficiary,
+        uint32 claimsAllowedFrom,
+        string calldata policy,
+        string calldata metadata
+    ) external override onlyPolicyAgentOrAdmin returns (bytes32 policyHash) {
+        policyHash = keccak256(
+            abi.encodePacked(claimant, beneficiary, claimsAllowedFrom, policy)
+        );
+        require(
+            policyHashToState[policyHash].claimsAllowedUntil != 0,
+            "Policy does not exist"
+        );
+        emit AnnouncedPolicyMetadata(
             metadata,
+            claimant,
+            policyHash,
             msg.sender
         );
     }
@@ -332,7 +329,6 @@ contract ClaimsManager is
         address beneficiary,
         uint32 claimsAllowedFrom,
         string calldata policy,
-        string calldata metadata,
         uint224 claimAmountInUsd,
         string calldata evidence
     ) external override returns (bytes32 claimHash) {
@@ -340,13 +336,7 @@ contract ClaimsManager is
         require(block.timestamp >= claimsAllowedFrom, "Claims not allowed yet");
         require(bytes(evidence).length != 0, "Evidence address empty");
         bytes32 policyHash = keccak256(
-            abi.encodePacked(
-                msg.sender,
-                beneficiary,
-                claimsAllowedFrom,
-                policy,
-                metadata
-            )
+            abi.encodePacked(msg.sender, beneficiary, claimsAllowedFrom, policy)
         );
         PolicyState storage policyState = policyHashToState[policyHash];
         require(
@@ -382,7 +372,6 @@ contract ClaimsManager is
             beneficiary,
             claimsAllowedFrom,
             policy,
-            metadata,
             claimAmountInUsd,
             evidence,
             uint32(block.timestamp)
