@@ -488,13 +488,11 @@ contract ClaimsManager is
     // The user can do a static call to this function to see how much API3 they will receive
     function acceptSettlement(
         bytes32 policyHash,
-        address claimant,
         address beneficiary,
         uint224 claimAmountInUsd,
         string calldata evidence,
         uint224 minimumPayoutAmountInApi3
     ) external returns (uint224 clippedPayoutAmountInApi3) {
-        require(msg.sender == claimant, "Sender not claimant");
         bytes32 claimHash = keccak256(
             abi.encodePacked(
                 policyHash,
@@ -530,7 +528,7 @@ contract ClaimsManager is
         );
         emit AcceptedSettlement(
             claimHash,
-            claimant,
+            msg.sender,
             clippedPayoutAmountInUsd,
             clippedPayoutAmountInApi3
         );
