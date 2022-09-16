@@ -2,12 +2,9 @@
 pragma solidity ^0.8.0;
 
 import "@api3/airnode-protocol-v1/contracts/dapis/DapiReader.sol";
-import "./interfaces/ICurrencyAmountConverterWithDapi.sol";
+import "./interfaces/ICurrencyConverterWithDapi.sol";
 
-contract CurrencyAmountConverterWithDapi is
-    DapiReader,
-    ICurrencyAmountConverterWithDapi
-{
+contract CurrencyConverterWithDapi is DapiReader, ICurrencyConverterWithDapi {
     address public immutable override reader;
     bytes32 public immutable override dapiName;
     uint8 public immutable override dapiDecimals;

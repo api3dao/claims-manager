@@ -6,7 +6,7 @@ describe('KlerosLiquidProxy', function () {
     api3Pool,
     claimsManager,
     dapiServer,
-    currencyAmountConverterWithDapi,
+    currencyConverterWithDapi,
     klerosLiquid,
     klerosLiquidProxy;
   let roles;
@@ -82,17 +82,17 @@ describe('KlerosLiquidProxy', function () {
     const dataFeedTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
     await dapiServer.mockDataFeed(dataFeedId, dataFeedValue, dataFeedTimestamp);
     await dapiServer.mockDapiName(dapiName, dataFeedId);
-    const currencyAmountConverterWithDapiFactory = await hre.ethers.getContractFactory(
-      'CurrencyAmountConverterWithDapi',
+    const currencyConverterWithDapiFactory = await hre.ethers.getContractFactory(
+      'CurrencyConverterWithDapi',
       roles.deployer
     );
-    currencyAmountConverterWithDapi = await currencyAmountConverterWithDapiFactory.deploy(
+    currencyConverterWithDapi = await currencyConverterWithDapiFactory.deploy(
       dapiServer.address,
       claimsManager.address,
       dapiName,
       dapiDecimals
     );
-    await claimsManager.connect(roles.admin).setApi3UsdAmountConverter(currencyAmountConverterWithDapi.address);
+    await claimsManager.connect(roles.admin).setApi3UsdAmountConverter(currencyConverterWithDapi.address);
     const klerosLiquidFactory = await hre.ethers.getContractFactory('MockKlerosLiquid', roles.deployer);
     klerosLiquid = await klerosLiquidFactory.deploy();
     const klerosLiquidProxyFactory = await hre.ethers.getContractFactory('KlerosLiquidProxy', roles.deployer);

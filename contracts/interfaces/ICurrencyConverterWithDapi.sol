@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./ICurrencyAmountConverter.sol";
+import "./ICurrencyConverter.sol";
 
-interface ICurrencyAmountConverterWithDapi is ICurrencyAmountConverter {
+interface ICurrencyConverterWithDapi is ICurrencyConverter {
     function reader() external view returns (address);
 
     function dapiName() external view returns (bytes32);

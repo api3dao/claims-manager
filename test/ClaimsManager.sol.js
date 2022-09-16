@@ -91,11 +91,11 @@ describe('ClaimsManager', function () {
     const dataFeedTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
     await dapiServer.mockDataFeed(dataFeedId, dataFeedValue, dataFeedTimestamp);
     await dapiServer.mockDapiName(dapiName, dataFeedId);
-    const currencyAmountConverterWithDapiFactory = await hre.ethers.getContractFactory(
-      'CurrencyAmountConverterWithDapi',
+    const currencyConverterWithDapiFactory = await hre.ethers.getContractFactory(
+      'CurrencyConverterWithDapi',
       roles.deployer
     );
-    api3UsdAmountConverter = await currencyAmountConverterWithDapiFactory.deploy(
+    api3UsdAmountConverter = await currencyConverterWithDapiFactory.deploy(
       dapiServer.address,
       claimsManager.address,
       dapiName,

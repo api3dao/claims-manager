@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@api3/airnode-protocol-v1/contracts/access-control-registry/AccessControlRegistryAdminnedWithManager.sol";
 import "@api3/api3-dao-contracts/contracts/interfaces/IApi3Pool.sol";
-import "./interfaces/ICurrencyAmountConverter.sol";
+import "./interfaces/ICurrencyConverter.sol";
 import "./interfaces/IClaimsManager.sol";
 
 contract ClaimsManager is
@@ -412,7 +412,7 @@ contract ClaimsManager is
             claimAmountInUsd
         );
         uint224 clippedPayoutAmountInApi3 = uint224(
-            ICurrencyAmountConverter(api3UsdAmountConverter).convertQuoteToBase(
+            ICurrencyConverter(api3UsdAmountConverter).convertQuoteToBase(
                 clippedPayoutAmountInUsd
             )
         );
@@ -470,8 +470,9 @@ contract ClaimsManager is
         updateQuotaUsage(
             msg.sender,
             uint224(
-                ICurrencyAmountConverter(api3UsdAmountConverter)
-                    .convertQuoteToBase(settlementAmountInUsd)
+                ICurrencyConverter(api3UsdAmountConverter).convertQuoteToBase(
+                    settlementAmountInUsd
+                )
             )
         );
         claimHashToProposedSettlementAmountInUsd[
@@ -518,7 +519,7 @@ contract ClaimsManager is
             claimHashToProposedSettlementAmountInUsd[claimHash]
         );
         clippedPayoutAmountInApi3 = uint224(
-            ICurrencyAmountConverter(api3UsdAmountConverter).convertQuoteToBase(
+            ICurrencyConverter(api3UsdAmountConverter).convertQuoteToBase(
                 clippedPayoutAmountInUsd
             )
         );
@@ -623,8 +624,9 @@ contract ClaimsManager is
                 claimAmountInUsd
             );
             clippedPayoutAmountInApi3 = uint224(
-                ICurrencyAmountConverter(api3UsdAmountConverter)
-                    .convertQuoteToBase(clippedPayoutAmountInUsd)
+                ICurrencyConverter(api3UsdAmountConverter).convertQuoteToBase(
+                    clippedPayoutAmountInUsd
+                )
             );
             updateQuotaUsage(msg.sender, clippedPayoutAmountInApi3);
             emit ResolvedDisputeByAcceptingClaim(
@@ -658,7 +660,7 @@ contract ClaimsManager is
                     settlementAmountInUsd
                 );
                 clippedPayoutAmountInApi3 = uint224(
-                    ICurrencyAmountConverter(api3UsdAmountConverter)
+                    ICurrencyConverter(api3UsdAmountConverter)
                         .convertQuoteToBase(clippedPayoutAmountInUsd)
                 );
                 updateQuotaUsage(msg.sender, clippedPayoutAmountInApi3);
