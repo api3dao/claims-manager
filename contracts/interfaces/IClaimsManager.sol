@@ -236,7 +236,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     function acceptSettlement(
         bytes32 policyHash,
-        address claimant,
         address beneficiary,
         uint224 claimAmountInUsd,
         string calldata evidence,
