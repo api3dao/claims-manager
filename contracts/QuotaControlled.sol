@@ -57,6 +57,29 @@ contract QuotaControlled is IQuotaControlled {
         accountToQuota[account] = Quota({period: 0, amount: 0});
     }
 
+    function updateQuotaUsage(address account, uint224 amount) internal {
+        Checkpoint[]
+            storage accumulatedQuotaUsageCheckpoints = accountToAccumulatedQuotaUsageCheckpoints[
+                account
+            ];
+        uint224 accumulatedQuotaUsage = amount;
+        if (accumulatedQuotaUsageCheckpoints.length > 0) {
+            accumulatedQuotaUsage += accumulatedQuotaUsageCheckpoints[
+                accumulatedQuotaUsageCheckpoints.length - 1
+            ].value;
+        }
+        accumulatedQuotaUsageCheckpoints.push(
+            Checkpoint({
+                fromTimestamp: uint32(block.timestamp),
+                value: accumulatedQuotaUsage
+            })
+        );
+        require(
+            getQuotaUsage(account) <= accountToQuota[account].amount,
+            "Quota exceeded"
+        );
+    }
+
     function getValueAt(Checkpoint[] storage checkpoints, uint32 _timestamp)
         private
         view
