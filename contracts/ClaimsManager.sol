@@ -2,28 +2,20 @@
 pragma solidity ^0.8.0;
 
 import "@api3/airnode-protocol-v1/contracts/access-control-registry/AccessControlRegistryAdminnedWithManager.sol";
+import "./QuotaControlled.sol";
 import "@api3/api3-dao-contracts/contracts/interfaces/IApi3Pool.sol";
 import "./interfaces/ICurrencyConverter.sol";
 import "./interfaces/IClaimsManager.sol";
 
 contract ClaimsManager is
     AccessControlRegistryAdminnedWithManager,
+    QuotaControlled,
     IClaimsManager
 {
     struct ClaimState {
         ClaimStatus status;
         uint32 updateTime;
         address arbitrator;
-    }
-
-    struct Checkpoint {
-        uint32 fromTimestamp;
-        uint224 value;
-    }
-
-    struct Quota {
-        uint32 period;
-        uint224 amountInApi3;
     }
 
     struct PolicyState {
@@ -40,10 +32,6 @@ contract ClaimsManager is
     uint32 public override mediatorResponsePeriod;
     uint32 public override claimantResponsePeriod;
     uint32 public override arbitratorResponsePeriod;
-    mapping(address => Checkpoint[])
-        public
-        override accountToAccumulatedQuotaUsageCheckpoints;
-    mapping(address => Quota) public override accountToQuota;
 
     mapping(bytes32 => PolicyState) public override policyHashToState;
     mapping(bytes32 => ClaimState) public override claimHashToState;
@@ -161,22 +149,15 @@ contract ClaimsManager is
     function setQuota(
         address account,
         uint32 period,
-        uint224 amountInApi3
+        uint224 amount
     ) external override onlyAdmin {
-        require(account != address(0), "Account address zero");
-        require(period != 0, "Quota period zero");
-        require(amountInApi3 != 0, "Quota amount zero");
-        accountToQuota[account] = Quota({
-            period: period,
-            amountInApi3: amountInApi3
-        });
-        emit SetQuota(account, period, amountInApi3, msg.sender);
+        _setQuota(account, period, amount);
+        emit SetQuota(account, period, amount, msg.sender);
     }
 
     // Means the account will not be limited
     function resetQuota(address account) external override onlyAdmin {
-        require(account != address(0), "Account address zero");
-        accountToQuota[account] = Quota({period: 0, amountInApi3: 0});
+        _resetQuota(account);
         emit ResetQuota(account, msg.sender);
     }
 
@@ -680,29 +661,6 @@ contract ClaimsManager is
         }
     }
 
-    function getQuotaUsage(address account)
-        public
-        view
-        override
-        returns (uint224)
-    {
-        Checkpoint[]
-            storage accumulatedQuotaUsageCheckpoints = accountToAccumulatedQuotaUsageCheckpoints[
-                account
-            ];
-        uint224 accumulatedQuotaUsage = 0;
-        if (accumulatedQuotaUsageCheckpoints.length > 0) {
-            accumulatedQuotaUsage = accumulatedQuotaUsageCheckpoints[
-                accumulatedQuotaUsageCheckpoints.length - 1
-            ].value;
-        }
-        uint224 accumulatedQuotaUsageThen = getValueAt(
-            accumulatedQuotaUsageCheckpoints,
-            uint32(block.timestamp) - accountToQuota[account].period
-        );
-        return accumulatedQuotaUsage - accumulatedQuotaUsageThen;
-    }
-
     function isMediatorOrAdmin(address account)
         public
         view
@@ -758,29 +716,6 @@ contract ClaimsManager is
         emit SetArbitratorResponsePeriod(_arbitratorResponsePeriod, msg.sender);
     }
 
-    function updateQuotaUsage(address account, uint224 amountInApi3) private {
-        Checkpoint[]
-            storage accumulatedQuotaUsageCheckpoints = accountToAccumulatedQuotaUsageCheckpoints[
-                account
-            ];
-        uint224 accumulatedQuotaUsage = amountInApi3;
-        if (accumulatedQuotaUsageCheckpoints.length > 0) {
-            accumulatedQuotaUsage += accumulatedQuotaUsageCheckpoints[
-                accumulatedQuotaUsageCheckpoints.length - 1
-            ].value;
-        }
-        accumulatedQuotaUsageCheckpoints.push(
-            Checkpoint({
-                fromTimestamp: uint32(block.timestamp),
-                value: accumulatedQuotaUsage
-            })
-        );
-        require(
-            getQuotaUsage(account) <= accountToQuota[account].amountInApi3,
-            "Quota exceeded"
-        );
-    }
-
     function updatePolicyCoverage(bytes32 policyHash, uint224 payoutAmountInUsd)
         private
         returns (uint224 clippedPayoutAmountInUsd)
@@ -793,31 +728,5 @@ contract ClaimsManager is
             : payoutAmountInUsd;
         policyHashToState[policyHash]
             .coverageAmountInUsd -= clippedPayoutAmountInUsd;
-    }
-
-    function getValueAt(Checkpoint[] storage checkpoints, uint32 _timestamp)
-        private
-        view
-        returns (uint224)
-    {
-        if (checkpoints.length == 0) return 0;
-
-        // Shortcut for the actual value
-        if (_timestamp >= checkpoints[checkpoints.length - 1].fromTimestamp)
-            return checkpoints[checkpoints.length - 1].value;
-        if (_timestamp < checkpoints[0].fromTimestamp) return 0;
-
-        // Binary search of the value in the array
-        uint256 min = 0;
-        uint256 max = checkpoints.length - 1;
-        while (max > min) {
-            uint256 mid = (max + min + 1) / 2;
-            if (checkpoints[mid].fromTimestamp <= _timestamp) {
-                min = mid;
-            } else {
-                max = mid - 1;
-            }
-        }
-        return checkpoints[min].value;
     }
 }

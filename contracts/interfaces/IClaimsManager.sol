@@ -263,8 +263,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         ArbitratorDecision result
     ) external returns (uint224 clippedAmountInApi3);
 
-    function getQuotaUsage(address account) external view returns (uint224);
-
     function isMediatorOrAdmin(address account) external view returns (bool);
 
     function policyAgentRole() external view returns (bytes32);
@@ -282,16 +280,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function claimantResponsePeriod() external view returns (uint32);
 
     function arbitratorResponsePeriod() external view returns (uint32);
-
-    function accountToAccumulatedQuotaUsageCheckpoints(
-        address account,
-        uint256 checkpointIndex
-    ) external view returns (uint32 fromTimestamp, uint224 value);
-
-    function accountToQuota(address account)
-        external
-        view
-        returns (uint32 period, uint224 amountInApi3);
 
     function policyHashToState(bytes32 policyHash)
         external

@@ -467,7 +467,7 @@ describe('ClaimsManager', function () {
                 .withArgs(account, period, amountInApi3, roles.manager.address);
               const quota = await claimsManager.accountToQuota(account);
               expect(quota.period).is.equal(period);
-              expect(quota.amountInApi3).is.equal(amountInApi3);
+              expect(quota.amount).is.equal(amountInApi3);
             });
           });
           context('Quota amount is zero', function () {
@@ -516,7 +516,7 @@ describe('ClaimsManager', function () {
                 .withArgs(account, period, amountInApi3, roles.admin.address);
               const quota = await claimsManager.accountToQuota(account);
               expect(quota.period).is.equal(period);
-              expect(quota.amountInApi3).is.equal(amountInApi3);
+              expect(quota.amount).is.equal(amountInApi3);
             });
           });
           context('Quota amount is zero', function () {
@@ -575,7 +575,7 @@ describe('ClaimsManager', function () {
               .withArgs(account, roles.manager.address);
             const quota = await claimsManager.accountToQuota(account);
             expect(quota.period).is.equal(0);
-            expect(quota.amountInApi3).is.equal(0);
+            expect(quota.amount).is.equal(0);
           });
         });
         context('Quota is not set before', function () {
@@ -586,7 +586,7 @@ describe('ClaimsManager', function () {
               .withArgs(account, roles.manager.address);
             const quota = await claimsManager.accountToQuota(account);
             expect(quota.period).is.equal(0);
-            expect(quota.amountInApi3).is.equal(0);
+            expect(quota.amount).is.equal(0);
           });
         });
       });
@@ -612,7 +612,7 @@ describe('ClaimsManager', function () {
               .withArgs(account, roles.admin.address);
             const quota = await claimsManager.accountToQuota(account);
             expect(quota.period).is.equal(0);
-            expect(quota.amountInApi3).is.equal(0);
+            expect(quota.amount).is.equal(0);
           });
         });
         context('Quota is not set before', function () {
@@ -623,7 +623,7 @@ describe('ClaimsManager', function () {
               .withArgs(account, roles.admin.address);
             const quota = await claimsManager.accountToQuota(account);
             expect(quota.period).is.equal(0);
-            expect(quota.amountInApi3).is.equal(0);
+            expect(quota.amount).is.equal(0);
           });
         });
       });
