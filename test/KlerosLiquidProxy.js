@@ -1,20 +1,26 @@
 const hre = require('hardhat');
 
-// API3 price is $2
-const api3UsdPriceWith18Decimals = hre.ethers.utils.parseEther('2');
-// The API3 staking pool has 50 million API3 staked
-const totalStake = hre.ethers.utils.parseEther('50000000');
-
 describe('KlerosLiquidProxy', function () {
   let accessControlRegistry,
     api3Token,
     api3Pool,
     claimsManager,
     dapiServer,
-    api3ToUsdReader,
+    currencyAmountConverterWithDapi,
     klerosLiquid,
     klerosLiquidProxy;
   let roles;
+
+  // API3 price is $2
+  const api3UsdPriceWith18Decimals = hre.ethers.utils.parseEther('2');
+  const dapiName = hre.ethers.utils.formatBytes32String('API3/USD');
+  const dapiDecimals = 18;
+  const dataFeedValue = api3UsdPriceWith18Decimals
+    .mul(hre.ethers.BigNumber.from(10).pow(dapiDecimals))
+    .div(hre.ethers.utils.parseEther('1'));
+
+  // The API3 staking pool has 50 million API3 staked
+  const totalStake = hre.ethers.utils.parseEther('50000000');
 
   beforeEach(async () => {
     const accounts = await hre.ethers.getSigners();
@@ -74,12 +80,19 @@ describe('KlerosLiquidProxy', function () {
     dapiServer = await dapiServerFactory.deploy();
     const dataFeedId = hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(32));
     const dataFeedTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
-    await dapiServer.mockDataFeed(dataFeedId, api3UsdPriceWith18Decimals, dataFeedTimestamp);
-    const dapiName = hre.ethers.utils.formatBytes32String('API3/USD');
+    await dapiServer.mockDataFeed(dataFeedId, dataFeedValue, dataFeedTimestamp);
     await dapiServer.mockDapiName(dapiName, dataFeedId);
-    const api3ToUsdReaderFactory = await hre.ethers.getContractFactory('Api3ToUsdReader', roles.deployer);
-    api3ToUsdReader = await api3ToUsdReaderFactory.deploy(dapiServer.address, claimsManager.address);
-    await claimsManager.connect(roles.admin).setApi3ToUsdReader(api3ToUsdReader.address);
+    const currencyAmountConverterWithDapiFactory = await hre.ethers.getContractFactory(
+      'CurrencyAmountConverterWithDapi',
+      roles.deployer
+    );
+    currencyAmountConverterWithDapi = await currencyAmountConverterWithDapiFactory.deploy(
+      dapiServer.address,
+      claimsManager.address,
+      dapiName,
+      dapiDecimals
+    );
+    await claimsManager.connect(roles.admin).setApi3UsdAmountConverter(currencyAmountConverterWithDapi.address);
     const klerosLiquidFactory = await hre.ethers.getContractFactory('MockKlerosLiquid', roles.deployer);
     klerosLiquid = await klerosLiquidFactory.deploy();
     const klerosLiquidProxyFactory = await hre.ethers.getContractFactory('KlerosLiquidProxy', roles.deployer);
@@ -94,7 +107,6 @@ describe('KlerosLiquidProxy', function () {
   describe('constructor', function () {
     it('works', async function () {
       console.log(klerosLiquidProxy.address);
-      console.log(api3ToUsdReader.address);
     });
   });
 });

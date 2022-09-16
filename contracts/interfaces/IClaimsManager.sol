@@ -22,7 +22,10 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         PaySettlement
     }
 
-    event SetApi3ToUsdReader(address api3ToUsdReader, address sender);
+    event SetApi3UsdAmountConverter(
+        address api3UsdAmountConverter,
+        address sender
+    );
 
     event SetApi3Pool(address api3Pool, address sender);
 
@@ -155,7 +158,8 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address arbitrator
     );
 
-    function setApi3ToUsdReader(address _api3ToUsdReader) external;
+    function setApi3UsdAmountConverter(address _api3UsdAmountConverter)
+        external;
 
     function setApi3Pool(address _api3Pool) external;
 
@@ -270,7 +274,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     function arbitratorRole() external view returns (bytes32);
 
-    function api3ToUsdReader() external view returns (address);
+    function api3UsdAmountConverter() external view returns (address);
 
     function api3Pool() external view returns (address);
 
