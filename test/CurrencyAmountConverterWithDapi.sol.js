@@ -5,10 +5,13 @@ describe('CurrencyAmountConverterWithDapi', function () {
   let dapiServer, currencyAmountConverterWithDapi;
   let roles;
 
+  // API3 price is $2
+  const api3UsdPriceWith18Decimals = hre.ethers.utils.parseEther('2');
   const dapiName = hre.ethers.utils.formatBytes32String('API3/USD');
   const dapiDecimals = 18;
-  // API3 price is $2
-  const dataFeedValue = hre.ethers.BigNumber.from(2).mul(hre.ethers.BigNumber.from(10).pow(dapiDecimals));
+  const dataFeedValue = api3UsdPriceWith18Decimals
+    .mul(hre.ethers.BigNumber.from(10).pow(dapiDecimals))
+    .div(hre.ethers.utils.parseEther('1'));
 
   beforeEach(async () => {
     const accounts = await hre.ethers.getSigners();
@@ -96,24 +99,54 @@ describe('CurrencyAmountConverterWithDapi', function () {
     context('Sender is reader', function () {
       context('CurrencyAmountConverterWithDapi is whitelisted to read the dAPI', function () {
         context('dAPI name is set', function () {
-          context('Data feed value is not large enough to cause overflow', function () {
-            context('dAPI name is set to a data feed that has a non-negative value', function () {
-              it('converts base to quote', async function () {
-                const baseAmount = hre.ethers.utils.parseEther('1000000');
-                const expectedQuoteAmount = hre.ethers.utils.parseEther('2000000');
-                expect(
-                  await currencyAmountConverterWithDapi.connect(roles.reader).convertBaseToQuote(baseAmount)
-                ).to.equal(expectedQuoteAmount);
+          context('Data feed value is initialized', function () {
+            context('Data feed value is not large enough to cause overflow', function () {
+              context('dAPI name is set to a data feed that has a non-negative value', function () {
+                it('converts base to quote', async function () {
+                  const baseAmount = hre.ethers.utils.parseEther('1000000');
+                  const expectedQuoteAmount = hre.ethers.utils.parseEther('2000000');
+                  expect(
+                    await currencyAmountConverterWithDapi.connect(roles.reader).convertBaseToQuote(baseAmount)
+                  ).to.equal(expectedQuoteAmount);
+                });
+              });
+              context('dAPI name is set to a data feed that has a negative value', function () {
+                it('reverts', async function () {
+                  const negativeDataFeedValue = -1;
+                  const dapiServerFactory = await hre.ethers.getContractFactory('MockDapiServer', roles.deployer);
+                  dapiServer = await dapiServerFactory.deploy();
+                  const dataFeedId = hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(32));
+                  const dataFeedTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
+                  await dapiServer.mockDataFeed(dataFeedId, negativeDataFeedValue, dataFeedTimestamp);
+                  await dapiServer.mockDapiName(dapiName, dataFeedId);
+                  const currencyAmountConverterWithDapiFactory = await hre.ethers.getContractFactory(
+                    'CurrencyAmountConverterWithDapi',
+                    roles.deployer
+                  );
+                  currencyAmountConverterWithDapi = await currencyAmountConverterWithDapiFactory.deploy(
+                    dapiServer.address,
+                    roles.reader.address,
+                    dapiName,
+                    dapiDecimals
+                  );
+
+                  const baseAmount = hre.ethers.utils.parseEther('1000000');
+                  await expect(
+                    currencyAmountConverterWithDapi.connect(roles.reader).convertBaseToQuote(baseAmount)
+                  ).to.be.revertedWith('Price not positive');
+                });
               });
             });
-            context('dAPI name is set to a data feed that has a negative value', function () {
+            context('Data feed value is large enough to cause overflow', function () {
               it('reverts', async function () {
-                const negativeDataFeedValue = -1;
+                const largeDataFeedValue = hre.ethers.BigNumber.from(
+                  '0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+                ); // max int224
                 const dapiServerFactory = await hre.ethers.getContractFactory('MockDapiServer', roles.deployer);
                 dapiServer = await dapiServerFactory.deploy();
                 const dataFeedId = hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(32));
                 const dataFeedTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
-                await dapiServer.mockDataFeed(dataFeedId, negativeDataFeedValue, dataFeedTimestamp);
+                await dapiServer.mockDataFeed(dataFeedId, largeDataFeedValue, dataFeedTimestamp);
                 await dapiServer.mockDapiName(dapiName, dataFeedId);
                 const currencyAmountConverterWithDapiFactory = await hre.ethers.getContractFactory(
                   'CurrencyAmountConverterWithDapi',
@@ -129,20 +162,15 @@ describe('CurrencyAmountConverterWithDapi', function () {
                 const baseAmount = hre.ethers.utils.parseEther('1000000');
                 await expect(
                   currencyAmountConverterWithDapi.connect(roles.reader).convertBaseToQuote(baseAmount)
-                ).to.be.revertedWith('Price not positive');
+                ).to.be.reverted;
               });
             });
           });
-          context('Data feed value is large enough to cause overflow', function () {
+          context('Data feed value is not initialized', function () {
             it('reverts', async function () {
-              const largeDataFeedValue = hre.ethers.BigNumber.from(
-                '0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffff'
-              ); // max int224
               const dapiServerFactory = await hre.ethers.getContractFactory('MockDapiServer', roles.deployer);
               dapiServer = await dapiServerFactory.deploy();
               const dataFeedId = hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(32));
-              const dataFeedTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
-              await dapiServer.mockDataFeed(dataFeedId, largeDataFeedValue, dataFeedTimestamp);
               await dapiServer.mockDapiName(dapiName, dataFeedId);
               const currencyAmountConverterWithDapiFactory = await hre.ethers.getContractFactory(
                 'CurrencyAmountConverterWithDapi',
@@ -158,7 +186,7 @@ describe('CurrencyAmountConverterWithDapi', function () {
               const baseAmount = hre.ethers.utils.parseEther('1000000');
               await expect(
                 currencyAmountConverterWithDapi.connect(roles.reader).convertBaseToQuote(baseAmount)
-              ).to.be.reverted;
+              ).to.be.revertedWith('Data feed does not exist');
             });
           });
         });
@@ -208,24 +236,52 @@ describe('CurrencyAmountConverterWithDapi', function () {
     context('Sender is reader', function () {
       context('CurrencyAmountConverterWithDapi is whitelisted to read the dAPI', function () {
         context('dAPI name is set', function () {
-          context('Data feed value is not small enough to cause overflow', function () {
-            context('dAPI name is set to a data feed that has a non-negative value', function () {
-              it('converts base to quote', async function () {
-                const quoteAmount = hre.ethers.utils.parseEther('1000000');
-                const expectedBaseAmount = hre.ethers.utils.parseEther('500000');
-                expect(
-                  await currencyAmountConverterWithDapi.connect(roles.reader).convertQuoteToBase(quoteAmount)
-                ).to.equal(expectedBaseAmount);
+          context('Data feed value is initialized', function () {
+            context('Data feed value is not small enough to cause overflow', function () {
+              context('dAPI name is set to a data feed that has a non-negative value', function () {
+                it('converts base to quote', async function () {
+                  const quoteAmount = hre.ethers.utils.parseEther('1000000');
+                  const expectedBaseAmount = hre.ethers.utils.parseEther('500000');
+                  expect(
+                    await currencyAmountConverterWithDapi.connect(roles.reader).convertQuoteToBase(quoteAmount)
+                  ).to.equal(expectedBaseAmount);
+                });
+              });
+              context('dAPI name is set to a data feed that has a negative value', function () {
+                it('reverts', async function () {
+                  const negativeDataFeedValue = -1;
+                  const dapiServerFactory = await hre.ethers.getContractFactory('MockDapiServer', roles.deployer);
+                  dapiServer = await dapiServerFactory.deploy();
+                  const dataFeedId = hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(32));
+                  const dataFeedTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
+                  await dapiServer.mockDataFeed(dataFeedId, negativeDataFeedValue, dataFeedTimestamp);
+                  await dapiServer.mockDapiName(dapiName, dataFeedId);
+                  const currencyAmountConverterWithDapiFactory = await hre.ethers.getContractFactory(
+                    'CurrencyAmountConverterWithDapi',
+                    roles.deployer
+                  );
+                  currencyAmountConverterWithDapi = await currencyAmountConverterWithDapiFactory.deploy(
+                    dapiServer.address,
+                    roles.reader.address,
+                    dapiName,
+                    dapiDecimals
+                  );
+
+                  const quoteAmount = hre.ethers.utils.parseEther('1000000');
+                  await expect(
+                    currencyAmountConverterWithDapi.connect(roles.reader).convertQuoteToBase(quoteAmount)
+                  ).to.be.revertedWith('Price not positive');
+                });
               });
             });
-            context('dAPI name is set to a data feed that has a negative value', function () {
+            context('Data feed value is small enough to cause overflow', function () {
               it('reverts', async function () {
-                const negativeDataFeedValue = -1;
+                const smallDataFeedValue = 1;
                 const dapiServerFactory = await hre.ethers.getContractFactory('MockDapiServer', roles.deployer);
                 dapiServer = await dapiServerFactory.deploy();
                 const dataFeedId = hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(32));
                 const dataFeedTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
-                await dapiServer.mockDataFeed(dataFeedId, negativeDataFeedValue, dataFeedTimestamp);
+                await dapiServer.mockDataFeed(dataFeedId, smallDataFeedValue, dataFeedTimestamp);
                 await dapiServer.mockDapiName(dapiName, dataFeedId);
                 const currencyAmountConverterWithDapiFactory = await hre.ethers.getContractFactory(
                   'CurrencyAmountConverterWithDapi',
@@ -238,21 +294,18 @@ describe('CurrencyAmountConverterWithDapi', function () {
                   dapiDecimals
                 );
 
-                const quoteAmount = hre.ethers.utils.parseEther('1000000');
+                const quoteAmount = hre.ethers.constants.MaxUint256;
                 await expect(
                   currencyAmountConverterWithDapi.connect(roles.reader).convertQuoteToBase(quoteAmount)
-                ).to.be.revertedWith('Price not positive');
+                ).to.be.reverted;
               });
             });
           });
-          context('Data feed value is small enough to cause overflow', function () {
+          context('Data feed value is not initialized', function () {
             it('reverts', async function () {
-              const smallDataFeedValue = 1;
               const dapiServerFactory = await hre.ethers.getContractFactory('MockDapiServer', roles.deployer);
               dapiServer = await dapiServerFactory.deploy();
               const dataFeedId = hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(32));
-              const dataFeedTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
-              await dapiServer.mockDataFeed(dataFeedId, smallDataFeedValue, dataFeedTimestamp);
               await dapiServer.mockDapiName(dapiName, dataFeedId);
               const currencyAmountConverterWithDapiFactory = await hre.ethers.getContractFactory(
                 'CurrencyAmountConverterWithDapi',
@@ -265,10 +318,10 @@ describe('CurrencyAmountConverterWithDapi', function () {
                 dapiDecimals
               );
 
-              const quoteAmount = hre.ethers.constants.MaxUint256;
+              const quoteAmount = hre.ethers.utils.parseEther('1000000');
               await expect(
                 currencyAmountConverterWithDapi.connect(roles.reader).convertQuoteToBase(quoteAmount)
-              ).to.be.reverted;
+              ).to.be.revertedWith('Data feed does not exist');
             });
           });
         });
