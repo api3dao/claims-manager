@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@api3/airnode-protocol-v1/contracts/access-control-registry/AccessControlRegistryAdminnedWithManager.sol";
 import "@api3/api3-dao-contracts/contracts/interfaces/IApi3Pool.sol";
-import "./interfaces/IApi3ToUsdReader.sol";
+import "./interfaces/ICurrencyConverter.sol";
 import "./interfaces/IClaimsManager.sol";
 
 contract ClaimsManager is
@@ -35,7 +35,7 @@ contract ClaimsManager is
     bytes32 public immutable override mediatorRole;
     bytes32 public immutable override arbitratorRole;
 
-    address public override api3ToUsdReader;
+    address public override api3UsdAmountConverter;
     address public override api3Pool;
     uint32 public override mediatorResponsePeriod;
     uint32 public override claimantResponsePeriod;
@@ -116,14 +116,17 @@ contract ClaimsManager is
         _setArbitratorResponsePeriod(_arbitratorResponsePeriod);
     }
 
-    function setApi3ToUsdReader(address _api3ToUsdReader)
+    function setApi3UsdAmountConverter(address _api3UsdAmountConverter)
         external
         override
         onlyAdmin
     {
-        require(_api3ToUsdReader != address(0), "Api3ToUsdReader address zero");
-        api3ToUsdReader = _api3ToUsdReader;
-        emit SetApi3ToUsdReader(_api3ToUsdReader, msg.sender);
+        require(
+            _api3UsdAmountConverter != address(0),
+            "Api3UsdAmountConverter zero"
+        );
+        api3UsdAmountConverter = _api3UsdAmountConverter;
+        emit SetApi3UsdAmountConverter(_api3UsdAmountConverter, msg.sender);
     }
 
     function setApi3Pool(address _api3Pool) external override onlyAdmin {
@@ -408,8 +411,10 @@ contract ClaimsManager is
             policyHash,
             claimAmountInUsd
         );
-        uint224 clippedPayoutAmountInApi3 = convertUsdToApi3(
-            clippedPayoutAmountInUsd
+        uint224 clippedPayoutAmountInApi3 = uint224(
+            ICurrencyConverter(api3UsdAmountConverter).convertQuoteToBase(
+                clippedPayoutAmountInUsd
+            )
         );
         updateQuotaUsage(msg.sender, clippedPayoutAmountInApi3);
         emit AcceptedClaim(
@@ -462,7 +467,14 @@ contract ClaimsManager is
         // The mediator quota in API3 has to be updated here
         // We're pessimistically using the unclipped amount
         // Current price has to be used as an approximation
-        updateQuotaUsage(msg.sender, convertUsdToApi3(settlementAmountInUsd));
+        updateQuotaUsage(
+            msg.sender,
+            uint224(
+                ICurrencyConverter(api3UsdAmountConverter).convertQuoteToBase(
+                    settlementAmountInUsd
+                )
+            )
+        );
         claimHashToProposedSettlementAmountInUsd[
             claimHash
         ] = settlementAmountInUsd;
@@ -506,7 +518,11 @@ contract ClaimsManager is
             policyHash,
             claimHashToProposedSettlementAmountInUsd[claimHash]
         );
-        clippedPayoutAmountInApi3 = convertUsdToApi3(clippedPayoutAmountInUsd);
+        clippedPayoutAmountInApi3 = uint224(
+            ICurrencyConverter(api3UsdAmountConverter).convertQuoteToBase(
+                clippedPayoutAmountInUsd
+            )
+        );
         require(
             clippedPayoutAmountInApi3 >= minimumPayoutAmountInApi3,
             "Payout less than minimum"
@@ -607,8 +623,10 @@ contract ClaimsManager is
                 policyHash,
                 claimAmountInUsd
             );
-            clippedPayoutAmountInApi3 = convertUsdToApi3(
-                clippedPayoutAmountInUsd
+            clippedPayoutAmountInApi3 = uint224(
+                ICurrencyConverter(api3UsdAmountConverter).convertQuoteToBase(
+                    clippedPayoutAmountInUsd
+                )
             );
             updateQuotaUsage(msg.sender, clippedPayoutAmountInApi3);
             emit ResolvedDisputeByAcceptingClaim(
@@ -641,8 +659,9 @@ contract ClaimsManager is
                     policyHash,
                     settlementAmountInUsd
                 );
-                clippedPayoutAmountInApi3 = convertUsdToApi3(
-                    clippedPayoutAmountInUsd
+                clippedPayoutAmountInApi3 = uint224(
+                    ICurrencyConverter(api3UsdAmountConverter)
+                        .convertQuoteToBase(clippedPayoutAmountInUsd)
                 );
                 updateQuotaUsage(msg.sender, clippedPayoutAmountInApi3);
                 emit ResolvedDisputeByAcceptingSettlement(
@@ -774,18 +793,6 @@ contract ClaimsManager is
             : payoutAmountInUsd;
         policyHashToState[policyHash]
             .coverageAmountInUsd -= clippedPayoutAmountInUsd;
-    }
-
-    // Assuming the API3/USD rate has 18 decimals
-    function convertUsdToApi3(uint224 amountInUsd)
-        private
-        view
-        returns (uint224 amountInApi3)
-    {
-        require(api3ToUsdReader != address(0), "Api3ToUsdReader not set");
-        int224 signedApi3ToUsd = IApi3ToUsdReader(api3ToUsdReader).read();
-        require(signedApi3ToUsd > 0, "API3 price not positive");
-        amountInApi3 = (amountInUsd * 10**18) / uint224(signedApi3ToUsd);
     }
 
     function getValueAt(Checkpoint[] storage checkpoints, uint32 _timestamp)
