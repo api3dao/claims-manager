@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./interfaces/IQuotaControlled.sol";
+import "./interfaces/IQuotaEnforcer.sol";
 
-contract QuotaControlled is IQuotaControlled {
+contract QuotaEnforcer is IQuotaEnforcer {
     struct Checkpoint {
         uint32 fromTimestamp;
         uint224 value;

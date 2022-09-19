@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface IQuotaControlled {
+interface IQuotaEnforcer {
     function getQuotaUsage(address account) external view returns (uint224);
 
     function accountToAccumulatedQuotaUsageCheckpoints(

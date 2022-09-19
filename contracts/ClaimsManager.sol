@@ -2,14 +2,14 @@
 pragma solidity ^0.8.0;
 
 import "@api3/airnode-protocol-v1/contracts/access-control-registry/AccessControlRegistryAdminnedWithManager.sol";
-import "./QuotaControlled.sol";
+import "./QuotaEnforcer.sol";
 import "@api3/api3-dao-contracts/contracts/interfaces/IApi3Pool.sol";
 import "./interfaces/ICurrencyConverter.sol";
 import "./interfaces/IClaimsManager.sol";
 
 contract ClaimsManager is
     AccessControlRegistryAdminnedWithManager,
-    QuotaControlled,
+    QuotaEnforcer,
     IClaimsManager
 {
     struct ClaimState {
