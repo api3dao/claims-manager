@@ -455,101 +455,29 @@ describe('ClaimsManager', function () {
 
   describe('setQuota', function () {
     context('Sender is manager', function () {
-      context('Account address is not zero', function () {
-        context('Quota period is not zero', function () {
-          context('Quota amount is not zero', function () {
-            it('sets quota', async function () {
-              const account = hre.ethers.utils.getAddress(hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(20)));
-              const period = 7 * 24 * 60 * 60;
-              const amountInApi3 = hre.ethers.utils.parseEther('1000000');
-              await expect(claimsManager.connect(roles.manager).setQuota(account, period, amountInApi3))
-                .to.emit(claimsManager, 'SetQuota')
-                .withArgs(account, period, amountInApi3, roles.manager.address);
-              const quota = await claimsManager.accountToQuota(account);
-              expect(quota.period).is.equal(period);
-              expect(quota.amount).is.equal(amountInApi3);
-            });
-          });
-          context('Quota amount is zero', function () {
-            it('reverts', async function () {
-              const account = hre.ethers.utils.getAddress(hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(20)));
-              const period = 7 * 24 * 60 * 60;
-              const amountInApi3 = 0;
-              await expect(
-                claimsManager.connect(roles.manager).setQuota(account, period, amountInApi3)
-              ).to.be.revertedWith('Quota amount zero');
-            });
-          });
-        });
-        context('Quota period is zero', function () {
-          it('reverts', async function () {
-            const account = hre.ethers.utils.getAddress(hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(20)));
-            const period = 0;
-            const amountInApi3 = hre.ethers.utils.parseEther('1000000');
-            await expect(
-              claimsManager.connect(roles.manager).setQuota(account, period, amountInApi3)
-            ).to.be.revertedWith('Quota period zero');
-          });
-        });
-      });
-      context('Account address is zero', function () {
-        it('reverts', async function () {
-          const account = hre.ethers.constants.AddressZero;
-          const period = 7 * 24 * 60 * 60;
-          const amountInApi3 = hre.ethers.utils.parseEther('1000000');
-          await expect(claimsManager.connect(roles.manager).setQuota(account, period, amountInApi3)).to.be.revertedWith(
-            'Account address zero'
-          );
-        });
+      it('sets quota', async function () {
+        const account = hre.ethers.utils.getAddress(hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(20)));
+        const period = 7 * 24 * 60 * 60;
+        const amountInApi3 = hre.ethers.utils.parseEther('1000000');
+        await expect(claimsManager.connect(roles.manager).setQuota(account, period, amountInApi3))
+          .to.emit(claimsManager, 'SetQuota')
+          .withArgs(account, period, amountInApi3, roles.manager.address);
+        const quota = await claimsManager.accountToQuota(account);
+        expect(quota.period).is.equal(period);
+        expect(quota.amount).is.equal(amountInApi3);
       });
     });
     context('Sender is admin', function () {
-      context('Account address is not zero', function () {
-        context('Quota period is not zero', function () {
-          context('Quota amount is not zero', function () {
-            it('sets quota', async function () {
-              const account = hre.ethers.utils.getAddress(hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(20)));
-              const period = 7 * 24 * 60 * 60;
-              const amountInApi3 = hre.ethers.utils.parseEther('1000000');
-              await expect(claimsManager.connect(roles.admin).setQuota(account, period, amountInApi3))
-                .to.emit(claimsManager, 'SetQuota')
-                .withArgs(account, period, amountInApi3, roles.admin.address);
-              const quota = await claimsManager.accountToQuota(account);
-              expect(quota.period).is.equal(period);
-              expect(quota.amount).is.equal(amountInApi3);
-            });
-          });
-          context('Quota amount is zero', function () {
-            it('reverts', async function () {
-              const account = hre.ethers.utils.getAddress(hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(20)));
-              const period = 7 * 24 * 60 * 60;
-              const amountInApi3 = 0;
-              await expect(
-                claimsManager.connect(roles.admin).setQuota(account, period, amountInApi3)
-              ).to.be.revertedWith('Quota amount zero');
-            });
-          });
-        });
-        context('Quota period is zero', function () {
-          it('reverts', async function () {
-            const account = hre.ethers.utils.getAddress(hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(20)));
-            const period = 0;
-            const amountInApi3 = hre.ethers.utils.parseEther('1000000');
-            await expect(claimsManager.connect(roles.admin).setQuota(account, period, amountInApi3)).to.be.revertedWith(
-              'Quota period zero'
-            );
-          });
-        });
-      });
-      context('Account address is zero', function () {
-        it('reverts', async function () {
-          const account = hre.ethers.constants.AddressZero;
-          const period = 7 * 24 * 60 * 60;
-          const amountInApi3 = hre.ethers.utils.parseEther('1000000');
-          await expect(claimsManager.connect(roles.admin).setQuota(account, period, amountInApi3)).to.be.revertedWith(
-            'Account address zero'
-          );
-        });
+      it('sets quota', async function () {
+        const account = hre.ethers.utils.getAddress(hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(20)));
+        const period = 7 * 24 * 60 * 60;
+        const amountInApi3 = hre.ethers.utils.parseEther('1000000');
+        await expect(claimsManager.connect(roles.admin).setQuota(account, period, amountInApi3))
+          .to.emit(claimsManager, 'SetQuota')
+          .withArgs(account, period, amountInApi3, roles.admin.address);
+        const quota = await claimsManager.accountToQuota(account);
+        expect(quota.period).is.equal(period);
+        expect(quota.amount).is.equal(amountInApi3);
       });
     });
     context('Sender is not manager or admin', function () {
@@ -563,77 +491,31 @@ describe('ClaimsManager', function () {
 
   describe('resetQuota', function () {
     context('Sender is manager', function () {
-      context('Account address is not zero', function () {
-        context('Quota is set before', function () {
-          it('resets quota', async function () {
-            const account = hre.ethers.utils.getAddress(hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(20)));
-            const period = 7 * 24 * 60 * 60;
-            const amountInApi3 = hre.ethers.utils.parseEther('1000000');
-            await claimsManager.connect(roles.manager).setQuota(account, period, amountInApi3);
-            await expect(claimsManager.connect(roles.manager).resetQuota(account))
-              .to.emit(claimsManager, 'ResetQuota')
-              .withArgs(account, roles.manager.address);
-            const quota = await claimsManager.accountToQuota(account);
-            expect(quota.period).is.equal(0);
-            expect(quota.amount).is.equal(0);
-          });
-        });
-        context('Quota is not set before', function () {
-          it('resets quota', async function () {
-            const account = hre.ethers.utils.getAddress(hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(20)));
-            await expect(claimsManager.connect(roles.manager).resetQuota(account))
-              .to.emit(claimsManager, 'ResetQuota')
-              .withArgs(account, roles.manager.address);
-            const quota = await claimsManager.accountToQuota(account);
-            expect(quota.period).is.equal(0);
-            expect(quota.amount).is.equal(0);
-          });
-        });
-      });
-      context('Account address is zero', function () {
-        it('reverts', async function () {
-          const account = hre.ethers.constants.AddressZero;
-          await expect(claimsManager.connect(roles.manager).resetQuota(account)).to.be.revertedWith(
-            'Account address zero'
-          );
-        });
+      it('resets quota', async function () {
+        const account = hre.ethers.utils.getAddress(hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(20)));
+        const period = 7 * 24 * 60 * 60;
+        const amountInApi3 = hre.ethers.utils.parseEther('1000000');
+        await claimsManager.connect(roles.manager).setQuota(account, period, amountInApi3);
+        await expect(claimsManager.connect(roles.manager).resetQuota(account))
+          .to.emit(claimsManager, 'ResetQuota')
+          .withArgs(account, roles.manager.address);
+        const quota = await claimsManager.accountToQuota(account);
+        expect(quota.period).is.equal(0);
+        expect(quota.amount).is.equal(0);
       });
     });
     context('Sender is admin', function () {
-      context('Account address is not zero', function () {
-        context('Quota is set before', function () {
-          it('resets quota', async function () {
-            const account = hre.ethers.utils.getAddress(hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(20)));
-            const period = 7 * 24 * 60 * 60;
-            const amountInApi3 = hre.ethers.utils.parseEther('1000000');
-            await claimsManager.connect(roles.admin).setQuota(account, period, amountInApi3);
-            await expect(claimsManager.connect(roles.admin).resetQuota(account))
-              .to.emit(claimsManager, 'ResetQuota')
-              .withArgs(account, roles.admin.address);
-            const quota = await claimsManager.accountToQuota(account);
-            expect(quota.period).is.equal(0);
-            expect(quota.amount).is.equal(0);
-          });
-        });
-        context('Quota is not set before', function () {
-          it('resets quota', async function () {
-            const account = hre.ethers.utils.getAddress(hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(20)));
-            await expect(claimsManager.connect(roles.admin).resetQuota(account))
-              .to.emit(claimsManager, 'ResetQuota')
-              .withArgs(account, roles.admin.address);
-            const quota = await claimsManager.accountToQuota(account);
-            expect(quota.period).is.equal(0);
-            expect(quota.amount).is.equal(0);
-          });
-        });
-      });
-      context('Account address is zero', function () {
-        it('reverts', async function () {
-          const account = hre.ethers.constants.AddressZero;
-          await expect(claimsManager.connect(roles.admin).resetQuota(account)).to.be.revertedWith(
-            'Account address zero'
-          );
-        });
+      it('resets quota', async function () {
+        const account = hre.ethers.utils.getAddress(hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(20)));
+        const period = 7 * 24 * 60 * 60;
+        const amountInApi3 = hre.ethers.utils.parseEther('1000000');
+        await claimsManager.connect(roles.admin).setQuota(account, period, amountInApi3);
+        await expect(claimsManager.connect(roles.admin).resetQuota(account))
+          .to.emit(claimsManager, 'ResetQuota')
+          .withArgs(account, roles.admin.address);
+        const quota = await claimsManager.accountToQuota(account);
+        expect(quota.period).is.equal(0);
+        expect(quota.amount).is.equal(0);
       });
     });
     context('Sender is not manager or admin', function () {
@@ -2608,7 +2490,7 @@ describe('ClaimsManager', function () {
               context('Accepting does not cause the sender quota to be exceeded', function () {
                 context('Coverage covers the entire claim', function () {
                   context('Pool has enough funds', function () {
-                    it('accepts and pays out the claim fully, updates coverage and quota', async function () {
+                    it('accepts and pays out the claim fully, updates coverage and records usage', async function () {
                       const quotaPeriod = 7 * 24 * 60 * 60;
                       const quotaAmount = hre.ethers.utils.parseEther('1000000');
                       await claimsManager
@@ -2712,7 +2594,7 @@ describe('ClaimsManager', function () {
                 });
                 context('Coverage does not cover the entire claim', function () {
                   context('Pool has enough funds', function () {
-                    it('accepts and pays out the remaining coverage, updates coverage and quota', async function () {
+                    it('accepts and pays out the remaining coverage, updates coverage and records usage', async function () {
                       const quotaPeriod = 7 * 24 * 60 * 60;
                       const quotaAmount = hre.ethers.utils.parseEther('1000000');
                       await claimsManager
@@ -3039,7 +2921,7 @@ describe('ClaimsManager', function () {
               context('Accepting does not cause the sender quota to be exceeded', function () {
                 context('Coverage covers the entire claim', function () {
                   context('Pool has enough funds', function () {
-                    it('accepts and pays out the claim fully, updates coverage and quota', async function () {
+                    it('accepts and pays out the claim fully, updates coverage and records usage', async function () {
                       const quotaPeriod = 7 * 24 * 60 * 60;
                       const quotaAmount = hre.ethers.utils.parseEther('1000000');
                       await claimsManager.connect(roles.admin).setQuota(roles.admin.address, quotaPeriod, quotaAmount);
@@ -3141,7 +3023,7 @@ describe('ClaimsManager', function () {
                 });
                 context('Coverage does not cover the entire claim', function () {
                   context('Pool has enough funds', function () {
-                    it('accepts and pays out the remaining coverage, updates coverage and quota', async function () {
+                    it('accepts and pays out the remaining coverage, updates coverage and records usage', async function () {
                       const quotaPeriod = 7 * 24 * 60 * 60;
                       const quotaAmount = hre.ethers.utils.parseEther('1000000');
                       await claimsManager.connect(roles.admin).setQuota(roles.admin.address, quotaPeriod, quotaAmount);
@@ -3469,7 +3351,7 @@ describe('ClaimsManager', function () {
               context('Accepting does not cause the sender quota to be exceeded', function () {
                 context('Coverage covers the entire claim', function () {
                   context('Pool has enough funds', function () {
-                    it('accepts and pays out the claim fully, updates coverage and quota', async function () {
+                    it('accepts and pays out the claim fully, updates coverage and records usage', async function () {
                       const quotaPeriod = 7 * 24 * 60 * 60;
                       const quotaAmount = hre.ethers.utils.parseEther('1000000');
                       await claimsManager
@@ -3573,7 +3455,7 @@ describe('ClaimsManager', function () {
                 });
                 context('Coverage does not cover the entire claim', function () {
                   context('Pool has enough funds', function () {
-                    it('accepts and pays out the remaining coverage, updates coverage and quota', async function () {
+                    it('accepts and pays out the remaining coverage, updates coverage and records usage', async function () {
                       const quotaPeriod = 7 * 24 * 60 * 60;
                       const quotaAmount = hre.ethers.utils.parseEther('1000000');
                       await claimsManager
@@ -3929,7 +3811,7 @@ describe('ClaimsManager', function () {
             context('Settlement amount is smaller than the claim amount', function () {
               context('Api3UsdAmountConverter is set', function () {
                 context('Proposing the settlement does not cause the sender quota to be exceeded', function () {
-                  it('proposes settlement and updates quota', async function () {
+                  it('proposes settlement and updates records usage', async function () {
                     const quotaPeriod = 7 * 24 * 60 * 60;
                     const quotaAmount = hre.ethers.utils.parseEther('1000000');
                     await claimsManager.connect(roles.admin).setQuota(roles.manager.address, quotaPeriod, quotaAmount);
@@ -4273,7 +4155,7 @@ describe('ClaimsManager', function () {
             context('Settlement amount is smaller than the claim amount', function () {
               context('Api3UsdAmountConverter is set', function () {
                 context('Proposing the settlement does not cause the sender quota to be exceeded', function () {
-                  it('proposes settlement and updates quota', async function () {
+                  it('proposes settlement and updates records usage', async function () {
                     const quotaPeriod = 7 * 24 * 60 * 60;
                     const quotaAmount = hre.ethers.utils.parseEther('1000000');
                     await claimsManager.connect(roles.admin).setQuota(roles.admin.address, quotaPeriod, quotaAmount);
@@ -4620,7 +4502,7 @@ describe('ClaimsManager', function () {
             context('Settlement amount is smaller than the claim amount', function () {
               context('Api3UsdAmountConverter is set', function () {
                 context('Proposing the settlement does not cause the sender quota to be exceeded', function () {
-                  it('proposes settlement and updates quota', async function () {
+                  it('proposes settlement and updates records usage', async function () {
                     const quotaPeriod = 7 * 24 * 60 * 60;
                     const quotaAmount = hre.ethers.utils.parseEther('1000000');
                     await claimsManager.connect(roles.admin).setQuota(roles.mediator.address, quotaPeriod, quotaAmount);
