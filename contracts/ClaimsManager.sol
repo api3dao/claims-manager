@@ -622,7 +622,7 @@ contract ClaimsManager is
                 beneficiary,
                 clippedPayoutAmountInApi3
             );
-        } else if (result == ArbitratorDecision.PaySettlement) {
+        } else {
             uint224 settlementAmountInUsd = claimHashToProposedSettlementAmountInUsd[
                     claimHash
                 ];

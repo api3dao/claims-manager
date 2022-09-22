@@ -115,7 +115,7 @@ describe('QuotaEnforcer', function () {
         const quotaAmount = hre.ethers.utils.parseEther('1000000');
         const usageAmount = quotaAmount.mul(2);
         await quotaEnforcer.setQuota(account, period, quotaAmount);
-        await expect(quotaEnforcer.externalRecordUsage(account, usageAmount)).to.be.reverted;
+        await expect(quotaEnforcer.externalRecordUsage(account, usageAmount)).to.be.revertedWith('Quota exceeded');
         expect(await quotaEnforcer.getQuotaUsage(account)).to.equal(0);
       });
     });
