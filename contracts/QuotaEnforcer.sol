@@ -57,7 +57,7 @@ contract QuotaEnforcer is IQuotaEnforcer {
         accountToQuota[account] = Quota({period: 0, amount: 0});
     }
 
-    function updateQuotaUsage(address account, uint224 amount) internal {
+    function recordUsage(address account, uint224 amount) internal {
         Checkpoint[]
             storage accumulatedQuotaUsageCheckpoints = accountToAccumulatedQuotaUsageCheckpoints[
                 account

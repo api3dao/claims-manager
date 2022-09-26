@@ -397,7 +397,7 @@ contract ClaimsManager is
                 clippedPayoutAmountInUsd
             )
         );
-        updateQuotaUsage(msg.sender, clippedPayoutAmountInApi3);
+        recordUsage(msg.sender, clippedPayoutAmountInApi3);
         emit AcceptedClaim(
             claimHash,
             claimant,
@@ -448,7 +448,7 @@ contract ClaimsManager is
         // The mediator quota in API3 has to be updated here
         // We're pessimistically using the unclipped amount
         // Current price has to be used as an approximation
-        updateQuotaUsage(
+        recordUsage(
             msg.sender,
             uint224(
                 ICurrencyConverter(api3UsdAmountConverter).convertQuoteToBase(
@@ -609,7 +609,7 @@ contract ClaimsManager is
                     clippedPayoutAmountInUsd
                 )
             );
-            updateQuotaUsage(msg.sender, clippedPayoutAmountInApi3);
+            recordUsage(msg.sender, clippedPayoutAmountInApi3);
             emit ResolvedDisputeByAcceptingClaim(
                 claimHash,
                 claimant,
@@ -622,7 +622,7 @@ contract ClaimsManager is
                 beneficiary,
                 clippedPayoutAmountInApi3
             );
-        } else if (result == ArbitratorDecision.PaySettlement) {
+        } else {
             uint224 settlementAmountInUsd = claimHashToProposedSettlementAmountInUsd[
                     claimHash
                 ];
@@ -644,7 +644,7 @@ contract ClaimsManager is
                     ICurrencyConverter(api3UsdAmountConverter)
                         .convertQuoteToBase(clippedPayoutAmountInUsd)
                 );
-                updateQuotaUsage(msg.sender, clippedPayoutAmountInApi3);
+                recordUsage(msg.sender, clippedPayoutAmountInApi3);
                 emit ResolvedDisputeByAcceptingSettlement(
                     claimHash,
                     claimant,
