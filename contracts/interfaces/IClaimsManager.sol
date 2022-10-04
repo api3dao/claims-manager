@@ -57,7 +57,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address beneficiary,
         address indexed claimant,
         bytes32 indexed policyHash,
-        uint224 coverageAmountInUsd,
+        uint224 maxCoverageAmountInUsd,
         uint32 claimsAllowedFrom,
         uint32 claimsAllowedUntil,
         string policy,
@@ -68,6 +68,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address beneficiary,
         address indexed claimant,
         bytes32 indexed policyHash,
+        uint224 maxCoverageAmountInUsd,
         uint224 coverageAmountInUsd,
         uint32 claimsAllowedFrom,
         uint32 claimsAllowedUntil,
@@ -79,6 +80,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address beneficiary,
         address indexed claimant,
         bytes32 indexed policyHash,
+        uint224 maxCoverageAmountInUsd,
         uint224 coverageAmountInUsd,
         uint32 claimsAllowedFrom,
         uint32 claimsAllowedUntil,
@@ -98,6 +100,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address indexed claimant,
         bytes32 indexed policyHash,
         address beneficiary,
+        uint224 maxCoverageAmountInUsd,
         uint32 claimsAllowedFrom,
         string policy,
         uint224 claimAmountInUsd,
@@ -181,7 +184,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function createPolicy(
         address claimant,
         address beneficiary,
-        uint224 coverageAmountInUsd,
+        uint224 maxCoverageAmountInUsd,
         uint32 claimsAllowedFrom,
         uint32 claimsAllowedUntil,
         string calldata policy
@@ -190,6 +193,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function upgradePolicy(
         address claimant,
         address beneficiary,
+        uint224 maxCoverageAmountInUsd,
         uint224 coverageAmountInUsd,
         uint32 claimsAllowedFrom,
         uint32 claimsAllowedUntil,
@@ -199,6 +203,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function downgradePolicy(
         address claimant,
         address beneficiary,
+        uint224 maxCoverageAmountInUsd,
         uint224 coverageAmountInUsd,
         uint32 claimsAllowedFrom,
         uint32 claimsAllowedUntil,
@@ -208,6 +213,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function announcePolicyMetadata(
         address claimant,
         address beneficiary,
+        uint224 maxCoverageAmountInUsd,
         uint32 claimsAllowedFrom,
         string calldata policy,
         string calldata metadata
@@ -215,6 +221,7 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     function createClaim(
         address beneficiary,
+        uint224 maxCoverageAmountInUsd,
         uint32 claimsAllowedFrom,
         string calldata policy,
         uint224 claimAmountInUsd,

@@ -165,14 +165,14 @@ contract ClaimsManager is
     function createPolicy(
         address claimant,
         address beneficiary,
-        uint224 coverageAmountInUsd,
+        uint224 maxCoverageAmountInUsd,
         uint32 claimsAllowedFrom,
         uint32 claimsAllowedUntil,
         string calldata policy
     ) external override onlyPolicyAgentOrAdmin returns (bytes32 policyHash) {
         require(claimant != address(0), "Claimant address zero");
         require(beneficiary != address(0), "Beneficiary address zero");
-        require(coverageAmountInUsd != 0, "Coverage amount zero");
+        require(maxCoverageAmountInUsd != 0, "Max coverage amount zero");
         require(claimsAllowedFrom != 0, "Start time zero");
         require(
             claimsAllowedUntil > claimsAllowedFrom,
@@ -180,7 +180,13 @@ contract ClaimsManager is
         );
         require(bytes(policy).length != 0, "Policy address empty");
         policyHash = keccak256(
-            abi.encodePacked(claimant, beneficiary, claimsAllowedFrom, policy)
+            abi.encodePacked(
+                claimant,
+                beneficiary,
+                maxCoverageAmountInUsd,
+                claimsAllowedFrom,
+                policy
+            )
         );
         require(
             policyHashToState[policyHash].claimsAllowedUntil == 0,
@@ -188,13 +194,13 @@ contract ClaimsManager is
         );
         policyHashToState[policyHash] = PolicyState({
             claimsAllowedUntil: claimsAllowedUntil,
-            coverageAmountInUsd: coverageAmountInUsd
+            coverageAmountInUsd: maxCoverageAmountInUsd
         });
         emit CreatedPolicy(
             beneficiary,
             claimant,
             policyHash,
-            coverageAmountInUsd,
+            maxCoverageAmountInUsd,
             claimsAllowedFrom,
             claimsAllowedUntil,
             policy,
@@ -206,17 +212,28 @@ contract ClaimsManager is
     function upgradePolicy(
         address claimant,
         address beneficiary,
+        uint224 maxCoverageAmountInUsd,
         uint224 coverageAmountInUsd,
         uint32 claimsAllowedFrom,
         uint32 claimsAllowedUntil,
         string calldata policy
     ) external override onlyPolicyAgentOrAdmin returns (bytes32 policyHash) {
         policyHash = keccak256(
-            abi.encodePacked(claimant, beneficiary, claimsAllowedFrom, policy)
+            abi.encodePacked(
+                claimant,
+                beneficiary,
+                maxCoverageAmountInUsd,
+                claimsAllowedFrom,
+                policy
+            )
         );
         PolicyState storage policyState = policyHashToState[policyHash];
         uint32 policyStateClaimsAllowedUntil = policyState.claimsAllowedUntil;
         require(policyStateClaimsAllowedUntil != 0, "Policy does not exist");
+        require(
+            coverageAmountInUsd <= maxCoverageAmountInUsd,
+            "Exceeds max coverage amount"
+        );
         require(
             policyState.coverageAmountInUsd <= coverageAmountInUsd,
             "Reduces coverage amount"
@@ -233,6 +250,7 @@ contract ClaimsManager is
             beneficiary,
             claimant,
             policyHash,
+            maxCoverageAmountInUsd,
             coverageAmountInUsd,
             claimsAllowedFrom,
             claimsAllowedUntil,
@@ -244,6 +262,7 @@ contract ClaimsManager is
     function downgradePolicy(
         address claimant,
         address beneficiary,
+        uint224 maxCoverageAmountInUsd,
         uint224 coverageAmountInUsd,
         uint32 claimsAllowedFrom,
         uint32 claimsAllowedUntil,
@@ -258,7 +277,13 @@ contract ClaimsManager is
             "Start not earlier than end"
         );
         policyHash = keccak256(
-            abi.encodePacked(claimant, beneficiary, claimsAllowedFrom, policy)
+            abi.encodePacked(
+                claimant,
+                beneficiary,
+                maxCoverageAmountInUsd,
+                claimsAllowedFrom,
+                policy
+            )
         );
         PolicyState storage policyState = policyHashToState[policyHash];
         uint32 policyStateClaimsAllowedUntil = policyState.claimsAllowedUntil;
@@ -279,6 +304,7 @@ contract ClaimsManager is
             beneficiary,
             claimant,
             policyHash,
+            maxCoverageAmountInUsd,
             coverageAmountInUsd,
             claimsAllowedFrom,
             claimsAllowedUntil,
@@ -290,12 +316,19 @@ contract ClaimsManager is
     function announcePolicyMetadata(
         address claimant,
         address beneficiary,
+        uint224 maxCoverageAmountInUsd,
         uint32 claimsAllowedFrom,
         string calldata policy,
         string calldata metadata
     ) external override onlyPolicyAgentOrAdmin returns (bytes32 policyHash) {
         policyHash = keccak256(
-            abi.encodePacked(claimant, beneficiary, claimsAllowedFrom, policy)
+            abi.encodePacked(
+                claimant,
+                beneficiary,
+                maxCoverageAmountInUsd,
+                claimsAllowedFrom,
+                policy
+            )
         );
         require(
             policyHashToState[policyHash].claimsAllowedUntil != 0,
@@ -311,6 +344,7 @@ contract ClaimsManager is
 
     function createClaim(
         address beneficiary,
+        uint224 maxCoverageAmountInUsd,
         uint32 claimsAllowedFrom,
         string calldata policy,
         uint224 claimAmountInUsd,
@@ -320,7 +354,13 @@ contract ClaimsManager is
         require(block.timestamp >= claimsAllowedFrom, "Claims not allowed yet");
         require(bytes(evidence).length != 0, "Evidence address empty");
         bytes32 policyHash = keccak256(
-            abi.encodePacked(msg.sender, beneficiary, claimsAllowedFrom, policy)
+            abi.encodePacked(
+                msg.sender,
+                beneficiary,
+                maxCoverageAmountInUsd,
+                claimsAllowedFrom,
+                policy
+            )
         );
         PolicyState storage policyState = policyHashToState[policyHash];
         require(
@@ -354,6 +394,7 @@ contract ClaimsManager is
             msg.sender,
             policyHash,
             beneficiary,
+            maxCoverageAmountInUsd,
             claimsAllowedFrom,
             policy,
             claimAmountInUsd,
