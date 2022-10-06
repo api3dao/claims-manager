@@ -590,7 +590,8 @@ contract ClaimsManager is
             )
         );
         ClaimState storage claimState = claimHashToState[claimHash];
-        require(msg.sender == claimState.arbitrator, "Sender wrong arbitrator");
+        address arbitrator = claimState.arbitrator;
+        require(msg.sender == arbitrator, "Sender wrong arbitrator");
         require(
             claimState.status == ClaimStatus.DisputeCreated,
             "No dispute to be resolved"
@@ -600,14 +601,22 @@ contract ClaimsManager is
             "Too late to resolve dispute"
         );
         if (result == ArbitratorDecision.DoNotPay) {
-            claimState.status = ClaimStatus.DisputeResolvedWithoutPayout;
+            claimHashToState[claimHash] = ClaimState({
+                status: ClaimStatus.DisputeResolvedWithoutPayout,
+                updateTime: uint32(block.timestamp),
+                arbitrator: arbitrator
+            });
             emit ResolvedDisputeByRejectingClaim(
                 claimHash,
                 claimant,
                 msg.sender
             );
         } else if (result == ArbitratorDecision.PayClaim) {
-            claimState.status = ClaimStatus.DisputeResolvedWithClaimPayout;
+            claimHashToState[claimHash] = ClaimState({
+                status: ClaimStatus.DisputeResolvedWithClaimPayout,
+                updateTime: uint32(block.timestamp),
+                arbitrator: arbitrator
+            });
             uint224 clippedPayoutAmountInUsd = updatePolicyCoverage(
                 policyHash,
                 claimAmountInUsd
@@ -635,15 +644,22 @@ contract ClaimsManager is
                     claimHash
                 ];
             if (settlementAmountInUsd == 0) {
-                claimState.status = ClaimStatus.DisputeResolvedWithoutPayout;
+                claimHashToState[claimHash] = ClaimState({
+                    status: ClaimStatus.DisputeResolvedWithoutPayout,
+                    updateTime: uint32(block.timestamp),
+                    arbitrator: arbitrator
+                });
                 emit ResolvedDisputeByRejectingClaim(
                     claimHash,
                     claimant,
                     msg.sender
                 );
             } else {
-                claimState.status = ClaimStatus
-                    .DisputeResolvedWithSettlementPayout;
+                claimHashToState[claimHash] = ClaimState({
+                    status: ClaimStatus.DisputeResolvedWithSettlementPayout,
+                    updateTime: uint32(block.timestamp),
+                    arbitrator: arbitrator
+                });
                 uint224 clippedPayoutAmountInUsd = updatePolicyCoverage(
                     policyHash,
                     settlementAmountInUsd

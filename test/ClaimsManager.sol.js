@@ -6051,8 +6051,11 @@ describe('ClaimsManager', function () {
                   .to.emit(claimsManager, 'ResolvedDisputeByRejectingClaim')
                   .withArgs(claimHash, claimant, roles.manager.address);
                 expect(await api3Token.balanceOf(beneficiary)).to.equal(0);
+                const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                 const claimState = await claimsManager.claimHashToState(claimHash);
                 expect(claimState.status).to.equal(ClaimStatus.DisputeResolvedWithoutPayout);
+                expect(claimState.updateTime).to.equal(disputeResolutionTimestamp);
+                expect(claimState.arbitrator).to.equal(roles.manager.address);
               });
             });
             context('Arbitrator decision is to pay out the claim', function () {
@@ -6128,8 +6131,11 @@ describe('ClaimsManager', function () {
                             roles.manager.address
                           );
                         expect(await api3Token.balanceOf(beneficiary)).to.equal(payoutAmountInApi3);
+                        const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                         const claimState = await claimsManager.claimHashToState(claimHash);
                         expect(claimState.status).to.equal(ClaimStatus.DisputeResolvedWithClaimPayout);
+                        expect(claimState.updateTime).to.equal(disputeResolutionTimestamp);
+                        expect(claimState.arbitrator).to.equal(roles.manager.address);
                         const policyState = await claimsManager.policyHashToState(policyHash);
                         expect(policyState.coverageAmountInUsd).to.equal(coverageAmountInUsd.sub(payoutAmountInUsd));
                         expect(await claimsManager.getQuotaUsage(roles.manager.address)).to.equal(payoutAmountInApi3);
@@ -6275,8 +6281,11 @@ describe('ClaimsManager', function () {
                       expect((await api3Token.balanceOf(beneficiary)).sub(beneficiaryBalance)).to.equal(
                         payoutAmountInApi3
                       );
+                      const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                       const claimState = await claimsManager.claimHashToState(claimHash2);
                       expect(claimState.status).to.equal(ClaimStatus.DisputeResolvedWithClaimPayout);
+                      expect(claimState.updateTime).to.equal(disputeResolutionTimestamp);
+                      expect(claimState.arbitrator).to.equal(roles.manager.address);
                       expect(
                         coverageAmount.sub((await claimsManager.policyHashToState(policyHash)).coverageAmountInUsd)
                       ).to.equal(payoutAmountInUsd);
@@ -6464,8 +6473,11 @@ describe('ClaimsManager', function () {
                               roles.manager.address
                             );
                           expect(await api3Token.balanceOf(beneficiary)).to.equal(payoutAmountInApi3);
+                          const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                           const claimState = await claimsManager.claimHashToState(claimHash);
                           expect(claimState.status).to.equal(ClaimStatus.DisputeResolvedWithSettlementPayout);
+                          expect(claimState.updateTime).to.equal(disputeResolutionTimestamp);
+                          expect(claimState.arbitrator).to.equal(roles.manager.address);
                           const policyState = await claimsManager.policyHashToState(policyHash);
                           expect(policyState.coverageAmountInUsd).to.equal(coverageAmountInUsd.sub(payoutAmountInUsd));
                           expect(await claimsManager.getQuotaUsage(roles.manager.address)).to.equal(payoutAmountInApi3);
@@ -6628,8 +6640,11 @@ describe('ClaimsManager', function () {
                         expect((await api3Token.balanceOf(beneficiary)).sub(beneficiaryBalance)).to.equal(
                           payoutAmountInApi3
                         );
+                        const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                         const claimState = await claimsManager.claimHashToState(claimHash2);
                         expect(claimState.status).to.equal(ClaimStatus.DisputeResolvedWithSettlementPayout);
+                        expect(claimState.updateTime).to.equal(disputeResolutionTimestamp);
+                        expect(claimState.arbitrator).to.equal(roles.manager.address);
                         expect(
                           coverageAmount.sub((await claimsManager.policyHashToState(policyHash)).coverageAmountInUsd)
                         ).to.equal(payoutAmountInUsd);
@@ -6806,8 +6821,11 @@ describe('ClaimsManager', function () {
                     .to.emit(claimsManager, 'ResolvedDisputeByRejectingClaim')
                     .withArgs(claimHash, claimant, roles.manager.address);
                   expect(await api3Token.balanceOf(beneficiary)).to.equal(0);
+                  const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                   const claimState = await claimsManager.claimHashToState(claimHash);
                   expect(claimState.status).to.equal(ClaimStatus.DisputeResolvedWithoutPayout);
+                  expect(claimState.updateTime).to.equal(disputeResolutionTimestamp);
+                  expect(claimState.arbitrator).to.equal(roles.manager.address);
                 });
               });
             });
@@ -6979,8 +6997,11 @@ describe('ClaimsManager', function () {
                   .to.emit(claimsManager, 'ResolvedDisputeByRejectingClaim')
                   .withArgs(claimHash, claimant, roles.admin.address);
                 expect(await api3Token.balanceOf(beneficiary)).to.equal(0);
+                const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                 const claimState = await claimsManager.claimHashToState(claimHash);
                 expect(claimState.status).to.equal(ClaimStatus.DisputeResolvedWithoutPayout);
+                expect(claimState.updateTime).to.equal(disputeResolutionTimestamp);
+                expect(claimState.arbitrator).to.equal(roles.admin.address);
               });
             });
             context('Arbitrator decision is to pay out the claim', function () {
@@ -7056,8 +7077,11 @@ describe('ClaimsManager', function () {
                             roles.admin.address
                           );
                         expect(await api3Token.balanceOf(beneficiary)).to.equal(payoutAmountInApi3);
+                        const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                         const claimState = await claimsManager.claimHashToState(claimHash);
                         expect(claimState.status).to.equal(ClaimStatus.DisputeResolvedWithClaimPayout);
+                        expect(claimState.updateTime).to.equal(disputeResolutionTimestamp);
+                        expect(claimState.arbitrator).to.equal(roles.admin.address);
                         const policyState = await claimsManager.policyHashToState(policyHash);
                         expect(policyState.coverageAmountInUsd).to.equal(coverageAmountInUsd.sub(payoutAmountInUsd));
                         expect(await claimsManager.getQuotaUsage(roles.admin.address)).to.equal(payoutAmountInApi3);
@@ -7201,8 +7225,11 @@ describe('ClaimsManager', function () {
                       expect((await api3Token.balanceOf(beneficiary)).sub(beneficiaryBalance)).to.equal(
                         payoutAmountInApi3
                       );
+                      const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                       const claimState = await claimsManager.claimHashToState(claimHash2);
                       expect(claimState.status).to.equal(ClaimStatus.DisputeResolvedWithClaimPayout);
+                      expect(claimState.updateTime).to.equal(disputeResolutionTimestamp);
+                      expect(claimState.arbitrator).to.equal(roles.admin.address);
                       expect(
                         coverageAmount.sub((await claimsManager.policyHashToState(policyHash)).coverageAmountInUsd)
                       ).to.equal(payoutAmountInUsd);
@@ -7390,8 +7417,11 @@ describe('ClaimsManager', function () {
                               roles.admin.address
                             );
                           expect(await api3Token.balanceOf(beneficiary)).to.equal(payoutAmountInApi3);
+                          const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                           const claimState = await claimsManager.claimHashToState(claimHash);
                           expect(claimState.status).to.equal(ClaimStatus.DisputeResolvedWithSettlementPayout);
+                          expect(claimState.updateTime).to.equal(disputeResolutionTimestamp);
+                          expect(claimState.arbitrator).to.equal(roles.admin.address);
                           const policyState = await claimsManager.policyHashToState(policyHash);
                           expect(policyState.coverageAmountInUsd).to.equal(coverageAmountInUsd.sub(payoutAmountInUsd));
                           expect(await claimsManager.getQuotaUsage(roles.admin.address)).to.equal(payoutAmountInApi3);
@@ -7554,8 +7584,11 @@ describe('ClaimsManager', function () {
                         expect((await api3Token.balanceOf(beneficiary)).sub(beneficiaryBalance)).to.equal(
                           payoutAmountInApi3
                         );
+                        const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                         const claimState = await claimsManager.claimHashToState(claimHash2);
                         expect(claimState.status).to.equal(ClaimStatus.DisputeResolvedWithSettlementPayout);
+                        expect(claimState.updateTime).to.equal(disputeResolutionTimestamp);
+                        expect(claimState.arbitrator).to.equal(roles.admin.address);
                         expect(
                           coverageAmount.sub((await claimsManager.policyHashToState(policyHash)).coverageAmountInUsd)
                         ).to.equal(payoutAmountInUsd);
@@ -7730,8 +7763,11 @@ describe('ClaimsManager', function () {
                     .to.emit(claimsManager, 'ResolvedDisputeByRejectingClaim')
                     .withArgs(claimHash, claimant, roles.admin.address);
                   expect(await api3Token.balanceOf(beneficiary)).to.equal(0);
+                  const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                   const claimState = await claimsManager.claimHashToState(claimHash);
                   expect(claimState.status).to.equal(ClaimStatus.DisputeResolvedWithoutPayout);
+                  expect(claimState.updateTime).to.equal(disputeResolutionTimestamp);
+                  expect(claimState.arbitrator).to.equal(roles.admin.address);
                 });
               });
             });
@@ -7903,8 +7939,11 @@ describe('ClaimsManager', function () {
                   .to.emit(claimsManager, 'ResolvedDisputeByRejectingClaim')
                   .withArgs(claimHash, claimant, roles.arbitrator.address);
                 expect(await api3Token.balanceOf(beneficiary)).to.equal(0);
+                const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                 const claimState = await claimsManager.claimHashToState(claimHash);
                 expect(claimState.status).to.equal(ClaimStatus.DisputeResolvedWithoutPayout);
+                expect(claimState.updateTime).to.equal(disputeResolutionTimestamp);
+                expect(claimState.arbitrator).to.equal(roles.arbitrator.address);
               });
             });
             context('Arbitrator decision is to pay out the claim', function () {
@@ -7980,8 +8019,11 @@ describe('ClaimsManager', function () {
                             roles.arbitrator.address
                           );
                         expect(await api3Token.balanceOf(beneficiary)).to.equal(payoutAmountInApi3);
+                        const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                         const claimState = await claimsManager.claimHashToState(claimHash);
                         expect(claimState.status).to.equal(ClaimStatus.DisputeResolvedWithClaimPayout);
+                        expect(claimState.updateTime).to.equal(disputeResolutionTimestamp);
+                        expect(claimState.arbitrator).to.equal(roles.arbitrator.address);
                         const policyState = await claimsManager.policyHashToState(policyHash);
                         expect(policyState.coverageAmountInUsd).to.equal(coverageAmountInUsd.sub(payoutAmountInUsd));
                         expect(await claimsManager.getQuotaUsage(roles.arbitrator.address)).to.equal(
@@ -8129,8 +8171,11 @@ describe('ClaimsManager', function () {
                       expect((await api3Token.balanceOf(beneficiary)).sub(beneficiaryBalance)).to.equal(
                         payoutAmountInApi3
                       );
+                      const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                       const claimState = await claimsManager.claimHashToState(claimHash2);
                       expect(claimState.status).to.equal(ClaimStatus.DisputeResolvedWithClaimPayout);
+                      expect(claimState.updateTime).to.equal(disputeResolutionTimestamp);
+                      expect(claimState.arbitrator).to.equal(roles.arbitrator.address);
                       expect(
                         coverageAmount.sub((await claimsManager.policyHashToState(policyHash)).coverageAmountInUsd)
                       ).to.equal(payoutAmountInUsd);
@@ -8320,8 +8365,11 @@ describe('ClaimsManager', function () {
                               roles.arbitrator.address
                             );
                           expect(await api3Token.balanceOf(beneficiary)).to.equal(payoutAmountInApi3);
+                          const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                           const claimState = await claimsManager.claimHashToState(claimHash);
                           expect(claimState.status).to.equal(ClaimStatus.DisputeResolvedWithSettlementPayout);
+                          expect(claimState.updateTime).to.equal(disputeResolutionTimestamp);
+                          expect(claimState.arbitrator).to.equal(roles.arbitrator.address);
                           const policyState = await claimsManager.policyHashToState(policyHash);
                           expect(policyState.coverageAmountInUsd).to.equal(coverageAmountInUsd.sub(payoutAmountInUsd));
                           expect(await claimsManager.getQuotaUsage(roles.arbitrator.address)).to.equal(
@@ -8486,8 +8534,11 @@ describe('ClaimsManager', function () {
                         expect((await api3Token.balanceOf(beneficiary)).sub(beneficiaryBalance)).to.equal(
                           payoutAmountInApi3
                         );
+                        const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                         const claimState = await claimsManager.claimHashToState(claimHash2);
                         expect(claimState.status).to.equal(ClaimStatus.DisputeResolvedWithSettlementPayout);
+                        expect(claimState.updateTime).to.equal(disputeResolutionTimestamp);
+                        expect(claimState.arbitrator).to.equal(roles.arbitrator.address);
                         expect(
                           coverageAmount.sub((await claimsManager.policyHashToState(policyHash)).coverageAmountInUsd)
                         ).to.equal(payoutAmountInUsd);
@@ -8664,8 +8715,11 @@ describe('ClaimsManager', function () {
                     .to.emit(claimsManager, 'ResolvedDisputeByRejectingClaim')
                     .withArgs(claimHash, claimant, roles.arbitrator.address);
                   expect(await api3Token.balanceOf(beneficiary)).to.equal(0);
+                  const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                   const claimState = await claimsManager.claimHashToState(claimHash);
                   expect(claimState.status).to.equal(ClaimStatus.DisputeResolvedWithoutPayout);
+                  expect(claimState.updateTime).to.equal(disputeResolutionTimestamp);
+                  expect(claimState.arbitrator).to.equal(roles.arbitrator.address);
                 });
               });
             });
