@@ -4830,6 +4830,11 @@ describe('ClaimsManager', function () {
                   )
                     .to.emit(claimsManager, 'AcceptedSettlement')
                     .withArgs(claimHash, claimant, settlementAmountInUsd, settlementAmountInApi3);
+                  const settlementAcceptanceTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
+                  const claimState = await claimsManager.claimHashToState(claimHash);
+                  expect(claimState.status).to.equal(ClaimStatus.SettlementAccepted);
+                  expect(claimState.updateTime).to.equal(settlementAcceptanceTimestamp);
+                  expect(claimState.arbitrator).to.equal(hre.ethers.constants.AddressZero);
                   expect((await api3Token.balanceOf(beneficiary)).sub(beneficiaryBalance)).to.equal(
                     settlementAmountInApi3
                   );
@@ -5011,6 +5016,11 @@ describe('ClaimsManager', function () {
                   )
                     .to.emit(claimsManager, 'AcceptedSettlement')
                     .withArgs(claimHash2, claimant, payoutAmountInUsd, payoutAmountInApi3);
+                  const settlementAcceptanceTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
+                  const claimState = await claimsManager.claimHashToState(claimHash2);
+                  expect(claimState.status).to.equal(ClaimStatus.SettlementAccepted);
+                  expect(claimState.updateTime).to.equal(settlementAcceptanceTimestamp);
+                  expect(claimState.arbitrator).to.equal(hre.ethers.constants.AddressZero);
                   expect((await api3Token.balanceOf(beneficiary)).sub(beneficiaryBalance)).to.equal(payoutAmountInApi3);
                   expect(
                     coverageAmount.sub((await claimsManager.policyHashToState(policyHash)).coverageAmountInUsd)

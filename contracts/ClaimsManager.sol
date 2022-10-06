@@ -497,7 +497,11 @@ contract ClaimsManager is
             claimState.updateTime + claimantResponsePeriod > block.timestamp,
             "Too late to accept settlement"
         );
-        claimState.status = ClaimStatus.SettlementAccepted;
+        claimHashToState[claimHash] = ClaimState({
+            status: ClaimStatus.SettlementAccepted,
+            updateTime: uint32(block.timestamp),
+            arbitrator: address(0)
+        });
         // If settlement amount in USD causes the policy coverage to be exceeded, clip the API3 amount being paid out
         uint224 clippedPayoutAmountInUsd = updatePolicyCoverage(
             policyHash,
