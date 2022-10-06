@@ -2549,6 +2549,11 @@ describe('ClaimsManager', function () {
                           payoutAmountInApi3,
                           roles.manager.address
                         );
+                      const claimAcceptanceTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
+                      const claimState = await claimsManager.claimHashToState(claimHash);
+                      expect(claimState.status).to.equal(ClaimStatus.ClaimAccepted);
+                      expect(claimState.updateTime).to.equal(claimAcceptanceTimestamp);
+                      expect(claimState.arbitrator).to.equal(hre.ethers.constants.AddressZero);
                       expect(await api3Token.balanceOf(beneficiary)).to.equal(payoutAmountInApi3);
                       const policyState = await claimsManager.policyHashToState(policyHash);
                       expect(policyState.coverageAmountInUsd).to.equal(coverageAmountInUsd.sub(payoutAmountInUsd));
@@ -2665,6 +2670,11 @@ describe('ClaimsManager', function () {
                           payoutAmountInApi3,
                           roles.manager.address
                         );
+                      const claimAcceptanceTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
+                      const claimState = await claimsManager.claimHashToState(claimHash2);
+                      expect(claimState.status).to.equal(ClaimStatus.ClaimAccepted);
+                      expect(claimState.updateTime).to.equal(claimAcceptanceTimestamp);
+                      expect(claimState.arbitrator).to.equal(hre.ethers.constants.AddressZero);
                       expect((await api3Token.balanceOf(beneficiary)).sub(beneficiaryBalance)).to.equal(
                         payoutAmountInApi3
                       );
@@ -2957,6 +2967,11 @@ describe('ClaimsManager', function () {
                           payoutAmountInApi3,
                           roles.admin.address
                         );
+                      const claimAcceptanceTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
+                      const claimState = await claimsManager.claimHashToState(claimHash);
+                      expect(claimState.status).to.equal(ClaimStatus.ClaimAccepted);
+                      expect(claimState.updateTime).to.equal(claimAcceptanceTimestamp);
+                      expect(claimState.arbitrator).to.equal(hre.ethers.constants.AddressZero);
                       expect(await api3Token.balanceOf(beneficiary)).to.equal(payoutAmountInApi3);
                       const policyState = await claimsManager.policyHashToState(policyHash);
                       expect(policyState.coverageAmountInUsd).to.equal(coverageAmountInUsd.sub(payoutAmountInUsd));
@@ -3071,6 +3086,11 @@ describe('ClaimsManager', function () {
                           payoutAmountInApi3,
                           roles.admin.address
                         );
+                      const claimAcceptanceTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
+                      const claimState = await claimsManager.claimHashToState(claimHash2);
+                      expect(claimState.status).to.equal(ClaimStatus.ClaimAccepted);
+                      expect(claimState.updateTime).to.equal(claimAcceptanceTimestamp);
+                      expect(claimState.arbitrator).to.equal(hre.ethers.constants.AddressZero);
                       expect((await api3Token.balanceOf(beneficiary)).sub(beneficiaryBalance)).to.equal(
                         payoutAmountInApi3
                       );
@@ -3365,6 +3385,11 @@ describe('ClaimsManager', function () {
                           payoutAmountInApi3,
                           roles.mediator.address
                         );
+                      const claimAcceptanceTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
+                      const claimState = await claimsManager.claimHashToState(claimHash);
+                      expect(claimState.status).to.equal(ClaimStatus.ClaimAccepted);
+                      expect(claimState.updateTime).to.equal(claimAcceptanceTimestamp);
+                      expect(claimState.arbitrator).to.equal(hre.ethers.constants.AddressZero);
                       expect(await api3Token.balanceOf(beneficiary)).to.equal(payoutAmountInApi3);
                       const policyState = await claimsManager.policyHashToState(policyHash);
                       expect(policyState.coverageAmountInUsd).to.equal(coverageAmountInUsd.sub(payoutAmountInUsd));
@@ -3481,6 +3506,11 @@ describe('ClaimsManager', function () {
                           payoutAmountInApi3,
                           roles.mediator.address
                         );
+                      const claimAcceptanceTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
+                      const claimState = await claimsManager.claimHashToState(claimHash2);
+                      expect(claimState.status).to.equal(ClaimStatus.ClaimAccepted);
+                      expect(claimState.updateTime).to.equal(claimAcceptanceTimestamp);
+                      expect(claimState.arbitrator).to.equal(hre.ethers.constants.AddressZero);
                       expect((await api3Token.balanceOf(beneficiary)).sub(beneficiaryBalance)).to.equal(
                         payoutAmountInApi3
                       );

@@ -387,7 +387,11 @@ contract ClaimsManager is
             claimState.updateTime + mediatorResponsePeriod > block.timestamp,
             "Too late to accept claim"
         );
-        claimState.status = ClaimStatus.ClaimAccepted;
+        claimHashToState[claimHash] = ClaimState({
+            status: ClaimStatus.ClaimAccepted,
+            updateTime: uint32(block.timestamp),
+            arbitrator: address(0)
+        });
         uint224 clippedPayoutAmountInUsd = updatePolicyCoverage(
             policyHash,
             claimAmountInUsd
