@@ -40,7 +40,6 @@ describe('ClaimsManager', function () {
       policyAgent: accounts[3],
       mediator: accounts[4],
       claimant: accounts[6],
-      beneficiary: accounts[7],
       randomPerson: accounts[9],
     };
     const accessControlRegistryFactory = await hre.ethers.getContractFactory('AccessControlRegistry', roles.deployer);
@@ -129,33 +128,25 @@ describe('ClaimsManager', function () {
             context('It is not too late to create a dispute', function () {
               it('creates dispute', async function () {
                 const claimant = roles.claimant.address;
-                const beneficiary = roles.beneficiary.address;
                 const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
                 const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
                 const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
                 const policy = '/ipfs/Qm...testaddress';
                 const policyHash = hre.ethers.utils.solidityKeccak256(
-                  ['address', 'address', 'uint32', 'string'],
-                  [claimant, beneficiary, claimsAllowedFrom, policy]
+                  ['address', 'uint32', 'string'],
+                  [claimant, claimsAllowedFrom, policy]
                 );
                 await claimsManager
                   .connect(roles.policyAgent)
-                  .createPolicy(
-                    claimant,
-                    beneficiary,
-                    coverageAmountInUsd,
-                    claimsAllowedFrom,
-                    claimsAllowedUntil,
-                    policy
-                  );
+                  .createPolicy(claimant, coverageAmountInUsd, claimsAllowedFrom, claimsAllowedUntil, policy);
                 const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
                 const evidence = '/ipfs/Qm...testaddress';
                 await claimsManager
                   .connect(roles.claimant)
-                  .createClaim(beneficiary, claimsAllowedFrom, policy, claimAmountInUsd, evidence);
+                  .createClaim(claimsAllowedFrom, policy, claimAmountInUsd, evidence);
                 const claimHash = hre.ethers.utils.solidityKeccak256(
-                  ['bytes32', 'address', 'address', 'uint224', 'string'],
-                  [policyHash, claimant, beneficiary, claimAmountInUsd, evidence]
+                  ['bytes32', 'address', 'uint224', 'string'],
+                  [policyHash, claimant, claimAmountInUsd, evidence]
                 );
                 const claimCreationBlockTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                 const disputeCreationBlockTimestamp = claimCreationBlockTimestamp + mediatorResponsePeriod;
@@ -163,7 +154,7 @@ describe('ClaimsManager', function () {
                 await expect(
                   passiveArbitrator
                     .connect(roles.claimant)
-                    .createDispute(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                    .createDispute(policyHash, claimant, claimAmountInUsd, evidence)
                 )
                   .to.emit(claimsManager, 'CreatedDispute')
                   .withArgs(claimHash, claimant, passiveArbitrator.address);
@@ -176,30 +167,22 @@ describe('ClaimsManager', function () {
             context('It is too late to create a dispute', function () {
               it('reverts', async function () {
                 const claimant = roles.claimant.address;
-                const beneficiary = roles.beneficiary.address;
                 const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
                 const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
                 const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
                 const policy = '/ipfs/Qm...testaddress';
                 const policyHash = hre.ethers.utils.solidityKeccak256(
-                  ['address', 'address', 'uint32', 'string'],
-                  [claimant, beneficiary, claimsAllowedFrom, policy]
+                  ['address', 'uint32', 'string'],
+                  [claimant, claimsAllowedFrom, policy]
                 );
                 await claimsManager
                   .connect(roles.policyAgent)
-                  .createPolicy(
-                    claimant,
-                    beneficiary,
-                    coverageAmountInUsd,
-                    claimsAllowedFrom,
-                    claimsAllowedUntil,
-                    policy
-                  );
+                  .createPolicy(claimant, coverageAmountInUsd, claimsAllowedFrom, claimsAllowedUntil, policy);
                 const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
                 const evidence = '/ipfs/Qm...testaddress';
                 await claimsManager
                   .connect(roles.claimant)
-                  .createClaim(beneficiary, claimsAllowedFrom, policy, claimAmountInUsd, evidence);
+                  .createClaim(claimsAllowedFrom, policy, claimAmountInUsd, evidence);
                 const claimCreationBlockTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                 const disputeCreationBlockTimestamp =
                   claimCreationBlockTimestamp + mediatorResponsePeriod + claimantResponsePeriod;
@@ -207,7 +190,7 @@ describe('ClaimsManager', function () {
                 await expect(
                   passiveArbitrator
                     .connect(roles.claimant)
-                    .createDispute(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                    .createDispute(policyHash, claimant, claimAmountInUsd, evidence)
                 ).to.be.revertedWith('Too late to create dispute');
               });
             });
@@ -215,34 +198,26 @@ describe('ClaimsManager', function () {
           context('Mediator was not given enough time to propose a settlement', function () {
             it('reverts', async function () {
               const claimant = roles.claimant.address;
-              const beneficiary = roles.beneficiary.address;
               const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
               const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
               const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
               const policy = '/ipfs/Qm...testaddress';
               const policyHash = hre.ethers.utils.solidityKeccak256(
-                ['address', 'address', 'uint32', 'string'],
-                [claimant, beneficiary, claimsAllowedFrom, policy]
+                ['address', 'uint32', 'string'],
+                [claimant, claimsAllowedFrom, policy]
               );
               await claimsManager
                 .connect(roles.policyAgent)
-                .createPolicy(
-                  claimant,
-                  beneficiary,
-                  coverageAmountInUsd,
-                  claimsAllowedFrom,
-                  claimsAllowedUntil,
-                  policy
-                );
+                .createPolicy(claimant, coverageAmountInUsd, claimsAllowedFrom, claimsAllowedUntil, policy);
               const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
               const evidence = '/ipfs/Qm...testaddress';
               await claimsManager
                 .connect(roles.claimant)
-                .createClaim(beneficiary, claimsAllowedFrom, policy, claimAmountInUsd, evidence);
+                .createClaim(claimsAllowedFrom, policy, claimAmountInUsd, evidence);
               await expect(
                 passiveArbitrator
                   .connect(roles.claimant)
-                  .createDispute(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                  .createDispute(policyHash, claimant, claimAmountInUsd, evidence)
               ).to.be.revertedWith('Awaiting mediator response');
             });
           });
@@ -251,49 +226,34 @@ describe('ClaimsManager', function () {
           context('It is not too late to create a dispute', function () {
             it('creates dispute', async function () {
               const claimant = roles.claimant.address;
-              const beneficiary = roles.beneficiary.address;
               const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
               const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
               const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
               const policy = '/ipfs/Qm...testaddress';
               const policyHash = hre.ethers.utils.solidityKeccak256(
-                ['address', 'address', 'uint32', 'string'],
-                [claimant, beneficiary, claimsAllowedFrom, policy]
+                ['address', 'uint32', 'string'],
+                [claimant, claimsAllowedFrom, policy]
               );
               await claimsManager
                 .connect(roles.policyAgent)
-                .createPolicy(
-                  claimant,
-                  beneficiary,
-                  coverageAmountInUsd,
-                  claimsAllowedFrom,
-                  claimsAllowedUntil,
-                  policy
-                );
+                .createPolicy(claimant, coverageAmountInUsd, claimsAllowedFrom, claimsAllowedUntil, policy);
               const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
               const evidence = '/ipfs/Qm...testaddress';
               await claimsManager
                 .connect(roles.claimant)
-                .createClaim(beneficiary, claimsAllowedFrom, policy, claimAmountInUsd, evidence);
+                .createClaim(claimsAllowedFrom, policy, claimAmountInUsd, evidence);
               const claimHash = hre.ethers.utils.solidityKeccak256(
-                ['bytes32', 'address', 'address', 'uint224', 'string'],
-                [policyHash, claimant, beneficiary, claimAmountInUsd, evidence]
+                ['bytes32', 'address', 'uint224', 'string'],
+                [policyHash, claimant, claimAmountInUsd, evidence]
               );
               const settlementAmountInUsd = hre.ethers.utils.parseEther('12500');
               await claimsManager
                 .connect(roles.mediator)
-                .proposeSettlement(
-                  policyHash,
-                  claimant,
-                  beneficiary,
-                  claimAmountInUsd,
-                  evidence,
-                  settlementAmountInUsd
-                );
+                .proposeSettlement(policyHash, claimant, claimAmountInUsd, evidence, settlementAmountInUsd);
               await expect(
                 passiveArbitrator
                   .connect(roles.claimant)
-                  .createDispute(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                  .createDispute(policyHash, claimant, claimAmountInUsd, evidence)
               )
                 .to.emit(claimsManager, 'CreatedDispute')
                 .withArgs(claimHash, claimant, passiveArbitrator.address);
@@ -307,48 +267,33 @@ describe('ClaimsManager', function () {
           context('It is too late to create a dispute', function () {
             it('reverts', async function () {
               const claimant = roles.claimant.address;
-              const beneficiary = roles.beneficiary.address;
               const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
               const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
               const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
               const policy = '/ipfs/Qm...testaddress';
               const policyHash = hre.ethers.utils.solidityKeccak256(
-                ['address', 'address', 'uint32', 'string'],
-                [claimant, beneficiary, claimsAllowedFrom, policy]
+                ['address', 'uint32', 'string'],
+                [claimant, claimsAllowedFrom, policy]
               );
               await claimsManager
                 .connect(roles.policyAgent)
-                .createPolicy(
-                  claimant,
-                  beneficiary,
-                  coverageAmountInUsd,
-                  claimsAllowedFrom,
-                  claimsAllowedUntil,
-                  policy
-                );
+                .createPolicy(claimant, coverageAmountInUsd, claimsAllowedFrom, claimsAllowedUntil, policy);
               const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
               const evidence = '/ipfs/Qm...testaddress';
               await claimsManager
                 .connect(roles.claimant)
-                .createClaim(beneficiary, claimsAllowedFrom, policy, claimAmountInUsd, evidence);
+                .createClaim(claimsAllowedFrom, policy, claimAmountInUsd, evidence);
               const settlementAmountInUsd = hre.ethers.utils.parseEther('12500');
               await claimsManager
                 .connect(roles.mediator)
-                .proposeSettlement(
-                  policyHash,
-                  claimant,
-                  beneficiary,
-                  claimAmountInUsd,
-                  evidence,
-                  settlementAmountInUsd
-                );
+                .proposeSettlement(policyHash, claimant, claimAmountInUsd, evidence, settlementAmountInUsd);
               const settlementProposalBlockTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
               const disputeCreationBlockTimestamp = settlementProposalBlockTimestamp + claimantResponsePeriod;
               await hre.ethers.provider.send('evm_setNextBlockTimestamp', [disputeCreationBlockTimestamp]);
               await expect(
                 passiveArbitrator
                   .connect(roles.claimant)
-                  .createDispute(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+                  .createDispute(policyHash, claimant, claimAmountInUsd, evidence)
               ).to.be.revertedWith('Too late to create dispute');
             });
           });
@@ -356,38 +301,35 @@ describe('ClaimsManager', function () {
         context('Last action was not claim creation or settlement proposal', function () {
           it('reverts', async function () {
             const claimant = roles.claimant.address;
-            const beneficiary = roles.beneficiary.address;
             const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
             const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
             const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
             const policy = '/ipfs/Qm...testaddress';
             const policyHash = hre.ethers.utils.solidityKeccak256(
-              ['address', 'address', 'uint32', 'string'],
-              [claimant, beneficiary, claimsAllowedFrom, policy]
+              ['address', 'uint32', 'string'],
+              [claimant, claimsAllowedFrom, policy]
             );
             await claimsManager
               .connect(roles.policyAgent)
-              .createPolicy(claimant, beneficiary, coverageAmountInUsd, claimsAllowedFrom, claimsAllowedUntil, policy);
+              .createPolicy(claimant, coverageAmountInUsd, claimsAllowedFrom, claimsAllowedUntil, policy);
             const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
             const evidence = '/ipfs/Qm...testaddress';
             await claimsManager
               .connect(roles.claimant)
-              .createClaim(beneficiary, claimsAllowedFrom, policy, claimAmountInUsd, evidence);
+              .createClaim(claimsAllowedFrom, policy, claimAmountInUsd, evidence);
             const settlementAmountInUsd = hre.ethers.utils.parseEther('12500');
             const settlementAmountInApi3 = settlementAmountInUsd
               .mul(hre.ethers.utils.parseEther('1'))
               .div(api3UsdPriceWith18Decimals);
             await claimsManager
               .connect(roles.mediator)
-              .proposeSettlement(policyHash, claimant, beneficiary, claimAmountInUsd, evidence, settlementAmountInUsd);
+              .proposeSettlement(policyHash, claimant, claimAmountInUsd, evidence, settlementAmountInUsd);
             const minimumPayoutAmountInApi3 = settlementAmountInApi3;
             await claimsManager
               .connect(roles.claimant)
-              .acceptSettlement(policyHash, beneficiary, claimAmountInUsd, evidence, minimumPayoutAmountInApi3);
+              .acceptSettlement(policyHash, claimAmountInUsd, evidence, minimumPayoutAmountInApi3);
             await expect(
-              passiveArbitrator
-                .connect(roles.claimant)
-                .createDispute(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+              passiveArbitrator.connect(roles.claimant).createDispute(policyHash, claimant, claimAmountInUsd, evidence)
             ).to.be.revertedWith('Claim is not disputable');
           });
         });
@@ -395,30 +337,27 @@ describe('ClaimsManager', function () {
       context('PassiveArbitrator does not have the arbitrator role', function () {
         it('reverts', async function () {
           const claimant = roles.claimant.address;
-          const beneficiary = roles.beneficiary.address;
           const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
           const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
           const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
           const policy = '/ipfs/Qm...testaddress';
           const policyHash = hre.ethers.utils.solidityKeccak256(
-            ['address', 'address', 'uint32', 'string'],
-            [claimant, beneficiary, claimsAllowedFrom, policy]
+            ['address', 'uint32', 'string'],
+            [claimant, claimsAllowedFrom, policy]
           );
           await claimsManager
             .connect(roles.policyAgent)
-            .createPolicy(claimant, beneficiary, coverageAmountInUsd, claimsAllowedFrom, claimsAllowedUntil, policy);
+            .createPolicy(claimant, coverageAmountInUsd, claimsAllowedFrom, claimsAllowedUntil, policy);
           const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
           const evidence = '/ipfs/Qm...testaddress';
           await claimsManager
             .connect(roles.claimant)
-            .createClaim(beneficiary, claimsAllowedFrom, policy, claimAmountInUsd, evidence);
+            .createClaim(claimsAllowedFrom, policy, claimAmountInUsd, evidence);
           await accessControlRegistry
             .connect(roles.manager)
             .revokeRole(await claimsManager.arbitratorRole(), passiveArbitrator.address);
           await expect(
-            passiveArbitrator
-              .connect(roles.claimant)
-              .createDispute(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+            passiveArbitrator.connect(roles.claimant).createDispute(policyHash, claimant, claimAmountInUsd, evidence)
           ).to.be.revertedWith('Sender not arbitrator');
         });
       });
@@ -426,27 +365,22 @@ describe('ClaimsManager', function () {
     context('Sender is not claimant', function () {
       it('reverts', async function () {
         const claimant = roles.claimant.address;
-        const beneficiary = roles.beneficiary.address;
         const coverageAmountInUsd = hre.ethers.utils.parseEther('50000');
         const claimsAllowedFrom = (await hre.ethers.provider.getBlock()).timestamp - 10000;
         const claimsAllowedUntil = claimsAllowedFrom + 365 * 24 * 60 * 60;
         const policy = '/ipfs/Qm...testaddress';
         const policyHash = hre.ethers.utils.solidityKeccak256(
-          ['address', 'address', 'uint32', 'string'],
-          [claimant, beneficiary, claimsAllowedFrom, policy]
+          ['address', 'uint32', 'string'],
+          [claimant, claimsAllowedFrom, policy]
         );
         await claimsManager
           .connect(roles.policyAgent)
-          .createPolicy(claimant, beneficiary, coverageAmountInUsd, claimsAllowedFrom, claimsAllowedUntil, policy);
+          .createPolicy(claimant, coverageAmountInUsd, claimsAllowedFrom, claimsAllowedUntil, policy);
         const claimAmountInUsd = hre.ethers.utils.parseEther('25000');
         const evidence = '/ipfs/Qm...testaddress';
-        await claimsManager
-          .connect(roles.claimant)
-          .createClaim(beneficiary, claimsAllowedFrom, policy, claimAmountInUsd, evidence);
+        await claimsManager.connect(roles.claimant).createClaim(claimsAllowedFrom, policy, claimAmountInUsd, evidence);
         await expect(
-          passiveArbitrator
-            .connect(roles.randomPerson)
-            .createDispute(policyHash, claimant, beneficiary, claimAmountInUsd, evidence)
+          passiveArbitrator.connect(roles.randomPerson).createDispute(policyHash, claimant, claimAmountInUsd, evidence)
         ).to.be.revertedWith('Sender not claimant');
       });
     });

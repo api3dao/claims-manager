@@ -15,7 +15,6 @@ contract PassiveArbitrator is Multicall, IPassiveArbitrator {
     function createDispute(
         bytes32 policyHash,
         address claimant,
-        address beneficiary,
         uint224 claimAmountInUsd,
         string calldata evidence
     ) external override {
@@ -24,7 +23,6 @@ contract PassiveArbitrator is Multicall, IPassiveArbitrator {
         claimsManager.createDispute(
             policyHash,
             claimant,
-            beneficiary,
             claimAmountInUsd,
             evidence
         );
