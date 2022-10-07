@@ -60,17 +60,6 @@ contract ClaimsManager is
         _;
     }
 
-    modifier onlyArbitratorOrAdmin() {
-        require(
-            IAccessControlRegistry(accessControlRegistry).hasRole(
-                arbitratorRole,
-                msg.sender
-            ) || isAdmin(msg.sender),
-            "Sender cannot arbitrate"
-        );
-        _;
-    }
-
     constructor(
         address _accessControlRegistry,
         string memory _adminRoleDescription,
@@ -531,7 +520,14 @@ contract ClaimsManager is
         address beneficiary,
         uint224 claimAmountInUsd,
         string calldata evidence
-    ) public override onlyArbitratorOrAdmin {
+    ) public override {
+        require(
+            IAccessControlRegistry(accessControlRegistry).hasRole(
+                arbitratorRole,
+                msg.sender
+            ),
+            "Sender not arbitrator"
+        );
         bytes32 claimHash = keccak256(
             abi.encodePacked(
                 policyHash,
@@ -579,7 +575,7 @@ contract ClaimsManager is
         uint224 claimAmountInUsd,
         string calldata evidence,
         ArbitratorDecision result
-    ) public onlyArbitratorOrAdmin returns (uint224 clippedPayoutAmountInApi3) {
+    ) public returns (uint224 clippedPayoutAmountInApi3) {
         bytes32 claimHash = keccak256(
             abi.encodePacked(
                 policyHash,
@@ -591,7 +587,13 @@ contract ClaimsManager is
         );
         ClaimState storage claimState = claimHashToState[claimHash];
         address arbitrator = claimState.arbitrator;
-        require(msg.sender == arbitrator, "Sender wrong arbitrator");
+        require(
+            (IAccessControlRegistry(accessControlRegistry).hasRole(
+                arbitratorRole,
+                msg.sender
+            ) && msg.sender == arbitrator) || isAdmin(msg.sender),
+            "Sender cannot arbitrate"
+        );
         require(
             claimState.status == ClaimStatus.DisputeCreated,
             "No dispute to be resolved"
