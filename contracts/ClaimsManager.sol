@@ -283,9 +283,9 @@ contract ClaimsManager is
             "Policy does not exist"
         );
         emit AnnouncedPolicyMetadata(
-            metadata,
             claimant,
             policyHash,
+            metadata,
             msg.sender
         );
     }
@@ -324,9 +324,9 @@ contract ClaimsManager is
             arbitrator: address(0)
         });
         emit CreatedClaim(
-            claimHash,
             msg.sender,
             policyHash,
+            claimHash,
             claimsAllowedFrom,
             policy,
             claimAmountInUsd,
@@ -369,8 +369,9 @@ contract ClaimsManager is
         );
         recordUsage(msg.sender, clippedPayoutAmountInApi3);
         emit AcceptedClaim(
-            claimHash,
             claimant,
+            policyHash,
+            claimHash,
             clippedPayoutAmountInUsd,
             clippedPayoutAmountInApi3,
             msg.sender
@@ -422,8 +423,9 @@ contract ClaimsManager is
             claimHash
         ] = settlementAmountInUsd;
         emit ProposedSettlement(
-            claimHash,
             claimant,
+            policyHash,
+            claimHash,
             settlementAmountInUsd,
             msg.sender
         );
@@ -468,8 +470,9 @@ contract ClaimsManager is
             "Payout less than minimum"
         );
         emit AcceptedSettlement(
-            claimHash,
             msg.sender,
+            policyHash,
+            claimHash,
             clippedPayoutAmountInUsd,
             clippedPayoutAmountInApi3
         );
@@ -520,7 +523,7 @@ contract ClaimsManager is
             updateTime: uint32(block.timestamp),
             arbitrator: msg.sender
         });
-        emit CreatedDispute(claimHash, claimant, msg.sender);
+        emit CreatedDispute(claimant, policyHash, claimHash, msg.sender);
     }
 
     function resolveDispute(
@@ -557,8 +560,9 @@ contract ClaimsManager is
                 arbitrator: arbitrator
             });
             emit ResolvedDisputeByRejectingClaim(
-                claimHash,
                 claimant,
+                policyHash,
+                claimHash,
                 msg.sender
             );
         } else if (result == ArbitratorDecision.PayClaim) {
@@ -578,8 +582,9 @@ contract ClaimsManager is
             );
             recordUsage(msg.sender, clippedPayoutAmountInApi3);
             emit ResolvedDisputeByAcceptingClaim(
-                claimHash,
                 claimant,
+                policyHash,
+                claimHash,
                 clippedPayoutAmountInUsd,
                 clippedPayoutAmountInApi3,
                 msg.sender
@@ -599,8 +604,9 @@ contract ClaimsManager is
                     arbitrator: arbitrator
                 });
                 emit ResolvedDisputeByRejectingClaim(
-                    claimHash,
                     claimant,
+                    policyHash,
+                    claimHash,
                     msg.sender
                 );
             } else {
@@ -619,8 +625,9 @@ contract ClaimsManager is
                 );
                 recordUsage(msg.sender, clippedPayoutAmountInApi3);
                 emit ResolvedDisputeByAcceptingSettlement(
-                    claimHash,
                     claimant,
+                    policyHash,
+                    claimHash,
                     clippedPayoutAmountInUsd,
                     clippedPayoutAmountInApi3,
                     msg.sender

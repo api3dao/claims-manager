@@ -84,16 +84,16 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     );
 
     event AnnouncedPolicyMetadata(
-        string metadata,
         address indexed claimant,
         bytes32 indexed policyHash,
+        string metadata,
         address sender
     );
 
     event CreatedClaim(
-        bytes32 indexed claimHash,
         address indexed claimant,
         bytes32 indexed policyHash,
+        bytes32 indexed claimHash,
         uint32 claimsAllowedFrom,
         string policy,
         uint224 claimAmountInUsd,
@@ -102,50 +102,57 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     );
 
     event AcceptedClaim(
-        bytes32 indexed claimHash,
         address indexed claimant,
+        bytes32 indexed policyHash,
+        bytes32 indexed claimHash,
         uint224 clippedPayoutAmountInUsd,
         uint224 clippedPayoutAmountInApi3,
         address sender
     );
 
     event ProposedSettlement(
-        bytes32 indexed claimHash,
         address indexed claimant,
+        bytes32 indexed policyHash,
+        bytes32 indexed claimHash,
         uint224 settlementAmountInUsd,
         address sender
     );
 
     event AcceptedSettlement(
-        bytes32 indexed claimHash,
         address indexed claimant,
+        bytes32 indexed policyHash,
+        bytes32 indexed claimHash,
         uint224 clippedAmountInUsd,
         uint224 clippedAmountInApi3
     );
 
     event CreatedDispute(
-        bytes32 indexed claimHash,
         address indexed claimant,
+        bytes32 indexed policyHash,
+        bytes32 indexed claimHash,
         address arbitrator
     );
 
     event ResolvedDisputeByRejectingClaim(
-        bytes32 indexed claimHash,
         address indexed claimant,
+        bytes32 indexed policyHash,
+        bytes32 indexed claimHash,
         address arbitrator
     );
 
     event ResolvedDisputeByAcceptingClaim(
-        bytes32 indexed claimHash,
         address indexed claimant,
+        bytes32 indexed policyHash,
+        bytes32 indexed claimHash,
         uint224 clippedPayoutAmountInUsd,
         uint224 clippedPayoutAmountInApi3,
         address arbitrator
     );
 
     event ResolvedDisputeByAcceptingSettlement(
-        bytes32 indexed claimHash,
         address indexed claimant,
+        bytes32 indexed policyHash,
+        bytes32 indexed claimHash,
         uint224 clippedPayoutAmountInUsd,
         uint224 clippedPayoutAmountInApi3,
         address arbitrator

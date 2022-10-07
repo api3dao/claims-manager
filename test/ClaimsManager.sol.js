@@ -1614,7 +1614,7 @@ describe('ClaimsManager', function () {
             claimsManager.connect(roles.manager).announcePolicyMetadata(claimant, claimsAllowedFrom, policy, metadata)
           )
             .to.emit(claimsManager, 'AnnouncedPolicyMetadata')
-            .withArgs(metadata, claimant, policyHash, roles.manager.address);
+            .withArgs(claimant, policyHash, metadata, roles.manager.address);
         });
       });
       context('Policy does not exist', function () {
@@ -1650,7 +1650,7 @@ describe('ClaimsManager', function () {
             claimsManager.connect(roles.admin).announcePolicyMetadata(claimant, claimsAllowedFrom, policy, metadata)
           )
             .to.emit(claimsManager, 'AnnouncedPolicyMetadata')
-            .withArgs(metadata, claimant, policyHash, roles.admin.address);
+            .withArgs(claimant, policyHash, metadata, roles.admin.address);
         });
       });
       context('Policy does not exist', function () {
@@ -1688,7 +1688,7 @@ describe('ClaimsManager', function () {
               .announcePolicyMetadata(claimant, claimsAllowedFrom, policy, metadata)
           )
             .to.emit(claimsManager, 'AnnouncedPolicyMetadata')
-            .withArgs(metadata, claimant, policyHash, roles.policyAgent.address);
+            .withArgs(claimant, policyHash, metadata, roles.policyAgent.address);
         });
       });
       context('Policy does not exist', function () {
@@ -1758,9 +1758,9 @@ describe('ClaimsManager', function () {
                     )
                       .to.emit(claimsManager, 'CreatedClaim')
                       .withArgs(
-                        claimHash,
                         claimant,
                         policyHash,
+                        claimHash,
                         claimsAllowedFrom,
                         policy,
                         claimAmountInUsd,
@@ -1951,7 +1951,14 @@ describe('ClaimsManager', function () {
                           .acceptClaim(policyHash, claimant, claimAmountInUsd, evidence)
                       )
                         .to.emit(claimsManager, 'AcceptedClaim')
-                        .withArgs(claimHash, claimant, payoutAmountInUsd, payoutAmountInApi3, roles.manager.address);
+                        .withArgs(
+                          claimant,
+                          policyHash,
+                          claimHash,
+                          payoutAmountInUsd,
+                          payoutAmountInApi3,
+                          roles.manager.address
+                        );
                       const claimAcceptanceTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                       const claimState = await claimsManager.claimHashToState(claimHash);
                       expect(claimState.status).to.equal(ClaimStatus.ClaimAccepted);
@@ -2049,7 +2056,14 @@ describe('ClaimsManager', function () {
                           .acceptClaim(policyHash, claimant, claimAmountInUsd2, evidence)
                       )
                         .to.emit(claimsManager, 'AcceptedClaim')
-                        .withArgs(claimHash2, claimant, payoutAmountInUsd, payoutAmountInApi3, roles.manager.address);
+                        .withArgs(
+                          claimant,
+                          policyHash,
+                          claimHash2,
+                          payoutAmountInUsd,
+                          payoutAmountInApi3,
+                          roles.manager.address
+                        );
                       const claimAcceptanceTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                       const claimState = await claimsManager.claimHashToState(claimHash2);
                       expect(claimState.status).to.equal(ClaimStatus.ClaimAccepted);
@@ -2281,7 +2295,14 @@ describe('ClaimsManager', function () {
                         claimsManager.connect(roles.admin).acceptClaim(policyHash, claimant, claimAmountInUsd, evidence)
                       )
                         .to.emit(claimsManager, 'AcceptedClaim')
-                        .withArgs(claimHash, claimant, payoutAmountInUsd, payoutAmountInApi3, roles.admin.address);
+                        .withArgs(
+                          claimant,
+                          policyHash,
+                          claimHash,
+                          payoutAmountInUsd,
+                          payoutAmountInApi3,
+                          roles.admin.address
+                        );
                       const claimAcceptanceTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                       const claimState = await claimsManager.claimHashToState(claimHash);
                       expect(claimState.status).to.equal(ClaimStatus.ClaimAccepted);
@@ -2375,7 +2396,14 @@ describe('ClaimsManager', function () {
                           .acceptClaim(policyHash, claimant, claimAmountInUsd2, evidence)
                       )
                         .to.emit(claimsManager, 'AcceptedClaim')
-                        .withArgs(claimHash2, claimant, payoutAmountInUsd, payoutAmountInApi3, roles.admin.address);
+                        .withArgs(
+                          claimant,
+                          policyHash,
+                          claimHash2,
+                          payoutAmountInUsd,
+                          payoutAmountInApi3,
+                          roles.admin.address
+                        );
                       const claimAcceptanceTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                       const claimState = await claimsManager.claimHashToState(claimHash2);
                       expect(claimState.status).to.equal(ClaimStatus.ClaimAccepted);
@@ -2611,7 +2639,14 @@ describe('ClaimsManager', function () {
                           .acceptClaim(policyHash, claimant, claimAmountInUsd, evidence)
                       )
                         .to.emit(claimsManager, 'AcceptedClaim')
-                        .withArgs(claimHash, claimant, payoutAmountInUsd, payoutAmountInApi3, roles.mediator.address);
+                        .withArgs(
+                          claimant,
+                          policyHash,
+                          claimHash,
+                          payoutAmountInUsd,
+                          payoutAmountInApi3,
+                          roles.mediator.address
+                        );
                       const claimAcceptanceTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                       const claimState = await claimsManager.claimHashToState(claimHash);
                       expect(claimState.status).to.equal(ClaimStatus.ClaimAccepted);
@@ -2709,7 +2744,14 @@ describe('ClaimsManager', function () {
                           .acceptClaim(policyHash, claimant, claimAmountInUsd2, evidence)
                       )
                         .to.emit(claimsManager, 'AcceptedClaim')
-                        .withArgs(claimHash2, claimant, payoutAmountInUsd, payoutAmountInApi3, roles.mediator.address);
+                        .withArgs(
+                          claimant,
+                          policyHash,
+                          claimHash2,
+                          payoutAmountInUsd,
+                          payoutAmountInApi3,
+                          roles.mediator.address
+                        );
                       const claimAcceptanceTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                       const claimState = await claimsManager.claimHashToState(claimHash2);
                       expect(claimState.status).to.equal(ClaimStatus.ClaimAccepted);
@@ -2967,7 +3009,7 @@ describe('ClaimsManager', function () {
                         .proposeSettlement(policyHash, claimant, claimAmountInUsd, evidence, settlementAmountInUsd)
                     )
                       .to.emit(claimsManager, 'ProposedSettlement')
-                      .withArgs(claimHash, claimant, settlementAmountInUsd, roles.manager.address);
+                      .withArgs(claimant, policyHash, claimHash, settlementAmountInUsd, roles.manager.address);
                     const settlementProposalTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                     const claimState = await claimsManager.claimHashToState(claimHash);
                     expect(claimState.status).to.equal(ClaimStatus.SettlementProposed);
@@ -3210,7 +3252,7 @@ describe('ClaimsManager', function () {
                         .proposeSettlement(policyHash, claimant, claimAmountInUsd, evidence, settlementAmountInUsd)
                     )
                       .to.emit(claimsManager, 'ProposedSettlement')
-                      .withArgs(claimHash, claimant, settlementAmountInUsd, roles.admin.address);
+                      .withArgs(claimant, policyHash, claimHash, settlementAmountInUsd, roles.admin.address);
                     const settlementProposalTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                     const claimState = await claimsManager.claimHashToState(claimHash);
                     expect(claimState.status).to.equal(ClaimStatus.SettlementProposed);
@@ -3453,7 +3495,7 @@ describe('ClaimsManager', function () {
                         .proposeSettlement(policyHash, claimant, claimAmountInUsd, evidence, settlementAmountInUsd)
                     )
                       .to.emit(claimsManager, 'ProposedSettlement')
-                      .withArgs(claimHash, claimant, settlementAmountInUsd, roles.mediator.address);
+                      .withArgs(claimant, policyHash, claimHash, settlementAmountInUsd, roles.mediator.address);
                     const settlementProposalTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                     const claimState = await claimsManager.claimHashToState(claimHash);
                     expect(claimState.status).to.equal(ClaimStatus.SettlementProposed);
@@ -3725,7 +3767,7 @@ describe('ClaimsManager', function () {
                       .acceptSettlement(policyHash, claimAmountInUsd, evidence, minimumPayoutAmountInApi3)
                   )
                     .to.emit(claimsManager, 'AcceptedSettlement')
-                    .withArgs(claimHash, claimant, settlementAmountInUsd, settlementAmountInApi3);
+                    .withArgs(claimant, policyHash, claimHash, settlementAmountInUsd, settlementAmountInApi3);
                   const settlementAcceptanceTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                   const claimState = await claimsManager.claimHashToState(claimHash);
                   expect(claimState.status).to.equal(ClaimStatus.SettlementAccepted);
@@ -3864,7 +3906,7 @@ describe('ClaimsManager', function () {
                       .acceptSettlement(policyHash, claimAmountInUsd2, evidence, minimumPayoutAmountInApi3)
                   )
                     .to.emit(claimsManager, 'AcceptedSettlement')
-                    .withArgs(claimHash2, claimant, payoutAmountInUsd, payoutAmountInApi3);
+                    .withArgs(claimant, policyHash, claimHash2, payoutAmountInUsd, payoutAmountInApi3);
                   const settlementAcceptanceTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                   const claimState = await claimsManager.claimHashToState(claimHash2);
                   expect(claimState.status).to.equal(ClaimStatus.SettlementAccepted);
@@ -4113,7 +4155,7 @@ describe('ClaimsManager', function () {
                 claimsManager.connect(roles.arbitrator).createDispute(policyHash, claimant, claimAmountInUsd, evidence)
               )
                 .to.emit(claimsManager, 'CreatedDispute')
-                .withArgs(claimHash, claimant, roles.arbitrator.address);
+                .withArgs(claimant, policyHash, claimHash, roles.arbitrator.address);
               const claimState = await claimsManager.claimHashToState(claimHash);
               expect(claimState.status).to.equal(ClaimStatus.DisputeCreated);
               expect(claimState.updateTime).to.equal(disputeCreationBlockTimestamp);
@@ -4206,7 +4248,7 @@ describe('ClaimsManager', function () {
               claimsManager.connect(roles.arbitrator).createDispute(policyHash, claimant, claimAmountInUsd, evidence)
             )
               .to.emit(claimsManager, 'CreatedDispute')
-              .withArgs(claimHash, claimant, roles.arbitrator.address);
+              .withArgs(claimant, policyHash, claimHash, roles.arbitrator.address);
             const disputeCreationBlockTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
             const claimState = await claimsManager.claimHashToState(claimHash);
             expect(claimState.status).to.equal(ClaimStatus.DisputeCreated);
@@ -4355,7 +4397,7 @@ describe('ClaimsManager', function () {
                   .resolveDispute(policyHash, claimant, claimAmountInUsd, evidence, arbitratorDecision)
               )
                 .to.emit(claimsManager, 'ResolvedDisputeByRejectingClaim')
-                .withArgs(claimHash, claimant, roles.manager.address);
+                .withArgs(claimant, policyHash, claimHash, roles.manager.address);
               expect(await api3Token.balanceOf(claimant)).to.equal(0);
               const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
               const claimState = await claimsManager.claimHashToState(claimHash);
@@ -4413,7 +4455,14 @@ describe('ClaimsManager', function () {
                           .resolveDispute(policyHash, claimant, claimAmountInUsd, evidence, arbitratorDecision)
                       )
                         .to.emit(claimsManager, 'ResolvedDisputeByAcceptingClaim')
-                        .withArgs(claimHash, claimant, payoutAmountInUsd, payoutAmountInApi3, roles.manager.address);
+                        .withArgs(
+                          claimant,
+                          policyHash,
+                          claimHash,
+                          payoutAmountInUsd,
+                          payoutAmountInApi3,
+                          roles.manager.address
+                        );
                       expect(await api3Token.balanceOf(claimant)).to.equal(payoutAmountInApi3);
                       const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                       const claimState = await claimsManager.claimHashToState(claimHash);
@@ -4522,7 +4571,14 @@ describe('ClaimsManager', function () {
                         .resolveDispute(policyHash, claimant, claimAmountInUsd2, evidence, arbitratorDecision)
                     )
                       .to.emit(claimsManager, 'ResolvedDisputeByAcceptingClaim')
-                      .withArgs(claimHash2, claimant, payoutAmountInUsd, payoutAmountInApi3, roles.manager.address);
+                      .withArgs(
+                        claimant,
+                        policyHash,
+                        claimHash2,
+                        payoutAmountInUsd,
+                        payoutAmountInApi3,
+                        roles.manager.address
+                      );
                     expect((await api3Token.balanceOf(claimant)).sub(claimantBalance)).to.equal(payoutAmountInApi3);
                     const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                     const claimState = await claimsManager.claimHashToState(claimHash2);
@@ -4662,7 +4718,14 @@ describe('ClaimsManager', function () {
                             .resolveDispute(policyHash, claimant, claimAmountInUsd, evidence, arbitratorDecision)
                         )
                           .to.emit(claimsManager, 'ResolvedDisputeByAcceptingSettlement')
-                          .withArgs(claimHash, claimant, payoutAmountInUsd, payoutAmountInApi3, roles.manager.address);
+                          .withArgs(
+                            claimant,
+                            policyHash,
+                            claimHash,
+                            payoutAmountInUsd,
+                            payoutAmountInApi3,
+                            roles.manager.address
+                          );
                         expect(await api3Token.balanceOf(claimant)).to.equal(payoutAmountInApi3);
                         const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                         const claimState = await claimsManager.claimHashToState(claimHash);
@@ -4776,7 +4839,14 @@ describe('ClaimsManager', function () {
                           .resolveDispute(policyHash, claimant, claimAmountInUsd2, evidence, arbitratorDecision)
                       )
                         .to.emit(claimsManager, 'ResolvedDisputeByAcceptingSettlement')
-                        .withArgs(claimHash2, claimant, payoutAmountInUsd, payoutAmountInApi3, roles.manager.address);
+                        .withArgs(
+                          claimant,
+                          policyHash,
+                          claimHash2,
+                          payoutAmountInUsd,
+                          payoutAmountInApi3,
+                          roles.manager.address
+                        );
                       expect((await api3Token.balanceOf(claimant)).sub(claimantBalance)).to.equal(payoutAmountInApi3);
                       const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                       const claimState = await claimsManager.claimHashToState(claimHash2);
@@ -4903,7 +4973,7 @@ describe('ClaimsManager', function () {
                     .resolveDispute(policyHash, claimant, claimAmountInUsd, evidence, arbitratorDecision)
                 )
                   .to.emit(claimsManager, 'ResolvedDisputeByRejectingClaim')
-                  .withArgs(claimHash, claimant, roles.manager.address);
+                  .withArgs(claimant, policyHash, claimHash, roles.manager.address);
                 expect(await api3Token.balanceOf(claimant)).to.equal(0);
                 const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                 const claimState = await claimsManager.claimHashToState(claimHash);
@@ -5024,7 +5094,7 @@ describe('ClaimsManager', function () {
                   .resolveDispute(policyHash, claimant, claimAmountInUsd, evidence, arbitratorDecision)
               )
                 .to.emit(claimsManager, 'ResolvedDisputeByRejectingClaim')
-                .withArgs(claimHash, claimant, roles.admin.address);
+                .withArgs(claimant, policyHash, claimHash, roles.admin.address);
               expect(await api3Token.balanceOf(claimant)).to.equal(0);
               const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
               const claimState = await claimsManager.claimHashToState(claimHash);
@@ -5080,7 +5150,14 @@ describe('ClaimsManager', function () {
                           .resolveDispute(policyHash, claimant, claimAmountInUsd, evidence, arbitratorDecision)
                       )
                         .to.emit(claimsManager, 'ResolvedDisputeByAcceptingClaim')
-                        .withArgs(claimHash, claimant, payoutAmountInUsd, payoutAmountInApi3, roles.admin.address);
+                        .withArgs(
+                          claimant,
+                          policyHash,
+                          claimHash,
+                          payoutAmountInUsd,
+                          payoutAmountInApi3,
+                          roles.admin.address
+                        );
                       expect(await api3Token.balanceOf(claimant)).to.equal(payoutAmountInApi3);
                       const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                       const claimState = await claimsManager.claimHashToState(claimHash);
@@ -5189,7 +5266,14 @@ describe('ClaimsManager', function () {
                         .resolveDispute(policyHash, claimant, claimAmountInUsd2, evidence, arbitratorDecision)
                     )
                       .to.emit(claimsManager, 'ResolvedDisputeByAcceptingClaim')
-                      .withArgs(claimHash2, claimant, payoutAmountInUsd, payoutAmountInApi3, roles.admin.address);
+                      .withArgs(
+                        claimant,
+                        policyHash,
+                        claimHash2,
+                        payoutAmountInUsd,
+                        payoutAmountInApi3,
+                        roles.admin.address
+                      );
                     expect((await api3Token.balanceOf(claimant)).sub(claimantBalance)).to.equal(payoutAmountInApi3);
                     const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                     const claimState = await claimsManager.claimHashToState(claimHash2);
@@ -5329,7 +5413,14 @@ describe('ClaimsManager', function () {
                             .resolveDispute(policyHash, claimant, claimAmountInUsd, evidence, arbitratorDecision)
                         )
                           .to.emit(claimsManager, 'ResolvedDisputeByAcceptingSettlement')
-                          .withArgs(claimHash, claimant, payoutAmountInUsd, payoutAmountInApi3, roles.admin.address);
+                          .withArgs(
+                            claimant,
+                            policyHash,
+                            claimHash,
+                            payoutAmountInUsd,
+                            payoutAmountInApi3,
+                            roles.admin.address
+                          );
                         expect(await api3Token.balanceOf(claimant)).to.equal(payoutAmountInApi3);
                         const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                         const claimState = await claimsManager.claimHashToState(claimHash);
@@ -5441,7 +5532,14 @@ describe('ClaimsManager', function () {
                           .resolveDispute(policyHash, claimant, claimAmountInUsd2, evidence, arbitratorDecision)
                       )
                         .to.emit(claimsManager, 'ResolvedDisputeByAcceptingSettlement')
-                        .withArgs(claimHash2, claimant, payoutAmountInUsd, payoutAmountInApi3, roles.admin.address);
+                        .withArgs(
+                          claimant,
+                          policyHash,
+                          claimHash2,
+                          payoutAmountInUsd,
+                          payoutAmountInApi3,
+                          roles.admin.address
+                        );
                       expect((await api3Token.balanceOf(claimant)).sub(claimantBalance)).to.equal(payoutAmountInApi3);
                       const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                       const claimState = await claimsManager.claimHashToState(claimHash2);
@@ -5568,7 +5666,7 @@ describe('ClaimsManager', function () {
                     .resolveDispute(policyHash, claimant, claimAmountInUsd, evidence, arbitratorDecision)
                 )
                   .to.emit(claimsManager, 'ResolvedDisputeByRejectingClaim')
-                  .withArgs(claimHash, claimant, roles.admin.address);
+                  .withArgs(claimant, policyHash, claimHash, roles.admin.address);
                 expect(await api3Token.balanceOf(claimant)).to.equal(0);
                 const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                 const claimState = await claimsManager.claimHashToState(claimHash);
@@ -5690,7 +5788,7 @@ describe('ClaimsManager', function () {
                     .resolveDispute(policyHash, claimant, claimAmountInUsd, evidence, arbitratorDecision)
                 )
                   .to.emit(claimsManager, 'ResolvedDisputeByRejectingClaim')
-                  .withArgs(claimHash, claimant, roles.arbitrator.address);
+                  .withArgs(claimant, policyHash, claimHash, roles.arbitrator.address);
                 expect(await api3Token.balanceOf(claimant)).to.equal(0);
                 const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                 const claimState = await claimsManager.claimHashToState(claimHash);
@@ -5749,8 +5847,9 @@ describe('ClaimsManager', function () {
                         )
                           .to.emit(claimsManager, 'ResolvedDisputeByAcceptingClaim')
                           .withArgs(
-                            claimHash,
                             claimant,
+                            policyHash,
+                            claimHash,
                             payoutAmountInUsd,
                             payoutAmountInApi3,
                             roles.arbitrator.address
@@ -5868,8 +5967,9 @@ describe('ClaimsManager', function () {
                       )
                         .to.emit(claimsManager, 'ResolvedDisputeByAcceptingClaim')
                         .withArgs(
-                          claimHash2,
                           claimant,
+                          policyHash,
+                          claimHash2,
                           payoutAmountInUsd,
                           payoutAmountInApi3,
                           roles.arbitrator.address
@@ -6016,8 +6116,9 @@ describe('ClaimsManager', function () {
                           )
                             .to.emit(claimsManager, 'ResolvedDisputeByAcceptingSettlement')
                             .withArgs(
-                              claimHash,
                               claimant,
+                              policyHash,
+                              claimHash,
                               payoutAmountInUsd,
                               payoutAmountInApi3,
                               roles.arbitrator.address
@@ -6138,8 +6239,9 @@ describe('ClaimsManager', function () {
                         )
                           .to.emit(claimsManager, 'ResolvedDisputeByAcceptingSettlement')
                           .withArgs(
-                            claimHash2,
                             claimant,
+                            policyHash,
+                            claimHash2,
                             payoutAmountInUsd,
                             payoutAmountInApi3,
                             roles.arbitrator.address
@@ -6272,7 +6374,7 @@ describe('ClaimsManager', function () {
                       .resolveDispute(policyHash, claimant, claimAmountInUsd, evidence, arbitratorDecision)
                   )
                     .to.emit(claimsManager, 'ResolvedDisputeByRejectingClaim')
-                    .withArgs(claimHash, claimant, roles.arbitrator.address);
+                    .withArgs(claimant, policyHash, claimHash, roles.arbitrator.address);
                   expect(await api3Token.balanceOf(claimant)).to.equal(0);
                   const disputeResolutionTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
                   const claimState = await claimsManager.claimHashToState(claimHash);

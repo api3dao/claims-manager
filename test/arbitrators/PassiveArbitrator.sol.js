@@ -157,7 +157,7 @@ describe('ClaimsManager', function () {
                     .createDispute(policyHash, claimant, claimAmountInUsd, evidence)
                 )
                   .to.emit(claimsManager, 'CreatedDispute')
-                  .withArgs(claimHash, claimant, passiveArbitrator.address);
+                  .withArgs(claimant, policyHash, claimHash, passiveArbitrator.address);
                 const claimState = await claimsManager.claimHashToState(claimHash);
                 expect(claimState.status).to.equal(ClaimStatus.DisputeCreated);
                 expect(claimState.updateTime).to.equal(disputeCreationBlockTimestamp);
@@ -256,7 +256,7 @@ describe('ClaimsManager', function () {
                   .createDispute(policyHash, claimant, claimAmountInUsd, evidence)
               )
                 .to.emit(claimsManager, 'CreatedDispute')
-                .withArgs(claimHash, claimant, passiveArbitrator.address);
+                .withArgs(claimant, policyHash, claimHash, passiveArbitrator.address);
               const disputeCreationBlockTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
               const claimState = await claimsManager.claimHashToState(claimHash);
               expect(claimState.status).to.equal(ClaimStatus.DisputeCreated);
