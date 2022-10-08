@@ -52,17 +52,13 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         address claimant,
         uint224 claimAmountInUsd,
         string calldata evidence
-    ) external payable override {
+    ) external payable override returns (uint256 disputeId) {
         // claimsManager.createDispute() will validate the arguments so we don't need to
         require(msg.sender == claimant, "Sender not claimant");
         bytes32 claimHash = keccak256(
             abi.encodePacked(policyHash, msg.sender, claimAmountInUsd, evidence)
         );
-        require(
-            claimHashToDisputeIdPlusOne[claimHash] == 0,
-            "Dispute already created"
-        );
-        uint256 disputeId = klerosArbitrator.createDispute{value: msg.value}(
+        disputeId = klerosArbitrator.createDispute{value: msg.value}(
             uint256(type(IClaimsManager.ArbitratorDecision).max),
             klerosArbitratorExtraData
         );
@@ -73,7 +69,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
             evidence: evidence
         });
         claimHashToDisputeIdPlusOne[claimHash] = disputeId + 1;
-        emit CreatedDispute(claimHash, claimant, disputeId);
+        emit CreatedDispute(claimant, disputeId, claimHash);
         emit Dispute(klerosArbitrator, disputeId, META_EVIDENCE_ID, disputeId);
         emit Evidence(klerosArbitrator, disputeId, claimant, evidence);
         claimsManager.createDispute(
@@ -102,9 +98,9 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
             "Dispute not in evidence period"
         );
         emit SubmittedEvidenceToKlerosArbitrator(
-            evidence,
             msg.sender,
-            disputeId
+            disputeId,
+            evidence
         );
         emit Evidence(klerosArbitrator, disputeId, msg.sender, evidence);
     }
@@ -116,7 +112,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         string calldata evidence
     ) external payable override {
         bytes32 claimHash = keccak256(
-            abi.encodePacked(policyHash, msg.sender, claimAmountInUsd, evidence)
+            abi.encodePacked(policyHash, claimant, claimAmountInUsd, evidence)
         );
         uint256 disputeIdPlusOne = claimHashToDisputeIdPlusOne[claimHash];
         require(disputeIdPlusOne != 0, "No dispute related to claim");
@@ -136,12 +132,12 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         } else if (claimsManager.isMediatorOrAdmin(msg.sender)) {
             require(
                 klerosArbitrator.currentRuling(disputeId) != 2,
-                "Ruling agrees with mediator"
+                "Ruling disagrees with claimant"
             );
         } else {
             revert("Only parties can appeal");
         }
-        emit AppealedKlerosArbitratorRuling(claimHash, msg.sender, disputeId);
+        emit AppealedKlerosArbitratorRuling(msg.sender, disputeId, claimHash);
         klerosArbitrator.appeal{value: msg.value}(
             disputeId,
             klerosArbitratorExtraData // Unused in KlerosLiquid
@@ -209,16 +205,16 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         );
     }
 
-    function getSubcourt(uint96 subcourtId)
+    function getSubcourt(uint96 subcourtID)
         external
         view
         override
         returns (uint256[] memory children, uint256[4] memory timesPerPeriod)
     {
-        return IKlerosLiquid(address(klerosArbitrator)).getSubcourt(subcourtId);
+        return IKlerosLiquid(address(klerosArbitrator)).getSubcourt(subcourtID);
     }
 
-    function courts(uint256 subcourtId)
+    function courts(uint256 subcourtID)
         external
         view
         override
@@ -231,7 +227,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
             uint256 jurorsForCourtJump
         )
     {
-        return IKlerosLiquid(address(klerosArbitrator)).courts(subcourtId);
+        return IKlerosLiquid(address(klerosArbitrator)).courts(subcourtID);
     }
 
     function disputes(uint256 disputeId)
@@ -239,7 +235,7 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         view
         override
         returns (
-            uint96 subcourtId,
+            uint96 subcourtID,
             address arbitrated,
             uint256 numberOfChoices,
             uint8 period,

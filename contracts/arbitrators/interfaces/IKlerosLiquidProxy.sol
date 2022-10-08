@@ -8,21 +8,21 @@ import "../../interfaces/IClaimsManager.sol";
 
 interface IKlerosLiquidProxy is IEvidence, IArbitrable {
     event CreatedDispute(
-        bytes32 indexed claimHash,
         address indexed claimant,
-        uint256 indexed disputeId
+        uint256 indexed disputeId,
+        bytes32 indexed claimHash
     );
 
     event SubmittedEvidenceToKlerosArbitrator(
-        string evidence,
         address indexed sender,
-        uint256 indexed disputeId
+        uint256 indexed disputeId,
+        string evidence
     );
 
     event AppealedKlerosArbitratorRuling(
-        bytes32 indexed claimHash,
         address indexed sender,
-        uint256 indexed disputeId
+        uint256 indexed disputeId,
+        bytes32 indexed claimHash
     );
 
     function createDispute(
@@ -30,7 +30,7 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
         address claimant,
         uint224 claimAmountInUsd,
         string calldata evidence
-    ) external payable;
+    ) external payable returns (uint256 disputeId);
 
     function submitEvidenceToKlerosArbitrator(
         uint256 disputeId,
@@ -62,12 +62,12 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
         view
         returns (uint256 start, uint256 end);
 
-    function getSubcourt(uint96 subcourtId)
+    function getSubcourt(uint96 subcourtID)
         external
         view
         returns (uint256[] memory children, uint256[4] memory timesPerPeriod);
 
-    function courts(uint256 subcourtId)
+    function courts(uint256 subcourtID)
         external
         view
         returns (
@@ -83,7 +83,7 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
         external
         view
         returns (
-            uint96 subcourtId,
+            uint96 subcourtID,
             address arbitrated,
             uint256 numberOfChoices,
             uint8 period,
