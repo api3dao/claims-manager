@@ -33,7 +33,7 @@ const DisputeStatus = Object.freeze({
   Solved: 2,
 });
 
-describe('ClaimsManager', function () {
+describe('KlerosLiquidProxy', function () {
   let accessControlRegistry,
     api3Token,
     api3Pool,
