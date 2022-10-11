@@ -5,23 +5,23 @@ import "../interfaces/IClaimsManager.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract PaidPolicyAgent {
+contract PolicyOfferExecutor {
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
 
     address public immutable claimsManager;
-    address public immutable authorizedSigner;
+    address public immutable offerSigner;
     address public immutable token;
     address public immutable beneficiary;
 
     constructor(
         address _claimsManager,
-        address _authorizedSigner,
+        address _offerSigner,
         address _token,
         address _beneficiary
     ) {
         claimsManager = _claimsManager;
-        authorizedSigner = _authorizedSigner;
+        offerSigner = _offerSigner;
         token = _token;
         beneficiary = _beneficiary;
     }
@@ -56,7 +56,7 @@ contract PaidPolicyAgent {
                         offerExpiration
                     )
                 ).toEthSignedMessageHash()
-            ).recover(offerSignature) == authorizedSigner,
+            ).recover(offerSignature) == offerSigner,
             "Signature mismatch"
         );
     }
