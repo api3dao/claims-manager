@@ -66,7 +66,7 @@ contract PolicyOfferExecutor {
         uint256 offerAmount,
         uint256 offerExpiration,
         bytes calldata offerSignature
-    ) external {
+    ) external returns (bytes32[] memory policyHashes) {
         require(block.timestamp < offerExpiration, "Offer expired");
         require(
             (
@@ -84,12 +84,16 @@ contract PolicyOfferExecutor {
         );
         IERC20(token).safeTransferFrom(msg.sender, beneficiary, offerAmount);
         uint256 countPolicy = policyData.length;
+        policyHashes = new bytes32[](countPolicy);
         for (uint256 indPolicy = 0; indPolicy < countPolicy; indPolicy++) {
-            claimsManager.functionCall(
-                abi.encodePacked(
-                    IClaimsManager.createPolicy.selector,
-                    policyData[indPolicy]
-                )
+            policyHashes[indPolicy] = abi.decode(
+                claimsManager.functionCall(
+                    abi.encodePacked(
+                        IClaimsManager.createPolicy.selector,
+                        policyData[indPolicy]
+                    )
+                ),
+                (bytes32)
             );
         }
     }
