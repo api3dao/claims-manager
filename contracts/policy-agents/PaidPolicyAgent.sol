@@ -34,7 +34,7 @@ contract PaidPolicyAgent {
         string calldata policy,
         uint256 offerAmount,
         uint256 offerExpiration,
-        string calldata offerSignature
+        bytes calldata offerSignature
     ) external returns (bytes32 policyHash) {
         require(block.timestamp < offerExpiration, "Offer expired");
         IERC20(token).safeTransferFrom(msg.sender, beneficiary, offerAmount);
