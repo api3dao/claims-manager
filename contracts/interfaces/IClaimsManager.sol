@@ -54,7 +54,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     event ResetQuota(address indexed account, address sender);
 
     event CreatedPolicy(
-        address beneficiary,
         address indexed claimant,
         bytes32 indexed policyHash,
         uint224 coverageAmountInUsd,
@@ -65,7 +64,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     );
 
     event UpgradedPolicy(
-        address beneficiary,
         address indexed claimant,
         bytes32 indexed policyHash,
         uint224 coverageAmountInUsd,
@@ -76,7 +74,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     );
 
     event DowngradedPolicy(
-        address beneficiary,
         address indexed claimant,
         bytes32 indexed policyHash,
         uint224 coverageAmountInUsd,
@@ -87,17 +84,16 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     );
 
     event AnnouncedPolicyMetadata(
-        string metadata,
         address indexed claimant,
         bytes32 indexed policyHash,
+        string metadata,
         address sender
     );
 
     event CreatedClaim(
-        bytes32 indexed claimHash,
         address indexed claimant,
         bytes32 indexed policyHash,
-        address beneficiary,
+        bytes32 indexed claimHash,
         uint32 claimsAllowedFrom,
         string policy,
         uint224 claimAmountInUsd,
@@ -106,53 +102,57 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     );
 
     event AcceptedClaim(
-        bytes32 indexed claimHash,
         address indexed claimant,
-        address beneficiary,
+        bytes32 indexed policyHash,
+        bytes32 indexed claimHash,
         uint224 clippedPayoutAmountInUsd,
         uint224 clippedPayoutAmountInApi3,
         address sender
     );
 
     event ProposedSettlement(
-        bytes32 indexed claimHash,
         address indexed claimant,
+        bytes32 indexed policyHash,
+        bytes32 indexed claimHash,
         uint224 settlementAmountInUsd,
         address sender
     );
 
     event AcceptedSettlement(
-        bytes32 indexed claimHash,
         address indexed claimant,
+        bytes32 indexed policyHash,
+        bytes32 indexed claimHash,
         uint224 clippedAmountInUsd,
         uint224 clippedAmountInApi3
     );
 
     event CreatedDispute(
-        bytes32 indexed claimHash,
         address indexed claimant,
+        bytes32 indexed policyHash,
+        bytes32 indexed claimHash,
         address arbitrator
     );
 
     event ResolvedDisputeByRejectingClaim(
-        bytes32 indexed claimHash,
         address indexed claimant,
+        bytes32 indexed policyHash,
+        bytes32 indexed claimHash,
         address arbitrator
     );
 
     event ResolvedDisputeByAcceptingClaim(
-        bytes32 indexed claimHash,
         address indexed claimant,
-        address beneficiary,
+        bytes32 indexed policyHash,
+        bytes32 indexed claimHash,
         uint224 clippedPayoutAmountInUsd,
         uint224 clippedPayoutAmountInApi3,
         address arbitrator
     );
 
     event ResolvedDisputeByAcceptingSettlement(
-        bytes32 indexed claimHash,
         address indexed claimant,
-        address beneficiary,
+        bytes32 indexed policyHash,
+        bytes32 indexed claimHash,
         uint224 clippedPayoutAmountInUsd,
         uint224 clippedPayoutAmountInApi3,
         address arbitrator
@@ -180,7 +180,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     function createPolicy(
         address claimant,
-        address beneficiary,
         uint224 coverageAmountInUsd,
         uint32 claimsAllowedFrom,
         uint32 claimsAllowedUntil,
@@ -189,7 +188,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     function upgradePolicy(
         address claimant,
-        address beneficiary,
         uint224 coverageAmountInUsd,
         uint32 claimsAllowedFrom,
         uint32 claimsAllowedUntil,
@@ -198,7 +196,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     function downgradePolicy(
         address claimant,
-        address beneficiary,
         uint224 coverageAmountInUsd,
         uint32 claimsAllowedFrom,
         uint32 claimsAllowedUntil,
@@ -207,14 +204,12 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     function announcePolicyMetadata(
         address claimant,
-        address beneficiary,
         uint32 claimsAllowedFrom,
         string calldata policy,
         string calldata metadata
     ) external returns (bytes32 policyHash);
 
     function createClaim(
-        address beneficiary,
         uint32 claimsAllowedFrom,
         string calldata policy,
         uint224 claimAmountInUsd,
@@ -224,7 +219,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function acceptClaim(
         bytes32 policyHash,
         address claimant,
-        address beneficiary,
         uint224 claimAmountInUsd,
         string calldata evidence
     ) external;
@@ -232,7 +226,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function proposeSettlement(
         bytes32 policyHash,
         address claimant,
-        address beneficiary,
         uint224 claimAmountInUsd,
         string calldata evidence,
         uint224 settlementAmountInUsd
@@ -240,7 +233,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     function acceptSettlement(
         bytes32 policyHash,
-        address beneficiary,
         uint224 claimAmountInUsd,
         string calldata evidence,
         uint224 minimumPayoutAmountInApi3
@@ -249,7 +241,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function createDispute(
         bytes32 policyHash,
         address claimant,
-        address beneficiary,
         uint224 claimAmountInUsd,
         string calldata evidence
     ) external;
@@ -257,7 +248,6 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     function resolveDispute(
         bytes32 policyHash,
         address claimant,
-        address beneficiary,
         uint224 claimAmountInUsd,
         string calldata evidence,
         ArbitratorDecision result

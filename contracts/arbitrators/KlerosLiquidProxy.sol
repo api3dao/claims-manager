@@ -9,7 +9,6 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
     struct ClaimDetails {
         bytes32 policyHash;
         address claimant;
-        address beneficiary;
         uint224 amountInUsd;
         string evidence;
     }
@@ -51,20 +50,13 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
     function createDispute(
         bytes32 policyHash,
         address claimant,
-        address beneficiary,
         uint224 claimAmountInUsd,
         string calldata evidence
     ) external payable override {
         // claimsManager.createDispute() will validate the arguments so we don't need to
         require(msg.sender == claimant, "Sender not claimant");
         bytes32 claimHash = keccak256(
-            abi.encodePacked(
-                policyHash,
-                msg.sender,
-                beneficiary,
-                claimAmountInUsd,
-                evidence
-            )
+            abi.encodePacked(policyHash, msg.sender, claimAmountInUsd, evidence)
         );
         require(
             claimHashToDisputeIdPlusOne[claimHash] == 0,
@@ -77,7 +69,6 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         disputeIdToClaimDetails[disputeId] = ClaimDetails({
             policyHash: policyHash,
             claimant: claimant,
-            beneficiary: beneficiary,
             amountInUsd: claimAmountInUsd,
             evidence: evidence
         });
@@ -88,7 +79,6 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         claimsManager.createDispute(
             policyHash,
             claimant,
-            beneficiary,
             claimAmountInUsd,
             evidence
         );
@@ -122,18 +112,11 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
     function appealKlerosArbitratorRuling(
         bytes32 policyHash,
         address claimant,
-        address beneficiary,
         uint224 claimAmountInUsd,
         string calldata evidence
     ) external payable override {
         bytes32 claimHash = keccak256(
-            abi.encodePacked(
-                policyHash,
-                msg.sender,
-                beneficiary,
-                claimAmountInUsd,
-                evidence
-            )
+            abi.encodePacked(policyHash, msg.sender, claimAmountInUsd, evidence)
         );
         uint256 disputeIdPlusOne = claimHashToDisputeIdPlusOne[claimHash];
         require(disputeIdPlusOne != 0, "No dispute related to claim");
@@ -178,7 +161,6 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         claimsManager.resolveDispute(
             claimDetails.policyHash,
             claimDetails.claimant,
-            claimDetails.beneficiary,
             claimDetails.amountInUsd,
             claimDetails.evidence,
             decision

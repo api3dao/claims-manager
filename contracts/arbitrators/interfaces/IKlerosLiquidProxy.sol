@@ -28,7 +28,6 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
     function createDispute(
         bytes32 policyHash,
         address claimant,
-        address beneficiary,
         uint224 claimAmountInUsd,
         string calldata evidence
     ) external payable;
@@ -41,7 +40,6 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
     function appealKlerosArbitratorRuling(
         bytes32 policyHash,
         address claimant,
-        address beneficiary,
         uint224 claimAmountInUsd,
         string calldata evidence
     ) external payable;
@@ -107,7 +105,6 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
         returns (
             bytes32 policyHash,
             address claimant,
-            address beneficiary,
             uint224 amountInUsd,
             string memory evidence
         );
