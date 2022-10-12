@@ -120,11 +120,17 @@ contract MockKlerosLiquid {
         __courts[_subcourtID].timesPerPeriod = _timesPerPeriod;
     }
 
-    function __setCurrentRuling(uint256 disputeId, uint256 ruling) external {
+    function __setCurrentRulingAndPassPeriodFromVoteToAppeal(
+        uint256 disputeId,
+        uint256 ruling
+    ) external {
+        require(__disputeIdToDispute[disputeId].period == Period.vote);
         currentRuling[disputeId] = ruling;
+        passPeriod(disputeId);
     }
 
-    function passPeriod(uint256 _disputeID) external {
+    // Made visibility public to use in __setCurrentRulingAndPassPeriodFromVoteToAppeal()
+    function passPeriod(uint256 _disputeID) public {
         Dispute storage dispute = __disputeIdToDispute[_disputeID];
         if (dispute.period == Period.evidence) {
             require(
@@ -363,8 +369,9 @@ contract MockKlerosLiquid {
         timesPerPeriod = subcourt.timesPerPeriod;
     }
 
+    // Made visibility public to use in tests
     function extraDataToSubcourtIDAndMinJurors(bytes memory _extraData)
-        internal
+        public
         view
         returns (uint96 subcourtID, uint256 minJurors)
     {
