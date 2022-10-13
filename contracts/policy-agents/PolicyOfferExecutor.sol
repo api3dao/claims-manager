@@ -97,4 +97,24 @@ contract PolicyOfferExecutor {
             );
         }
     }
+
+    function decodePolicyData(bytes calldata policyData)
+        external
+        pure
+        returns (
+            address claimant,
+            uint224 coverageAmountInUsd,
+            uint32 claimsAllowedFrom,
+            uint32 claimsAllowedUntil,
+            string memory policy
+        )
+    {
+        (
+            claimant,
+            coverageAmountInUsd,
+            claimsAllowedFrom,
+            claimsAllowedUntil,
+            policy
+        ) = abi.decode(policyData, (address, uint224, uint32, uint32, string));
+    }
 }
