@@ -4,12 +4,10 @@ pragma solidity ^0.8.0;
 import "../interfaces/IClaimsManager.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
 
 contract PolicyOfferExecutor {
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
-    using Address for address;
 
     address public immutable claimsManager;
     address public immutable offerSigner;
@@ -50,14 +48,19 @@ contract PolicyOfferExecutor {
             "Signature mismatch"
         );
         IERC20(token).safeTransferFrom(msg.sender, beneficiary, offerAmount);
-        policyHash = abi.decode(
-            claimsManager.functionCall(
-                abi.encodePacked(
-                    IClaimsManager.createPolicy.selector,
-                    policyData
-                )
-            ),
-            (bytes32)
+        (
+            address claimant,
+            uint224 coverageAmountInUsd,
+            uint32 claimsAllowedFrom,
+            uint32 claimsAllowedUntil,
+            string memory policy
+        ) = decodePolicyData(policyData);
+        policyHash = IClaimsManager(claimsManager).createPolicy(
+            claimant,
+            coverageAmountInUsd,
+            claimsAllowedFrom,
+            claimsAllowedUntil,
+            policy
         );
     }
 
@@ -86,20 +89,26 @@ contract PolicyOfferExecutor {
         uint256 countPolicy = policyData.length;
         policyHashes = new bytes32[](countPolicy);
         for (uint256 indPolicy = 0; indPolicy < countPolicy; indPolicy++) {
-            policyHashes[indPolicy] = abi.decode(
-                claimsManager.functionCall(
-                    abi.encodePacked(
-                        IClaimsManager.createPolicy.selector,
-                        policyData[indPolicy]
-                    )
-                ),
-                (bytes32)
-            );
+            (
+                address claimant,
+                uint224 coverageAmountInUsd,
+                uint32 claimsAllowedFrom,
+                uint32 claimsAllowedUntil,
+                string memory policy
+            ) = decodePolicyData(policyData[indPolicy]);
+            policyHashes[indPolicy] = IClaimsManager(claimsManager)
+                .createPolicy(
+                    claimant,
+                    coverageAmountInUsd,
+                    claimsAllowedFrom,
+                    claimsAllowedUntil,
+                    policy
+                );
         }
     }
 
     function decodePolicyData(bytes calldata policyData)
-        external
+        public
         pure
         returns (
             address claimant,
