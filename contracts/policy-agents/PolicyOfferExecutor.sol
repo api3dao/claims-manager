@@ -61,6 +61,7 @@ contract PolicyOfferExecutor {
                     policyData[indPolicy],
                     (address, uint224, uint32, uint32, string)
                 );
+            require(msg.sender == claimant, "Sender not claimant");
             policyHashes[indPolicy] = IClaimsManager(claimsManager)
                 .createPolicy(
                     claimant,
