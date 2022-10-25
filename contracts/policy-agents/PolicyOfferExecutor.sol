@@ -62,14 +62,30 @@ contract PolicyOfferExecutor {
                     (address, uint224, uint32, uint32, string)
                 );
             require(msg.sender == claimant, "Sender not claimant");
-            policyHashes[indPolicy] = IClaimsManager(claimsManager)
-                .createPolicy(
-                    claimant,
-                    coverageAmountInUsd,
-                    claimsAllowedFrom,
-                    claimsAllowedUntil,
-                    policy
-                );
+            bytes32 policyHash = keccak256(
+                abi.encodePacked(claimant, claimsAllowedFrom, policy)
+            );
+            (uint32 currentClaimsAllowedUntil, ) = IClaimsManager(claimsManager)
+                .policyHashToState(policyHash);
+            if (currentClaimsAllowedUntil == 0) {
+                policyHashes[indPolicy] = IClaimsManager(claimsManager)
+                    .createPolicy(
+                        claimant,
+                        coverageAmountInUsd,
+                        claimsAllowedFrom,
+                        claimsAllowedUntil,
+                        policy
+                    );
+            } else {
+                policyHashes[indPolicy] = IClaimsManager(claimsManager)
+                    .upgradePolicy(
+                        claimant,
+                        coverageAmountInUsd,
+                        claimsAllowedFrom,
+                        claimsAllowedUntil,
+                        policy
+                    );
+            }
         }
     }
 }
