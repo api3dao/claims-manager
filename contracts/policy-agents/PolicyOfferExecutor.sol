@@ -5,6 +5,9 @@ import "../interfaces/IClaimsManager.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+// This contract needs to have the admin role for the ClaimsManager contract.
+// It can only call updatePolicy() with the permission of the claimant, which
+// effectively makes this contract a policy agent.
 contract PolicyOfferExecutor {
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
@@ -71,30 +74,14 @@ contract PolicyOfferExecutor {
                     (address, uint224, uint32, uint32, string)
                 );
             require(msg.sender == claimant, "Sender not claimant");
-            bytes32 policyHash = keccak256(
-                abi.encodePacked(claimant, claimsAllowedFrom, policy)
-            );
-            (uint32 currentClaimsAllowedUntil, ) = IClaimsManager(claimsManager)
-                .policyHashToState(policyHash);
-            if (currentClaimsAllowedUntil == 0) {
-                policyHashes[indPolicy] = IClaimsManager(claimsManager)
-                    .createPolicy(
-                        claimant,
-                        coverageAmountInUsd,
-                        claimsAllowedFrom,
-                        claimsAllowedUntil,
-                        policy
-                    );
-            } else {
-                policyHashes[indPolicy] = IClaimsManager(claimsManager)
-                    .upgradePolicy(
-                        claimant,
-                        coverageAmountInUsd,
-                        claimsAllowedFrom,
-                        claimsAllowedUntil,
-                        policy
-                    );
-            }
+            policyHashes[indPolicy] = IClaimsManager(claimsManager)
+                .updatePolicy(
+                    claimant,
+                    coverageAmountInUsd,
+                    claimsAllowedFrom,
+                    claimsAllowedUntil,
+                    policy
+                );
         }
     }
 }

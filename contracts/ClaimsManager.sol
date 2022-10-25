@@ -269,6 +269,48 @@ contract ClaimsManager is
         );
     }
 
+    function updatePolicy(
+        address claimant,
+        uint224 coverageAmountInUsd,
+        uint32 claimsAllowedFrom,
+        uint32 claimsAllowedUntil,
+        string calldata policy
+    ) external override returns (bytes32 policyHash) {
+        require(isAdmin(msg.sender), "Sender not admin");
+        require(
+            claimsAllowedUntil > claimsAllowedFrom,
+            "Start not earlier than end"
+        );
+        policyHash = keccak256(
+            abi.encodePacked(claimant, claimsAllowedFrom, policy)
+        );
+        if (policyHashToState[policyHash].claimsAllowedUntil == 0) {
+            emit CreatedPolicy(
+                claimant,
+                policyHash,
+                coverageAmountInUsd,
+                claimsAllowedFrom,
+                claimsAllowedUntil,
+                policy,
+                msg.sender
+            );
+        } else {
+            emit UpdatedPolicy(
+                claimant,
+                policyHash,
+                coverageAmountInUsd,
+                claimsAllowedFrom,
+                claimsAllowedUntil,
+                policy,
+                msg.sender
+            );
+        }
+        policyHashToState[policyHash] = PolicyState({
+            claimsAllowedUntil: claimsAllowedUntil,
+            coverageAmountInUsd: coverageAmountInUsd
+        });
+    }
+
     function announcePolicyMetadata(
         address claimant,
         uint32 claimsAllowedFrom,
