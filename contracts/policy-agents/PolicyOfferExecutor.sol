@@ -27,44 +27,6 @@ contract PolicyOfferExecutor {
     }
 
     function executeOffer(
-        bytes calldata policyData,
-        uint256 offerAmount,
-        uint256 offerExpiration,
-        bytes calldata offerSignature
-    ) external returns (bytes32 policyHash) {
-        require(block.timestamp < offerExpiration, "Offer expired");
-        require(
-            (
-                keccak256(
-                    abi.encode(
-                        block.chainid,
-                        address(this),
-                        policyData,
-                        offerAmount,
-                        offerExpiration
-                    )
-                ).toEthSignedMessageHash()
-            ).recover(offerSignature) == offerSigner,
-            "Signature mismatch"
-        );
-        IERC20(token).safeTransferFrom(msg.sender, beneficiary, offerAmount);
-        (
-            address claimant,
-            uint224 coverageAmountInUsd,
-            uint32 claimsAllowedFrom,
-            uint32 claimsAllowedUntil,
-            string memory policy
-        ) = decodePolicyData(policyData);
-        policyHash = IClaimsManager(claimsManager).createPolicy(
-            claimant,
-            coverageAmountInUsd,
-            claimsAllowedFrom,
-            claimsAllowedUntil,
-            policy
-        );
-    }
-
-    function executeOffer(
         bytes[] calldata policyData,
         uint256 offerAmount,
         uint256 offerExpiration,
