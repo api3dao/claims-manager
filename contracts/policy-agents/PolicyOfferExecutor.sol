@@ -57,7 +57,10 @@ contract PolicyOfferExecutor {
                 uint32 claimsAllowedFrom,
                 uint32 claimsAllowedUntil,
                 string memory policy
-            ) = decodePolicyData(policyData[indPolicy]);
+            ) = abi.decode(
+                    policyData[indPolicy],
+                    (address, uint224, uint32, uint32, string)
+                );
             policyHashes[indPolicy] = IClaimsManager(claimsManager)
                 .createPolicy(
                     claimant,
@@ -67,25 +70,5 @@ contract PolicyOfferExecutor {
                     policy
                 );
         }
-    }
-
-    function decodePolicyData(bytes calldata policyData)
-        public
-        pure
-        returns (
-            address claimant,
-            uint224 coverageAmountInUsd,
-            uint32 claimsAllowedFrom,
-            uint32 claimsAllowedUntil,
-            string memory policy
-        )
-    {
-        (
-            claimant,
-            coverageAmountInUsd,
-            claimsAllowedFrom,
-            claimsAllowedUntil,
-            policy
-        ) = abi.decode(policyData, (address, uint224, uint32, uint32, string));
     }
 }
