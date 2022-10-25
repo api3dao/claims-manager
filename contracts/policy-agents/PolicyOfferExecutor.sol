@@ -13,6 +13,7 @@ contract PolicyOfferExecutor {
     address public immutable offerSigner;
     address public immutable token;
     address public immutable beneficiary;
+    mapping(bytes32 => bool) public offerWithIdIsExecuted;
 
     constructor(
         address _claimsManager,
@@ -38,6 +39,7 @@ contract PolicyOfferExecutor {
                 keccak256(abi.encode(policyData, offerAmount, offerExpiration)),
             "Invalid offer ID"
         );
+        require(!offerWithIdIsExecuted[offerId], "Offer already executed");
         require(block.timestamp < offerExpiration, "Offer expired");
         require(
             (
@@ -53,6 +55,7 @@ contract PolicyOfferExecutor {
             ).recover(offerSignature) == offerSigner,
             "Signature mismatch"
         );
+        offerWithIdIsExecuted[offerId] = true;
         IERC20(token).safeTransferFrom(msg.sender, beneficiary, offerAmount);
         uint256 countPolicy = policyData.length;
         policyHashes = new bytes32[](countPolicy);
