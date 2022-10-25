@@ -27,11 +27,17 @@ contract PolicyOfferExecutor {
     }
 
     function executeOffer(
+        bytes32 offerId,
         bytes[] calldata policyData,
         uint256 offerAmount,
         uint256 offerExpiration,
         bytes calldata offerSignature
     ) external returns (bytes32[] memory policyHashes) {
+        require(
+            offerId ==
+                keccak256(abi.encode(policyData, offerAmount, offerExpiration)),
+            "Invalid offer ID"
+        );
         require(block.timestamp < offerExpiration, "Offer expired");
         require(
             (
