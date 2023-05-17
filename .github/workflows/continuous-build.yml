@@ -1,5 +1,9 @@
 name: Continuous Build
 on: [push]
+
+env:
+  TARGET_NODE_VERSION: '18.16.0'
+
 jobs:
   test:
     runs-on: ubuntu-latest

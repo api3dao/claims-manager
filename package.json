@@ -9,14 +9,18 @@
     "build:tsc": "tsc -p tsconfig.build.json",
     "clean": "rimraf -rf ./dist *.tgz src/contracts artifacts cache",
     "lint": "yarn prettier:check && yarn lint:eslint && yarn lint:solhint",
-    "lint:eslint": "eslint . --ext .js",
+    "lint:eslint": "eslint . --ext .js,.ts",
     "lint:solhint": "solhint contracts/**/*.sol",
     "prepare": "husky install",
-    "prettier": "prettier --write \"./**/*.{json,js,ts,sol,md}\"",
+    "prettier": "yarn prettier:write",
+    "prettier:write": "prettier --write \"./**/*.{json,js,ts,sol,md}\"",
     "prettier:check": "prettier --check \"./**/*.{json,js,ts,sol,md}\"",
     "test": "hardhat test --parallel",
     "test:coverage": "hardhat coverage",
     "test:gas": "REPORT_GAS=true hardhat test"
+  },
+  "engines": {
+    "node": "^18.16.0"
   },
   "main": "dist/src/index",
   "files": [
@@ -34,7 +38,7 @@
     "eslint": "^8.14.0",
     "ethereum-waffle": "^3.4.4",
     "ethers": "^5.6.5",
-    "hardhat": "^2.9.3",
+    "hardhat": "^2.11.1",
     "hardhat-gas-reporter": "^1.0.8",
     "husky": "^7.0.4",
     "prettier": "^2.6.2",
