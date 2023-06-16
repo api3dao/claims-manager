@@ -83,6 +83,16 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address sender
     );
 
+    event UpdatedPolicy(
+        address indexed claimant,
+        bytes32 indexed policyHash,
+        uint224 coverageAmountInUsd,
+        uint32 claimsAllowedFrom,
+        uint32 claimsAllowedUntil,
+        string policy,
+        address sender
+    );
+
     event AnnouncedPolicyMetadata(
         address indexed claimant,
         bytes32 indexed policyHash,
@@ -195,6 +205,14 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
     ) external returns (bytes32 policyHash);
 
     function downgradePolicy(
+        address claimant,
+        uint224 coverageAmountInUsd,
+        uint32 claimsAllowedFrom,
+        uint32 claimsAllowedUntil,
+        string calldata policy
+    ) external returns (bytes32 policyHash);
+
+    function updatePolicy(
         address claimant,
         uint224 coverageAmountInUsd,
         uint32 claimsAllowedFrom,
