@@ -7,3 +7,10 @@ typechain
 #Hardhat files
 cache
 artifacts
+
+dist
+
+artifacts
+cache
+gas_report
+contracts

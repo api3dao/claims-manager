@@ -2,9 +2,15 @@ node_modules
 .env
 coverage
 coverage.json
-gas_report
 typechain
 
 #Hardhat files
 cache
 artifacts
+
+dist
+
+artifacts
+cache
+gas_report
+contracts
