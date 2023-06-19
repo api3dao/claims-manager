@@ -2,17 +2,25 @@
 # yarn lockfile v1
 
 
-"@api3/airnode-protocol-v1@^0.5.2":
-  version "0.5.2"
-  resolved "https://registry.yarnpkg.com/@api3/airnode-protocol-v1/-/airnode-protocol-v1-0.5.2.tgz#7144ab0c53ff153b32f4ce22bb60cab77344a78b"
-  integrity sha512-hzS/E6eGB6GiXaQfWXvQlGwwxU3frEfq7I35qpPh8mrteWc4czJQS1OPcrQFZiNeyU/f6rUDoUY/oPPrhCzSbw==
+"@api3/airnode-protocol-v1@^2.3.0", "@api3/airnode-protocol-v1@^2.7.1":
+  version "2.7.1"
+  resolved "https://registry.yarnpkg.com/@api3/airnode-protocol-v1/-/airnode-protocol-v1-2.7.1.tgz#dc60c2470cec8f4e884c224f0208ddd530caf68c"
+  integrity sha512-hOuddd+GvypvkMGu8bHPidKiBeEU3NjopaX8GSODPdae9n6ReXIFWFUgQz3AJNpwyUnb7Ivx4nXdiYMSyc9adQ==
   dependencies:
-    "@openzeppelin/contracts" "^4.4.2"
+    "@openzeppelin/contracts" "4.8.2"
 
 "@api3/api3-dao-contracts@^0.1.0":
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/@api3/api3-dao-contracts/-/api3-dao-contracts-0.1.0.tgz#13d38a94459ee86865a8d3cdbe456500ba4409c8"
   integrity sha512-VT10GFPTLR7I2U5VTcceGbhzSk3qiu6lXHzhqBWzBXwAl4+Rvvhstvehtt5zvsVBoQ4tlL8ON37dRDt/jYOB9Q==
+
+"@api3/contracts@^0.9.1":
+  version "0.9.1"
+  resolved "https://registry.yarnpkg.com/@api3/contracts/-/contracts-0.9.1.tgz#c2a5b14501cb7bc8496c9695e02d9c015adfc102"
+  integrity sha512-7D6/BaDvWjupERJ26lcCJuIwze0W90g3mV0NF5tWcoFCagsGvhuL0uYeYy89cl1Um5gE1yFt2vE7TUX4lYh4jA==
+  dependencies:
+    "@api3/airnode-protocol-v1" "^2.3.0"
+    ethers "^5.4.7"
 
 "@babel/code-frame@^7.0.0":
   version "7.22.5"
@@ -780,10 +788,10 @@
     table "^6.8.0"
     undici "^5.14.0"
 
-"@openzeppelin/contracts@^4.4.2":
-  version "4.9.2"
-  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.9.2.tgz#1cb2d5e4d3360141a17dbc45094a8cad6aac16c1"
-  integrity sha512-mO+y6JaqXjWeMh9glYVzVu8HYPGknAAnWyxTRhGeckOruyXQMNnlcW6w/Dx9ftLeIQk6N+ZJFuVmTwF7lEIFrg==
+"@openzeppelin/contracts@4.8.2":
+  version "4.8.2"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.8.2.tgz#d815ade0027b50beb9bcca67143c6bcc3e3923d6"
+  integrity sha512-kEUOgPQszC0fSYWpbh2kT94ltOJwj1qfT2DWo+zVttmGmf97JZ99LspePNaeeaLhCImaHVeBbjaQFZQn7+Zc5g==
 
 "@scure/base@~1.1.0":
   version "1.1.1"
@@ -2284,7 +2292,7 @@ ethers@^4.0.40:
     uuid "2.0.1"
     xmlhttprequest "1.8.0"
 
-ethers@^5.7.1:
+ethers@^5.4.7, ethers@^5.7.1:
   version "5.7.2"
   resolved "https://registry.yarnpkg.com/ethers/-/ethers-5.7.2.tgz#3a7deeabbb8c030d4126b24f84e525466145872e"
   integrity sha512-wswUsmWo1aOK8rR7DIKiWSw9DbLWe6x98Jrn8wcTflTVvaXhAMaB5zGAXy0GYQEQp9iO1iSHWVyARQm11zUtyg==

@@ -1,5 +1,6 @@
 const { expect } = require('chai');
 const hre = require('hardhat');
+const testUtils = require('../test-utils');
 
 const ClaimStatus = Object.freeze({
   None: 0,
@@ -38,7 +39,7 @@ describe('KlerosLiquidProxy', function () {
     api3Token,
     api3Pool,
     claimsManager,
-    dapiServer,
+    proxy,
     api3UsdAmountConverter,
     klerosLiquid,
     klerosLiquidProxy;
@@ -50,7 +51,6 @@ describe('KlerosLiquidProxy', function () {
 
   // API3 price is $2
   const api3UsdPriceWith18Decimals = hre.ethers.utils.parseEther('2');
-  const dapiName = hre.ethers.utils.formatBytes32String('API3/USD');
   const dapiDecimals = 18;
   const dataFeedValue = api3UsdPriceWith18Decimals
     .mul(hre.ethers.BigNumber.from(10).pow(dapiDecimals))
@@ -77,6 +77,7 @@ describe('KlerosLiquidProxy', function () {
       policyAgent: accounts[3],
       mediator: accounts[4],
       claimant: accounts[6],
+      api3ServerV1: accounts[7],
       randomPerson: accounts[9],
     };
     const accessControlRegistryFactory = await hre.ethers.getContractFactory('AccessControlRegistry', roles.deployer);
@@ -97,10 +98,7 @@ describe('KlerosLiquidProxy', function () {
     );
     await accessControlRegistry
       .connect(roles.manager)
-      .initializeRoleAndGrantToSender(
-        await accessControlRegistry.deriveRootRole(roles.manager.address),
-        'ClaimsManager admin'
-      );
+      .initializeRoleAndGrantToSender(testUtils.deriveRootRole(roles.manager.address), 'ClaimsManager admin');
     await accessControlRegistry
       .connect(roles.manager)
       .initializeRoleAndGrantToSender(await claimsManager.adminRole(), 'Policy agent');
@@ -117,22 +115,15 @@ describe('KlerosLiquidProxy', function () {
     await accessControlRegistry
       .connect(roles.manager)
       .grantRole(await claimsManager.mediatorRole(), roles.mediator.address);
-    const dapiServerFactory = await hre.ethers.getContractFactory('MockDapiServer', roles.deployer);
-    dapiServer = await dapiServerFactory.deploy();
-    const dataFeedId = hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(32));
+    const proxyFactory = await hre.ethers.getContractFactory('MockProxy', roles.deployer);
+    proxy = await proxyFactory.deploy(roles.api3ServerV1.address);
     const dataFeedTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
-    await dapiServer.mockDataFeed(dataFeedId, dataFeedValue, dataFeedTimestamp);
-    await dapiServer.mockDapiName(dapiName, dataFeedId);
+    await proxy.mock(dataFeedValue, dataFeedTimestamp);
     const currencyConverterWithDapiFactory = await hre.ethers.getContractFactory(
       'CurrencyConverterWithDapi',
       roles.deployer
     );
-    api3UsdAmountConverter = await currencyConverterWithDapiFactory.deploy(
-      dapiServer.address,
-      claimsManager.address,
-      dapiName,
-      dapiDecimals
-    );
+    api3UsdAmountConverter = await currencyConverterWithDapiFactory.deploy(proxy.address, dapiDecimals);
     await claimsManager.connect(roles.admin).setApi3UsdAmountConverter(api3UsdAmountConverter.address);
     const klerosLiquidFactory = await hre.ethers.getContractFactory('MockKlerosLiquid', roles.deployer);
     klerosLiquid = await klerosLiquidFactory.deploy();

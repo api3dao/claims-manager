@@ -1,5 +1,6 @@
 const { expect } = require('chai');
 const hre = require('hardhat');
+const testUtils = require('./test-utils');
 
 const ClaimStatus = Object.freeze({
   None: 0,
@@ -20,7 +21,7 @@ const ArbitratorDecision = Object.freeze({
 });
 
 describe('ClaimsManager', function () {
-  let accessControlRegistry, api3Token, api3Pool, claimsManager, dapiServer, api3UsdAmountConverter;
+  let accessControlRegistry, api3Token, api3Pool, claimsManager, proxy, api3UsdAmountConverter;
   let roles;
 
   const mediatorResponsePeriod = 3 * 24 * 60 * 60,
@@ -29,7 +30,6 @@ describe('ClaimsManager', function () {
 
   // API3 price is $2
   const api3UsdPriceWith18Decimals = hre.ethers.utils.parseEther('2');
-  const dapiName = hre.ethers.utils.formatBytes32String('API3/USD');
   const dapiDecimals = 18;
   const dataFeedValue = api3UsdPriceWith18Decimals
     .mul(hre.ethers.BigNumber.from(10).pow(dapiDecimals))
@@ -47,6 +47,7 @@ describe('ClaimsManager', function () {
       mediator: accounts[4],
       arbitrator: accounts[5],
       claimant: accounts[6],
+      api3ServerV1: accounts[7],
       randomPerson: accounts[9],
     };
     const accessControlRegistryFactory = await hre.ethers.getContractFactory('AccessControlRegistry', roles.deployer);
@@ -67,10 +68,7 @@ describe('ClaimsManager', function () {
     );
     await accessControlRegistry
       .connect(roles.manager)
-      .initializeRoleAndGrantToSender(
-        await accessControlRegistry.deriveRootRole(roles.manager.address),
-        'ClaimsManager admin'
-      );
+      .initializeRoleAndGrantToSender(testUtils.deriveRootRole(roles.manager.address), 'ClaimsManager admin');
     await accessControlRegistry
       .connect(roles.manager)
       .initializeRoleAndGrantToSender(await claimsManager.adminRole(), 'Policy agent');
@@ -102,22 +100,15 @@ describe('ClaimsManager', function () {
     await accessControlRegistry
       .connect(roles.manager)
       .renounceRole(await claimsManager.arbitratorRole(), roles.manager.address);
-    const dapiServerFactory = await hre.ethers.getContractFactory('MockDapiServer', roles.deployer);
-    dapiServer = await dapiServerFactory.deploy();
-    const dataFeedId = hre.ethers.utils.hexlify(hre.ethers.utils.randomBytes(32));
+    const proxyFactory = await hre.ethers.getContractFactory('MockProxy', roles.deployer);
+    proxy = await proxyFactory.deploy(roles.api3ServerV1.address);
     const dataFeedTimestamp = (await hre.ethers.provider.getBlock()).timestamp;
-    await dapiServer.mockDataFeed(dataFeedId, dataFeedValue, dataFeedTimestamp);
-    await dapiServer.mockDapiName(dapiName, dataFeedId);
+    await proxy.mock(dataFeedValue, dataFeedTimestamp);
     const currencyConverterWithDapiFactory = await hre.ethers.getContractFactory(
       'CurrencyConverterWithDapi',
       roles.deployer
     );
-    api3UsdAmountConverter = await currencyConverterWithDapiFactory.deploy(
-      dapiServer.address,
-      claimsManager.address,
-      dapiName,
-      dapiDecimals
-    );
+    api3UsdAmountConverter = await currencyConverterWithDapiFactory.deploy(proxy.address, dapiDecimals);
     await claimsManager.connect(roles.admin).setApi3UsdAmountConverter(api3UsdAmountConverter.address);
   });
 
