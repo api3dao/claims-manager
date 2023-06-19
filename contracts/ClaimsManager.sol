@@ -93,11 +93,9 @@ contract ClaimsManager is
         _setArbitratorResponsePeriod(_arbitratorResponsePeriod);
     }
 
-    function setApi3UsdAmountConverter(address _api3UsdAmountConverter)
-        external
-        override
-        onlyAdmin
-    {
+    function setApi3UsdAmountConverter(
+        address _api3UsdAmountConverter
+    ) external override onlyAdmin {
         require(
             _api3UsdAmountConverter != address(0),
             "Api3UsdAmountConverter zero"
@@ -110,27 +108,21 @@ contract ClaimsManager is
         _setApi3Pool(_api3Pool);
     }
 
-    function setMediatorResponsePeriod(uint32 _mediatorResponsePeriod)
-        external
-        override
-        onlyAdmin
-    {
+    function setMediatorResponsePeriod(
+        uint32 _mediatorResponsePeriod
+    ) external override onlyAdmin {
         _setMediatorResponsePeriod(_mediatorResponsePeriod);
     }
 
-    function setClaimantResponsePeriod(uint32 _claimantResponsePeriod)
-        external
-        override
-        onlyAdmin
-    {
+    function setClaimantResponsePeriod(
+        uint32 _claimantResponsePeriod
+    ) external override onlyAdmin {
         _setClaimantResponsePeriod(_claimantResponsePeriod);
     }
 
-    function setArbitratorResponsePeriod(uint32 _arbitratorResponsePeriod)
-        external
-        override
-        onlyAdmin
-    {
+    function setArbitratorResponsePeriod(
+        uint32 _arbitratorResponsePeriod
+    ) external override onlyAdmin {
         _setArbitratorResponsePeriod(_arbitratorResponsePeriod);
     }
 
@@ -640,12 +632,9 @@ contract ClaimsManager is
         }
     }
 
-    function isMediatorOrAdmin(address account)
-        public
-        view
-        override
-        returns (bool)
-    {
+    function isMediatorOrAdmin(
+        address account
+    ) public view override returns (bool) {
         return
             IAccessControlRegistry(accessControlRegistry).hasRole(
                 mediatorRole,
@@ -668,25 +657,25 @@ contract ClaimsManager is
         emit SetApi3Pool(_api3Pool, msg.sender);
     }
 
-    function _setMediatorResponsePeriod(uint32 _mediatorResponsePeriod)
-        internal
-    {
+    function _setMediatorResponsePeriod(
+        uint32 _mediatorResponsePeriod
+    ) internal {
         require(_mediatorResponsePeriod != 0, "Mediator response period zero");
         mediatorResponsePeriod = _mediatorResponsePeriod;
         emit SetMediatorResponsePeriod(_mediatorResponsePeriod, msg.sender);
     }
 
-    function _setClaimantResponsePeriod(uint32 _claimantResponsePeriod)
-        internal
-    {
+    function _setClaimantResponsePeriod(
+        uint32 _claimantResponsePeriod
+    ) internal {
         require(_claimantResponsePeriod != 0, "Claimant response period zero");
         claimantResponsePeriod = _claimantResponsePeriod;
         emit SetClaimantResponsePeriod(_claimantResponsePeriod, msg.sender);
     }
 
-    function _setArbitratorResponsePeriod(uint32 _arbitratorResponsePeriod)
-        internal
-    {
+    function _setArbitratorResponsePeriod(
+        uint32 _arbitratorResponsePeriod
+    ) internal {
         require(
             _arbitratorResponsePeriod != 0,
             "Arbitrator response period zero"
@@ -695,10 +684,10 @@ contract ClaimsManager is
         emit SetArbitratorResponsePeriod(_arbitratorResponsePeriod, msg.sender);
     }
 
-    function updatePolicyCoverage(bytes32 policyHash, uint224 payoutAmountInUsd)
-        private
-        returns (uint224 clippedPayoutAmountInUsd)
-    {
+    function updatePolicyCoverage(
+        bytes32 policyHash,
+        uint224 payoutAmountInUsd
+    ) private returns (uint224 clippedPayoutAmountInUsd) {
         uint224 remainingCoverageAmountInUsd = policyHashToState[policyHash]
             .coverageAmountInUsd;
         clippedPayoutAmountInUsd = payoutAmountInUsd >

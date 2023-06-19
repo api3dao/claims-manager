@@ -4,11 +4,7 @@ pragma solidity ^0.8.0;
 import "../QuotaEnforcer.sol";
 
 contract MockQuotaEnforcer is QuotaEnforcer {
-    function setQuota(
-        address account,
-        uint32 period,
-        uint224 amount
-    ) external {
+    function setQuota(address account, uint32 period, uint224 amount) external {
         _setQuota(account, period, amount);
     }
 

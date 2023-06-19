@@ -50,24 +50,26 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
 
     function appealCost(uint256 disputeId) external view returns (uint256);
 
-    function disputeStatus(uint256 disputeId)
-        external
-        view
-        returns (IArbitrator.DisputeStatus);
+    function disputeStatus(
+        uint256 disputeId
+    ) external view returns (IArbitrator.DisputeStatus);
 
     function currentRuling(uint256 disputeId) external view returns (uint256);
 
-    function appealPeriod(uint256 disputeId)
-        external
-        view
-        returns (uint256 start, uint256 end);
+    function appealPeriod(
+        uint256 disputeId
+    ) external view returns (uint256 start, uint256 end);
 
-    function getSubcourt(uint96 subcourtID)
+    function getSubcourt(
+        uint96 subcourtID
+    )
         external
         view
         returns (uint256[] memory children, uint256[4] memory timesPerPeriod);
 
-    function courts(uint256 subcourtID)
+    function courts(
+        uint256 subcourtID
+    )
         external
         view
         returns (
@@ -79,7 +81,9 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
             uint256 jurorsForCourtJump
         );
 
-    function disputes(uint256 disputeId)
+    function disputes(
+        uint256 disputeId
+    )
         external
         view
         returns (
@@ -99,7 +103,9 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
 
     function klerosArbitratorExtraData() external view returns (bytes memory);
 
-    function disputeIdToClaimDetails(uint256 disputeId)
+    function disputeIdToClaimDetails(
+        uint256 disputeId
+    )
         external
         view
         returns (
@@ -109,8 +115,7 @@ interface IKlerosLiquidProxy is IEvidence, IArbitrable {
             string memory evidence
         );
 
-    function claimHashToDisputeIdPlusOne(bytes32 claimHash)
-        external
-        view
-        returns (uint256 disputeIdPlusOne);
+    function claimHashToDisputeIdPlusOne(
+        bytes32 claimHash
+    ) external view returns (uint256 disputeIdPlusOne);
 }

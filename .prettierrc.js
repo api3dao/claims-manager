@@ -9,19 +9,17 @@ module.exports = {
       files: '*.md',
       options: {
         parser: 'markdown',
-        proseWrap: 'always',
       },
     },
     {
       files: '*.sol',
       options: {
-        compiler: '0.8.12',
+        compiler: '0.8.9',
         printWidth: 80,
         tabWidth: 4,
         useTabs: false,
         singleQuote: false,
         bracketSpacing: false,
-        explicitTypes: 'always',
       },
     },
   ],

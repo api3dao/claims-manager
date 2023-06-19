@@ -12,17 +12,20 @@ interface IKlerosLiquid {
 
     function executeRuling(uint256 disputeId) external;
 
-    function appealPeriod(uint256 disputeId)
-        external
-        view
-        returns (uint256 start, uint256 end);
+    function appealPeriod(
+        uint256 disputeId
+    ) external view returns (uint256 start, uint256 end);
 
-    function getSubcourt(uint96 subcourtId)
+    function getSubcourt(
+        uint96 subcourtId
+    )
         external
         view
         returns (uint256[] memory children, uint256[4] memory timesPerPeriod);
 
-    function courts(uint256 subcourtId)
+    function courts(
+        uint256 subcourtId
+    )
         external
         view
         returns (
@@ -34,7 +37,9 @@ interface IKlerosLiquid {
             uint256 jurorsForCourtJump
         );
 
-    function disputes(uint256 disputeId)
+    function disputes(
+        uint256 disputeId
+    )
         external
         view
         returns (

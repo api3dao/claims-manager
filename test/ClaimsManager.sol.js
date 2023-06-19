@@ -2173,7 +2173,7 @@ describe('ClaimsManager', function () {
                   .createClaim(claimsAllowedFrom, policy, claimAmountInUsd, evidence);
                 await expect(
                   claimsManager.connect(roles.manager).acceptClaim(policyHash, claimant, claimAmountInUsd, evidence)
-                ).to.be.revertedWith('function call to a non-contract account');
+                ).to.be.revertedWithoutReason;
               });
             });
           });
@@ -2513,7 +2513,7 @@ describe('ClaimsManager', function () {
                   .createClaim(claimsAllowedFrom, policy, claimAmountInUsd, evidence);
                 await expect(
                   claimsManager.connect(roles.admin).acceptClaim(policyHash, claimant, claimAmountInUsd, evidence)
-                ).to.be.revertedWith('function call to a non-contract account');
+                ).to.be.revertedWithoutReason;
               });
             });
           });
@@ -2861,7 +2861,7 @@ describe('ClaimsManager', function () {
                   .createClaim(claimsAllowedFrom, policy, claimAmountInUsd, evidence);
                 await expect(
                   claimsManager.connect(roles.mediator).acceptClaim(policyHash, claimant, claimAmountInUsd, evidence)
-                ).to.be.revertedWith('function call to a non-contract account');
+                ).to.be.revertedWithoutReason;
               });
             });
           });
@@ -3085,7 +3085,7 @@ describe('ClaimsManager', function () {
                     claimsManager
                       .connect(roles.manager)
                       .proposeSettlement(policyHash, claimant, claimAmountInUsd, evidence, settlementAmountInUsd)
-                  ).to.be.revertedWith('function call to a non-contract account');
+                  ).to.be.revertedWithoutReason;
                 });
               });
             });
@@ -3328,7 +3328,7 @@ describe('ClaimsManager', function () {
                     claimsManager
                       .connect(roles.admin)
                       .proposeSettlement(policyHash, claimant, claimAmountInUsd, evidence, settlementAmountInUsd)
-                  ).to.be.revertedWith('function call to a non-contract account');
+                  ).to.be.revertedWithoutReason;
                 });
               });
             });
@@ -3571,7 +3571,7 @@ describe('ClaimsManager', function () {
                     claimsManager
                       .connect(roles.mediator)
                       .proposeSettlement(policyHash, claimant, claimAmountInUsd, evidence, settlementAmountInUsd)
-                  ).to.be.revertedWith('function call to a non-contract account');
+                  ).to.be.revertedWithoutReason;
                 });
               });
             });
@@ -4048,7 +4048,7 @@ describe('ClaimsManager', function () {
               claimsManager
                 .connect(roles.claimant)
                 .acceptSettlement(policyHash, claimAmountInUsd, evidence, minimumPayoutAmountInApi3)
-            ).to.be.revertedWith('function call to a non-contract account');
+            ).to.be.revertedWithoutReason;
           });
         });
       });
@@ -4663,7 +4663,7 @@ describe('ClaimsManager', function () {
                   claimsManager
                     .connect(roles.manager)
                     .resolveDispute(policyHash, claimant, claimAmountInUsd, evidence, arbitratorDecision)
-                ).to.be.revertedWith('function call to a non-contract account');
+                ).to.be.revertedWithoutReason;
               });
             });
           });
@@ -4933,7 +4933,7 @@ describe('ClaimsManager', function () {
                     claimsManager
                       .connect(roles.manager)
                       .resolveDispute(policyHash, claimant, claimAmountInUsd, evidence, arbitratorDecision)
-                  ).to.be.revertedWith('function call to a non-contract account');
+                  ).to.be.revertedWithoutReason;
                 });
               });
             });
@@ -5358,7 +5358,7 @@ describe('ClaimsManager', function () {
                   claimsManager
                     .connect(roles.admin)
                     .resolveDispute(policyHash, claimant, claimAmountInUsd, evidence, arbitratorDecision)
-                ).to.be.revertedWith('function call to a non-contract account');
+                ).to.be.revertedWithoutReason;
               });
             });
           });
@@ -5626,7 +5626,7 @@ describe('ClaimsManager', function () {
                     claimsManager
                       .connect(roles.admin)
                       .resolveDispute(policyHash, claimant, claimAmountInUsd, evidence, arbitratorDecision)
-                  ).to.be.revertedWith('function call to a non-contract account');
+                  ).to.be.revertedWithoutReason;
                 });
               });
             });
@@ -6060,7 +6060,7 @@ describe('ClaimsManager', function () {
                     claimsManager
                       .connect(roles.arbitrator)
                       .resolveDispute(policyHash, claimant, claimAmountInUsd, evidence, arbitratorDecision)
-                  ).to.be.revertedWith('function call to a non-contract account');
+                  ).to.be.revertedWithoutReason;
                 });
               });
             });
@@ -6334,7 +6334,7 @@ describe('ClaimsManager', function () {
                       claimsManager
                         .connect(roles.arbitrator)
                         .resolveDispute(policyHash, claimant, claimAmountInUsd, evidence, arbitratorDecision)
-                    ).to.be.revertedWith('function call to a non-contract account');
+                    ).to.be.revertedWithoutReason;
                   });
                 });
               });

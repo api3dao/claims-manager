@@ -158,8 +158,9 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
         address arbitrator
     );
 
-    function setApi3UsdAmountConverter(address _api3UsdAmountConverter)
-        external;
+    function setApi3UsdAmountConverter(
+        address _api3UsdAmountConverter
+    ) external;
 
     function setApi3Pool(address _api3Pool) external;
 
@@ -167,8 +168,9 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     function setClaimantResponsePeriod(uint32 _claimantResponsePeriod) external;
 
-    function setArbitratorResponsePeriod(uint32 _arbitratorResponsePeriod)
-        external;
+    function setArbitratorResponsePeriod(
+        uint32 _arbitratorResponsePeriod
+    ) external;
 
     function setQuota(
         address account,
@@ -271,22 +273,21 @@ interface IClaimsManager is IAccessControlRegistryAdminnedWithManager {
 
     function arbitratorResponsePeriod() external view returns (uint32);
 
-    function policyHashToState(bytes32 policyHash)
+    function policyHashToState(
+        bytes32 policyHash
+    )
         external
         view
         returns (uint32 claimsAllowedUntil, uint224 coverageAmountInUsd);
 
-    function claimHashToState(bytes32 claimHash)
+    function claimHashToState(
+        bytes32 claimHash
+    )
         external
         view
-        returns (
-            ClaimStatus status,
-            uint32 updateTime,
-            address arbitrator
-        );
+        returns (ClaimStatus status, uint32 updateTime, address arbitrator);
 
-    function claimHashToProposedSettlementAmountInUsd(bytes32 claimHash)
-        external
-        view
-        returns (uint224);
+    function claimHashToProposedSettlementAmountInUsd(
+        bytes32 claimHash
+    ) external view returns (uint224);
 }

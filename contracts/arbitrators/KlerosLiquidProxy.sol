@@ -171,22 +171,16 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         return klerosArbitrator.arbitrationCost(klerosArbitratorExtraData);
     }
 
-    function appealCost(uint256 disputeId)
-        external
-        view
-        override
-        returns (uint256)
-    {
+    function appealCost(
+        uint256 disputeId
+    ) external view override returns (uint256) {
         return
             klerosArbitrator.appealCost(disputeId, klerosArbitratorExtraData);
     }
 
-    function disputeStatus(uint256 disputeId)
-        external
-        view
-        override
-        returns (IArbitrator.DisputeStatus)
-    {
+    function disputeStatus(
+        uint256 disputeId
+    ) external view override returns (IArbitrator.DisputeStatus) {
         return klerosArbitrator.disputeStatus(disputeId);
     }
 
@@ -194,18 +188,17 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         return klerosArbitrator.currentRuling(disputeId);
     }
 
-    function appealPeriod(uint256 disputeId)
-        external
-        view
-        override
-        returns (uint256 start, uint256 end)
-    {
+    function appealPeriod(
+        uint256 disputeId
+    ) external view override returns (uint256 start, uint256 end) {
         (start, end) = IKlerosLiquid(address(klerosArbitrator)).appealPeriod(
             disputeId
         );
     }
 
-    function getSubcourt(uint96 subcourtID)
+    function getSubcourt(
+        uint96 subcourtID
+    )
         external
         view
         override
@@ -214,7 +207,9 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         return IKlerosLiquid(address(klerosArbitrator)).getSubcourt(subcourtID);
     }
 
-    function courts(uint256 subcourtID)
+    function courts(
+        uint256 subcourtID
+    )
         external
         view
         override
@@ -230,7 +225,9 @@ contract KlerosLiquidProxy is Multicall, IKlerosLiquidProxy {
         return IKlerosLiquid(address(klerosArbitrator)).courts(subcourtID);
     }
 
-    function disputes(uint256 disputeId)
+    function disputes(
+        uint256 disputeId
+    )
         external
         view
         override

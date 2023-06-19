@@ -40,22 +40,18 @@ contract MockDapiServer {
     }
 
     // Reads a data feed using the data feed ID
-    function readDataFeedWithId(bytes32 dataFeedId)
-        external
-        view
-        returns (int224 value, uint32 timestamp)
-    {
+    function readDataFeedWithId(
+        bytes32 dataFeedId
+    ) external view returns (int224 value, uint32 timestamp) {
         require(allowedToRead, "Sender cannot read");
         DataFeed storage dataFeed = dataFeeds[dataFeedId];
         return (dataFeed.value, dataFeed.timestamp);
     }
 
     // Reads a data feed using the data feed ID. Omits the timestamp.
-    function readDataFeedValueWithId(bytes32 dataFeedId)
-        external
-        view
-        returns (int224 value)
-    {
+    function readDataFeedValueWithId(
+        bytes32 dataFeedId
+    ) external view returns (int224 value) {
         require(allowedToRead, "Sender cannot read");
         DataFeed storage dataFeed = dataFeeds[dataFeedId];
         require(dataFeed.timestamp != 0, "Data feed does not exist");
@@ -63,11 +59,9 @@ contract MockDapiServer {
     }
 
     // Reads a data feed using the dAPI name that is mapped to a data feed
-    function readDataFeedWithDapiName(bytes32 dapiName)
-        external
-        view
-        returns (int224 value, uint32 timestamp)
-    {
+    function readDataFeedWithDapiName(
+        bytes32 dapiName
+    ) external view returns (int224 value, uint32 timestamp) {
         bytes32 dapiNameHash = keccak256(abi.encodePacked(dapiName));
         require(allowedToRead, "Sender cannot read");
         bytes32 dataFeedId = dapiNameHashToDataFeedId[dapiNameHash];
@@ -78,11 +72,9 @@ contract MockDapiServer {
 
     // Reads a data feed using the dAPI name that is mapped to a data feed.
     // Omits the timestamp.
-    function readDataFeedValueWithDapiName(bytes32 dapiName)
-        external
-        view
-        returns (int224 value)
-    {
+    function readDataFeedValueWithDapiName(
+        bytes32 dapiName
+    ) external view returns (int224 value) {
         bytes32 dapiNameHash = keccak256(abi.encodePacked(dapiName));
         require(allowedToRead, "Sender cannot read");
         DataFeed storage dataFeed = dataFeeds[
