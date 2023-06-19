@@ -25,8 +25,9 @@
     "dist"
   ],
   "devDependencies": {
-    "@api3/airnode-protocol-v1": "^0.5.2",
+    "@api3/airnode-protocol-v1": "^2.7.1",
     "@api3/api3-dao-contracts": "^0.1.0",
+    "@api3/contracts": "^0.9.1",
     "@kleros/erc-792": "^8.0.0",
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.0",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
