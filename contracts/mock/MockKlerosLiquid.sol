@@ -258,7 +258,7 @@ contract MockKlerosLiquid {
 
     function appealCost(
         uint256 _disputeID,
-        bytes calldata _extraData
+        bytes calldata /*_extraData*/
     ) public view returns (uint256 cost) {
         Dispute storage dispute = __disputeIdToDispute[_disputeID];
         uint256 lastNumberOfJurors = dispute.__appealToJurorCount[
