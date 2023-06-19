@@ -8,7 +8,7 @@ contract MockApi3Pool {
     address public immutable api3Token;
     uint256 public immutable totalStake;
 
-    constructor(address _api3Token, uint256 _totalStake) public {
+    constructor(address _api3Token, uint256 _totalStake) {
         api3Token = _api3Token;
         totalStake = _totalStake;
     }
