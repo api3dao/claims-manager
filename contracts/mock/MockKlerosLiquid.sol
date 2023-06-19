@@ -48,7 +48,7 @@ contract MockKlerosLiquid {
 
     uint256 public constant MIN_JURORS = 3; // The global default minimum number of jurors in a dispute.
 
-    uint256 public constant NON_PAYABLE_AMOUNT = (2**256 - 2) / 2; // An amount higher than the supply of ETH.
+    uint256 public constant NON_PAYABLE_AMOUNT = (2 ** 256 - 2) / 2; // An amount higher than the supply of ETH.
 
     Court[] private __courts;
 
@@ -176,7 +176,10 @@ contract MockKlerosLiquid {
         dispute.lastPeriodChange = block.timestamp;
     }
 
-    function createDispute(uint256 _numberOfChoices, bytes calldata _extraData)
+    function createDispute(
+        uint256 _numberOfChoices,
+        bytes calldata _extraData
+    )
         public
         payable
         requireArbitrationFee(_extraData)
@@ -197,7 +200,10 @@ contract MockKlerosLiquid {
             __courts[subcourtID].feeForJuror;
     }
 
-    function appeal(uint256 _disputeID, bytes calldata _extraData)
+    function appeal(
+        uint256 _disputeID,
+        bytes calldata _extraData
+    )
         public
         payable
         requireAppealFee(_disputeID, _extraData)
@@ -223,10 +229,9 @@ contract MockKlerosLiquid {
             __courts[dispute.subcourtID].feeForJuror;
     }
 
-    function executeRuling(uint256 _disputeID)
-        external
-        onlyDuringPeriod(_disputeID, Period.execution)
-    {
+    function executeRuling(
+        uint256 _disputeID
+    ) external onlyDuringPeriod(_disputeID, Period.execution) {
         Dispute storage dispute = __disputeIdToDispute[_disputeID];
         require(!dispute.ruled, "Ruling already executed.");
         dispute.ruled = true;
@@ -241,11 +246,9 @@ contract MockKlerosLiquid {
         require(success, "__Ruling execution reverted");
     }
 
-    function arbitrationCost(bytes calldata _extraData)
-        public
-        view
-        returns (uint256 cost)
-    {
+    function arbitrationCost(
+        bytes calldata _extraData
+    ) public view returns (uint256 cost) {
         (
             uint96 subcourtID,
             uint256 minJurors
@@ -253,11 +256,10 @@ contract MockKlerosLiquid {
         cost = __courts[subcourtID].feeForJuror * minJurors;
     }
 
-    function appealCost(uint256 _disputeID, bytes calldata _extraData)
-        public
-        view
-        returns (uint256 cost)
-    {
+    function appealCost(
+        uint256 _disputeID,
+        bytes calldata _extraData
+    ) public view returns (uint256 cost) {
         Dispute storage dispute = __disputeIdToDispute[_disputeID];
         uint256 lastNumberOfJurors = dispute.__appealToJurorCount[
             dispute.__appealCount
@@ -282,11 +284,9 @@ contract MockKlerosLiquid {
                 ((lastNumberOfJurors * 2) + 1);
     }
 
-    function disputeStatus(uint256 _disputeID)
-        public
-        view
-        returns (DisputeStatus status)
-    {
+    function disputeStatus(
+        uint256 _disputeID
+    ) public view returns (DisputeStatus status) {
         Dispute storage dispute = __disputeIdToDispute[_disputeID];
         if (dispute.period < Period.appeal) status = DisputeStatus.Waiting;
         else if (dispute.period < Period.execution)
@@ -294,11 +294,9 @@ contract MockKlerosLiquid {
         else status = DisputeStatus.Solved;
     }
 
-    function appealPeriod(uint256 _disputeID)
-        public
-        view
-        returns (uint256 start, uint256 end)
-    {
+    function appealPeriod(
+        uint256 _disputeID
+    ) public view returns (uint256 start, uint256 end) {
         Dispute storage dispute = __disputeIdToDispute[_disputeID];
         if (dispute.period == Period.appeal) {
             start = dispute.lastPeriodChange;
@@ -313,7 +311,9 @@ contract MockKlerosLiquid {
         }
     }
 
-    function courts(uint256 subcourtId)
+    function courts(
+        uint256 subcourtId
+    )
         public
         view
         returns (
@@ -334,7 +334,9 @@ contract MockKlerosLiquid {
         jurorsForCourtJump = court.jurorsForCourtJump;
     }
 
-    function disputes(uint256 disputeId)
+    function disputes(
+        uint256 disputeId
+    )
         public
         view
         returns (
@@ -359,7 +361,9 @@ contract MockKlerosLiquid {
         ruled = dispute.ruled;
     }
 
-    function getSubcourt(uint96 _subcourtID)
+    function getSubcourt(
+        uint96 _subcourtID
+    )
         external
         view
         returns (uint256[] memory children, uint256[4] memory timesPerPeriod)
@@ -370,11 +374,9 @@ contract MockKlerosLiquid {
     }
 
     // Made visibility public to use in tests
-    function extraDataToSubcourtIDAndMinJurors(bytes memory _extraData)
-        public
-        view
-        returns (uint96 subcourtID, uint256 minJurors)
-    {
+    function extraDataToSubcourtIDAndMinJurors(
+        bytes memory _extraData
+    ) public view returns (uint96 subcourtID, uint256 minJurors) {
         if (_extraData.length >= 64) {
             assembly {
                 // solium-disable-line security/no-inline-assembly

@@ -18,12 +18,9 @@ contract QuotaEnforcer is IQuotaEnforcer {
         override accountToAccumulatedQuotaUsageCheckpoints;
     mapping(address => Quota) public override accountToQuota;
 
-    function getQuotaUsage(address account)
-        public
-        view
-        override
-        returns (uint224)
-    {
+    function getQuotaUsage(
+        address account
+    ) public view override returns (uint224) {
         Checkpoint[]
             storage accumulatedQuotaUsageCheckpoints = accountToAccumulatedQuotaUsageCheckpoints[
                 account
@@ -80,11 +77,10 @@ contract QuotaEnforcer is IQuotaEnforcer {
         );
     }
 
-    function getValueAt(Checkpoint[] storage checkpoints, uint32 _timestamp)
-        private
-        view
-        returns (uint224)
-    {
+    function getValueAt(
+        Checkpoint[] storage checkpoints,
+        uint32 _timestamp
+    ) private view returns (uint224) {
         if (checkpoints.length == 0) return 0;
 
         // Shortcut for the actual value

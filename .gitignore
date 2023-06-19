@@ -1,16 +1,14 @@
 node_modules
+dist
 .env
 coverage
 coverage.json
 typechain
+typechain-types
 
-#Hardhat files
+# Hardhat files
 cache
 artifacts
+deployments
 
-dist
-
-artifacts
-cache
-gas_report
-contracts
+src/contracts

@@ -9,8 +9,7 @@ interface IQuotaEnforcer {
         uint256 checkpointIndex
     ) external view returns (uint32 fromTimestamp, uint224 value);
 
-    function accountToQuota(address account)
-        external
-        view
-        returns (uint32 period, uint224 amountInApi3);
+    function accountToQuota(
+        address account
+    ) external view returns (uint32 period, uint224 amountInApi3);
 }

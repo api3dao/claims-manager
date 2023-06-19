@@ -23,29 +23,27 @@ contract CurrencyConverterWithDapi is DapiReader, ICurrencyConverterWithDapi {
         dapiDecimals = _dapiDecimals;
     }
 
-    function convertBaseToQuote(uint256 amountInBase)
-        external
-        view
-        override
-        returns (uint256 amountInQuote)
-    {
+    function convertBaseToQuote(
+        uint256 amountInBase
+    ) external view override returns (uint256 amountInQuote) {
         require(msg.sender == reader, "Sender not reader");
         int224 pairPrice = IDapiServer(dapiServer)
             .readDataFeedValueWithDapiName(dapiName);
         require(pairPrice > 0, "Price not positive");
-        amountInQuote = (amountInBase * uint224(pairPrice)) / 10**dapiDecimals;
+        amountInQuote =
+            (amountInBase * uint224(pairPrice)) /
+            10 ** dapiDecimals;
     }
 
-    function convertQuoteToBase(uint256 amountInQuote)
-        external
-        view
-        override
-        returns (uint256 amountInBase)
-    {
+    function convertQuoteToBase(
+        uint256 amountInQuote
+    ) external view override returns (uint256 amountInBase) {
         require(msg.sender == reader, "Sender not reader");
         int224 pairPrice = IDapiServer(dapiServer)
             .readDataFeedValueWithDapiName(dapiName);
         require(pairPrice > 0, "Price not positive");
-        amountInBase = (amountInQuote * 10**dapiDecimals) / uint224(pairPrice);
+        amountInBase =
+            (amountInQuote * 10 ** dapiDecimals) /
+            uint224(pairPrice);
     }
 }
